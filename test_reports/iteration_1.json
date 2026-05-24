@@ -1,0 +1,42 @@
+{
+  "summary": "Completed frontend-only testing of The BlackRock Lagos 6-page site. All 6 routes load, navigation/CTA works, reservations flow (occasion selection + concierge branch + dynamic fields + success modal), menu tab switching (5 categories), gallery filters (6 categories) + lightbox, contact form submission, footer, floating WhatsApp, and mobile hamburger menu all work. Found one CRITICAL design bug: navbar 'onLight' background never actually applies (Tailwind arbitrary value opacity modifier on CSS var does not resolve), causing the navbar to remain fully transparent on scrolled state and on every non-home page — producing dark text over dark hero images with poor contrast.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Navbar.jsx",
+        "issue": "Navbar background is permanently transparent. Class `bg-[var(--warm-white)]/95` does not compile to an actual background-color (Tailwind cannot apply the /95 opacity modifier to an arbitrary `var()` value unless the variable is defined as space-separated RGB triplet). Confirmed via getComputedStyle: backgroundColor = rgba(0,0,0,0) on /about and on home after scrollY=800. backdrop-filter:blur(12px) IS applied so there is slight diffusion, but no light tint. Result: on non-home pages (e.g., /about which uses a dark hero) the dark nav links + dark logo sit directly on a dark image with poor contrast.",
+        "selector": "[data-testid=\"navbar\"]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "/about (and all non-home pages with dark hero), and home after scrolling past 24px",
+        "issues": [
+          "Navbar text/logo lack a solid/light backdrop because the warm-white/95 background never renders — readability of HOME/ABOUT/MENU/GALLERY/CONTACT links and BlackRock logo is poor over dark hero images.",
+          "Border-bottom of navbar renders (1px) but the panel itself stays transparent — visually inconsistent with intended 'light' navbar."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix navbar background in /app/frontend/src/components/Navbar.jsx. Replace `bg-[var(--warm-white)]/95` with a class that actually paints a background. Options: (a) define --warm-white in tailwind config as RGB channels and use bg-warm-white/95, (b) use inline style `style={{ backgroundColor: 'rgba(250, 248, 245, 0.95)' }}` when onLight is true, or (c) use a static color e.g. `bg-white/95` or `bg-[#faf8f5e6]` (with embedded alpha). Same fix may be needed for any other place using `bg-[var(--...)]/<opacity>` (e.g., Menu sticky tabs section also uses `bg-[var(--warm-white)]/95 backdrop-blur-md`)."
+  ],
+  "critical_code_review_comments": [
+    "Tailwind arbitrary-value opacity modifier (`/95`) does not work on `var(--x)` colors unless variables are declared as `R G B` triplets (referenced with `<alpha-value>`). Search the codebase for `bg-[var(` and `/<digit>` combinations and remediate.",
+    "Reservations page uses `step === 2.5` as a state value — works but a string state machine ('occasion' | 'concierge' | 'form') would be more readable.",
+    "App.js wraps content with BrowserRouter and includes a ScrollToTop helper — good. No 404/NotFound route defined; unknown URLs render blank content under Navbar/Footer.",
+    "All interactive elements have appropriate data-testid attributes — good."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested per request)", "frontend": "95% (one HIGH design bug; all functional flows pass)"},
+  "test_credentials": "N/A",
+  "seed_data_creation": "N/A",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All functional flows are working: 6 routes, navigation, Reserve CTA, 8 occasions, concierge branch (proposal/private-dining), birthday/corporate/anniversary/special dynamic fields, success modal close, ?occasion=birthday URL pre-select, 5 menu tabs (lowercase testids: menu-tab-starters/mains/grills/desserts/drinks), 6 gallery filters (lowercase: gallery-filter-all/restaurant/lounge/rooftop/kitchen/bar with item counts 12/2/1/2/5/1), gallery lightbox, contact form 'Sent — we'll be in touch' feedback, footer, floating WhatsApp on all 6 pages, mobile hamburger open/close. The single open issue is the navbar background bug described above — verify a re-test of getComputedStyle on `[data-testid=\"navbar\"]` returns a non-transparent backgroundColor on /about and on home after scrolling.",
+  "rca of the issue": "Tailwind CSS opacity modifier (e.g. `/95`) requires the target color to expose its channels via the `<alpha-value>` placeholder. When passed an arbitrary `var(--warm-white)` whose value is the full hex `#faf8f5` (confirmed via getComputedStyle: --warm-white = #faf8f5), Tailwind cannot interpolate the alpha channel, so the resulting CSS resolves to no background at all (`rgba(0,0,0,0)`). Reproduction: open /about → inspect `<header data-testid='navbar'>` → backgroundColor is transparent despite class `bg-[var(--warm-white)]/95`. Mitigation listed in action_items."
+}
