@@ -7,20 +7,20 @@ import SectionHeader from "../components/SectionHeader";
 
 const galleryImages = [
   { src: IMAGES.heroRooftop, tag: "Rooftop", label: "Lagos by night" },
-  { src: IMAGES.steak, tag: "Kitchen", label: "Wagyu Suya" },
+  { src: IMAGES.jollof, tag: "Kitchen", label: "Party jollof" },
   { src: IMAGES.interior1, tag: "Restaurant", label: "Ground floor" },
-  { src: IMAGES.cocktail, tag: "Bar", label: "BlackRock Negroni" },
+  { src: IMAGES.cocktail, tag: "Bar", label: "Palm wine spritz" },
   { src: IMAGES.rooftopNight, tag: "Rooftop", label: "Fire pit nights" },
-  { src: IMAGES.pasta, tag: "Kitchen", label: "Egusi Ravioli" },
-  { src: IMAGES.bar, tag: "Lounge", label: "Velvet hour" },
-  { src: IMAGES.dessert, tag: "Kitchen", label: "Chin Chin Tiramisu" },
+  { src: IMAGES.pepperSoup, tag: "Kitchen", label: "Catfish pepper soup" },
+  { src: IMAGES.bar, tag: "Bush Bar", label: "Palm wine hour" },
+  { src: IMAGES.grilledFish, tag: "Kitchen", label: "Whole grilled croaker" },
   { src: IMAGES.interior2, tag: "Restaurant", label: "Quiet corners" },
-  { src: IMAGES.grill, tag: "Kitchen", label: "From the grill" },
-  { src: IMAGES.wine, tag: "Cellar", label: "2,400 bottles" },
-  { src: IMAGES.starter, tag: "Kitchen", label: "Burrata & plantain" },
+  { src: IMAGES.grill, tag: "Kitchen", label: "Asun off the grill" },
+  { src: IMAGES.suya, tag: "Kitchen", label: "Suya plate" },
+  { src: IMAGES.riceDish, tag: "Kitchen", label: "Ofada & ayamase" },
 ];
 
-const filters = ["All", "Restaurant", "Lounge", "Rooftop", "Kitchen", "Bar"];
+const filters = ["All", "Restaurant", "Bush Bar", "Rooftop", "Kitchen", "Bar"];
 
 export default function Gallery() {
   const [filter, setFilter] = useState("All");

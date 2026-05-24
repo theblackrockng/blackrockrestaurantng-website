@@ -11,11 +11,11 @@ export default function Footer() {
           <div className="md:col-span-5">
             <img src={LOGO_URL} alt="The BlackRock" className="h-20 w-auto brightness-0 invert mb-6" />
             <p className="font-serif-italic text-xl text-[var(--gold)] leading-snug max-w-md mb-6">
-              "Where the city slows down and the evening begins."
+              "Lagos on a plate. Lagos in a glass. Lagos in the air."
             </p>
             <p className="text-sm text-white/60 leading-relaxed max-w-md">
-              A restaurant, lounge and rooftop in the heart of Ikeja. Curated to feel
-              unhurried, intentional, and unmistakably Lagos.
+              A restaurant, lounge and rooftop in the heart of Ikeja. From jollof to T-bone,
+              pepper soup to palm wine — every flavour of Lagos, under one roof.
             </p>
           </div>
 

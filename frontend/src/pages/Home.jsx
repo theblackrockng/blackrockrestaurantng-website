@@ -17,7 +17,10 @@ export default function Home() {
             alt="The BlackRock rooftop"
             className="w-full h-full object-cover ken-burns"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--charcoal)]/30 via-[var(--charcoal)]/40 to-[var(--charcoal)]/90" />
+          {/* Strong layered overlays for legibility */}
+          <div className="absolute inset-0 bg-[var(--charcoal)]/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--charcoal)]/40 via-[var(--charcoal)]/50 to-[var(--charcoal)]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--charcoal)] via-[var(--charcoal)]/60 to-[var(--charcoal)]/30" />
         </div>
         <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-16 max-w-[1440px] mx-auto">
           <motion.span
@@ -32,19 +35,19 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="font-serif-display text-[var(--warm-white)] text-5xl sm:text-6xl md:text-7xl lg:text-[112px] leading-[0.95] max-w-5xl"
+            className="font-serif-display text-[var(--warm-white)] text-5xl sm:text-6xl md:text-7xl lg:text-[112px] leading-[0.95] max-w-5xl drop-shadow-[0_4px_24px_rgba(0,0,0,0.7)]"
           >
-            Lagos by night,<br />
-            <span className="font-serif-italic text-[var(--gold)]">unhurried.</span>
+            Lagos,<br />
+            <span className="font-serif-italic text-[var(--gold)]">served right.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 1.05 }}
-            className="text-white/75 text-base md:text-lg font-light max-w-xl mt-8 leading-relaxed"
+            className="text-white/85 text-base md:text-lg font-light max-w-xl mt-8 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]"
           >
-            A restaurant, lounge and rooftop carved into the soul of Ikeja —
-            where every plate is a story and every evening, an occasion.
+            A restaurant, lounge and rooftop in the soul of Ikeja — where
+            jollof meets candlelight, and every evening tastes like home.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -94,8 +97,8 @@ export default function Home() {
             transition={{ duration: 1 }}
             className="font-serif-display text-3xl md:text-5xl lg:text-6xl leading-[1.15] text-[var(--charcoal)] mt-6"
           >
-            We built BlackRock for the people who believe a night out
-            <span className="font-serif-italic text-[var(--burgundy)]"> should mean something.</span>
+            We built BlackRock for Lagos —
+            <span className="font-serif-italic text-[var(--burgundy)]"> for nights that take their time.</span>
           </motion.p>
           <motion.div
             initial={{ scaleY: 0 }}
@@ -152,32 +155,32 @@ export default function Home() {
             transition={{ duration: 0.9 }}
             className="img-hover aspect-[4/5] order-2 lg:order-1"
           >
-            <img src={IMAGES.steak} alt="Signature plate" loading="lazy" />
+            <img src={IMAGES.jollof} alt="Signature plate" loading="lazy" />
           </motion.div>
           <div className="order-1 lg:order-2">
             <span className="gold-line left mb-6">The Kitchen</span>
             <h2 className="font-serif-display text-4xl md:text-5xl lg:text-6xl leading-tight mt-6 text-[var(--charcoal)]">
-              Lagos heritage,
+              From Mile 12 to
               <br />
-              <span className="font-serif-italic text-[var(--burgundy)]">precision plated.</span>
+              <span className="font-serif-italic text-[var(--burgundy)]">your table.</span>
             </h2>
             <p className="text-[var(--muted)] text-base md:text-lg leading-relaxed mt-8 max-w-xl font-light">
-              Our chefs trained across Lagos, Lisbon and London. The menu reads like
-              memory — suya, jollof, egusi — rewritten in the language of fine dining.
-              Every dish, a small act of pride.
+              Jollof smoked over open fire. Pepper soup that clears the head.
+              Goat that falls off the bone. Suya the way Sabo intended.
+              Our menu is a tour of Nigeria — cooked with respect, plated with pride.
             </p>
             <div className="mt-10 grid grid-cols-3 gap-6 max-w-md">
               <div>
-                <div className="font-serif-display text-4xl text-[var(--burgundy)]">28</div>
-                <div className="text-xs uppercase tracking-[0.22em] text-[var(--muted)] mt-1">Day Dry-Aged</div>
-              </div>
-              <div>
-                <div className="font-serif-display text-4xl text-[var(--burgundy)]">12</div>
-                <div className="text-xs uppercase tracking-[0.22em] text-[var(--muted)] mt-1">Course Tasting</div>
+                <div className="font-serif-display text-4xl text-[var(--burgundy)]">85+</div>
+                <div className="text-xs uppercase tracking-[0.22em] text-[var(--muted)] mt-1">Dishes On Menu</div>
               </div>
               <div>
                 <div className="font-serif-display text-4xl text-[var(--burgundy)]">100%</div>
-                <div className="text-xs uppercase tracking-[0.22em] text-[var(--muted)] mt-1">House Cured</div>
+                <div className="text-xs uppercase tracking-[0.22em] text-[var(--muted)] mt-1">Local Sourced</div>
+              </div>
+              <div>
+                <div className="font-serif-display text-4xl text-[var(--burgundy)]">36</div>
+                <div className="text-xs uppercase tracking-[0.22em] text-[var(--muted)] mt-1">States Represented</div>
               </div>
             </div>
             <Link to="/menu" className="btn-ghost-dark mt-12 inline-flex" data-testid="explore-menu-link">
@@ -198,9 +201,9 @@ export default function Home() {
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20">
             {[
-              { img: IMAGES.interior1, name: "The Restaurant", desc: "Considered tasting menus. White linen, warm light, glass walls.", floor: "Ground" },
-              { img: IMAGES.bar, name: "The Lounge", desc: "Low velvet, smoked cocktails, a soundtrack that moves with the night.", floor: "First Floor" },
-              { img: IMAGES.rooftopNight, name: "The Rooftop", desc: "Open sky, Lagos skyline, fire pits, a different kind of altitude.", floor: "Top" },
+              { img: IMAGES.interior1, name: "The Restaurant", desc: "Continental and traditional. White linen, warm light, full flavours.", floor: "Ground" },
+              { img: IMAGES.bar, name: "The Bush Bar", desc: "Pepper soup, palm wine, asun off the grill — Lagos turnt up.", floor: "First Floor" },
+              { img: IMAGES.rooftopNight, name: "The Rooftop", desc: "Open sky, Ikeja skyline, fire pits, the night stretches long.", floor: "Top" },
             ].map((s, i) => (
               <motion.div
                 key={s.name}
@@ -241,7 +244,7 @@ export default function Home() {
             transition={{ duration: 0.9 }}
             className="font-serif-italic text-3xl md:text-4xl lg:text-5xl leading-[1.25] text-[var(--charcoal)]"
           >
-            "We came for dinner. We stayed for the rooftop. We came back the next night."
+            "Best jollof in Ikeja — and I don't say that lightly. We came for dinner, stayed for the asun. Lagos at its finest."
           </motion.blockquote>
           <div className="mt-10 text-xs uppercase tracking-[0.32em] text-[var(--muted)]">
             Tomi A. · Google Review

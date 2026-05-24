@@ -5,9 +5,9 @@ import { IMAGES } from "../lib/data";
 import SectionHeader from "../components/SectionHeader";
 
 const values = [
-  { num: "01", title: "Hospitality with intention", body: "We don't believe in standard. Every guest, every table, every greeting — considered." },
-  { num: "02", title: "Lagos, plated with pride", body: "Our menu draws from the markets of Mile 12, the streets of Lagos Island, and the soul of West Africa." },
-  { num: "03", title: "A room that listens", body: "Acoustics built so you can hear your dinner companion. Lighting that flatters everyone." },
+  { num: "01", title: "Lagos on the plate", body: "Every dish on our menu traces back to a Nigerian market, a family kitchen, or a roadside that taught us how it should taste." },
+  { num: "02", title: "Hospitality with intention", body: "We don't believe in standard. Every guest, every table, every greeting — considered." },
+  { num: "03", title: "A room that listens", body: "Acoustics built so you can hear your dinner companion. Lighting that flatters everyone. Music that knows when to lift." },
 ];
 
 export default function About() {
@@ -49,7 +49,7 @@ export default function About() {
           >
             We started with a quiet idea — that Lagos deserved a place to
             <span className="font-serif-italic text-[var(--burgundy)]"> slow down in.</span>
-            <br />Not a club. Not a restaurant. Both, neither, more.
+            <br />Not a club. Not a foreign restaurant. Somewhere that finally tasted like home.
           </motion.p>
         </div>
       </section>
@@ -64,9 +64,9 @@ export default function About() {
           />
           <div className="mt-16 space-y-24 md:space-y-32">
             {[
-              { img: IMAGES.interior1, name: "The Restaurant", floor: "Ground Floor", desc: "Forty seats, white linen, an open kitchen. A tasting menu that changes with the season, drawn from the markets of Mile 12 and the herbs of our rooftop garden. This is where the night begins.", reverse: false },
-              { img: IMAGES.bar, name: "The Lounge", floor: "First Floor", desc: "Velvet booths, low light, a bar built for storytelling. Cocktails that smoke and sing. A DJ from 10pm on Fridays. Closer to a private members' club than a bar — by design.", reverse: true },
-              { img: IMAGES.rooftopNight, name: "The Rooftop", floor: "Top Floor", desc: "Open to the sky. Fire pits in the corners. The Lagos skyline curling around you. Smaller plates, longer pours, conversations that stretch into morning. A different kind of altitude.", reverse: false },
+            { img: IMAGES.interior1, name: "The Restaurant", floor: "Ground Floor", desc: "Forty seats, white linen, an open kitchen. Continental, traditional, and everything in between — from grilled T-bone to ofada and ayamase. This is where the night begins.", reverse: false },
+            { img: IMAGES.bar, name: "The Bush Bar", floor: "First Floor", desc: "Pepper soup steaming on the table. Palm wine pouring slowly. Asun smoking off the grill. The closest thing to a proper Lagos joint, set inside a serious kitchen.", reverse: true },
+            { img: IMAGES.rooftopNight, name: "The Rooftop", floor: "Top Floor", desc: "Open to the sky. Fire pits in the corners. The Ikeja skyline curling around you. Smaller plates, longer pours, conversations that stretch into morning.", reverse: false },
             ].map((s, i) => (
               <div key={s.name} className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center ${s.reverse ? "" : ""}`}>
                 <motion.div

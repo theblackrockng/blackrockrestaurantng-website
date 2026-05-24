@@ -9,10 +9,15 @@ const categories = Object.keys(MENU);
 
 const imgByCat = {
   Starters: IMAGES.starter,
-  Mains: IMAGES.pasta,
-  Grills: IMAGES.grill,
-  Desserts: IMAGES.dessert,
-  Drinks: IMAGES.cocktail,
+  Salads: IMAGES.salad,
+  Rice: IMAGES.jollof,
+  Noodles: IMAGES.noodles,
+  "Bush Bar Kitchen": IMAGES.pepperSoup,
+  Continental: IMAGES.steak,
+  Sauces: IMAGES.pasta,
+  "Charcoal Grills": IMAGES.grill,
+  "National Dishes": IMAGES.grilledFish,
+  "Traditional Specials": IMAGES.riceDish,
 };
 
 export default function MenuPage() {
