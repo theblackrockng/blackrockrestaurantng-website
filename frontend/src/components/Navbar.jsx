@@ -28,9 +28,10 @@ export default function Navbar({ onReserveClick }) {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           onLight
-            ? "bg-[var(--warm-white)]/95 backdrop-blur-md border-b border-[var(--border-soft)]"
+            ? "backdrop-blur-md border-b border-[var(--border-soft)]"
             : "bg-transparent"
         }`}
+        style={onLight ? { backgroundColor: "rgba(250, 248, 245, 0.95)" } : undefined}
         data-testid="navbar"
       >
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex items-center justify-between h-20 md:h-24">

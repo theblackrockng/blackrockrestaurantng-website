@@ -35,7 +35,11 @@ export default function MenuPage() {
       </section>
 
       {/* Category tabs */}
-      <section className="sticky top-20 md:top-24 z-30 bg-[var(--warm-white)]/95 backdrop-blur-md border-y border-[var(--border-soft)]" data-testid="menu-tabs">
+      <section
+        className="sticky top-20 md:top-24 z-30 backdrop-blur-md border-y border-[var(--border-soft)]"
+        style={{ backgroundColor: "rgba(250, 248, 245, 0.95)" }}
+        data-testid="menu-tabs"
+      >
         <div className="max-w-[1440px] mx-auto px-6 md:px-12">
           <div className="flex gap-2 overflow-x-auto no-scrollbar py-4">
             {categories.map((cat) => (
