@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -71,6 +71,59 @@ body {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 400;
+}
+
+/* Brush font — used for the BlackRock wordmark on dark backgrounds */
+.font-brush {
+    font-family: 'Caveat Brush', cursive;
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    line-height: 0.9;
+}
+
+/* Brand mark wordmark — text-based fallback for dark sections */
+.brand-mark-text {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 0.85;
+    user-select: none;
+}
+.brand-mark-text .bm-title {
+    font-family: 'Caveat Brush', cursive;
+    font-size: 2rem;
+    color: var(--burgundy);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+.brand-mark-text.dark .bm-title {
+    color: #f5e7e7;
+}
+.brand-mark-text .bm-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.32em;
+    color: var(--gold);
+    margin-top: 4px;
+    align-self: flex-end;
+}
+.brand-mark-text .bm-sub::before,
+.brand-mark-text .bm-sub::after {
+    content: '';
+    width: 14px;
+    height: 1px;
+    background: var(--burgundy);
+}
+.brand-mark-text.dark .bm-sub::before,
+.brand-mark-text.dark .bm-sub::after {
+    background: var(--gold);
+}
+
+/* Logo image (PNG with white bg) — knock out white via multiply on light bg */
+.logo-img-light {
+    mix-blend-mode: multiply;
 }
 
 /* Custom selection */

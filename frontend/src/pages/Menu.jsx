@@ -41,7 +41,7 @@ export default function MenuPage() {
 
       {/* Category tabs */}
       <section
-        className="sticky top-20 md:top-24 z-30 backdrop-blur-md border-y border-[var(--border-soft)]"
+        className="sticky top-24 md:top-28 z-30 backdrop-blur-md border-y border-[var(--border-soft)]"
         style={{ backgroundColor: "rgba(250, 248, 245, 0.95)" }}
         data-testid="menu-tabs"
       >

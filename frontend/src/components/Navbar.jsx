@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LOGO_URL, NAV_LINKS } from "../lib/data";
+import { NAV_LINKS } from "../lib/data";
+import BrandMark from "./BrandMark";
 
 export default function Navbar({ onReserveClick }) {
   const location = useLocation();
@@ -21,29 +22,19 @@ export default function Navbar({ onReserveClick }) {
     setOpen(false);
   }, [location.pathname]);
 
-  const onLight = scrolled || location.pathname !== "/";
-
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          onLight
-            ? "backdrop-blur-md border-b border-[var(--border-soft)]"
-            : "bg-transparent"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b ${
+          scrolled ? "border-[var(--border-soft)] shadow-[0_8px_30px_rgba(0,0,0,0.06)]" : "border-transparent"
         }`}
-        style={onLight ? { backgroundColor: "rgba(250, 248, 245, 0.95)" } : undefined}
+        style={{ backgroundColor: "var(--warm-white)" }}
         data-testid="navbar"
       >
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex items-center justify-between h-20 md:h-24">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex items-center justify-between h-24 md:h-28">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3" data-testid="logo-link">
-            <img
-              src={LOGO_URL}
-              alt="The BlackRock Lagos"
-              className={`h-12 md:h-14 w-auto transition-all duration-500 ${
-                onLight ? "opacity-100" : "brightness-0 invert opacity-95"
-              }`}
-            />
+            <BrandMark variant="light" size="md" />
           </Link>
 
           {/* Desktop nav */}
@@ -54,7 +45,7 @@ export default function Navbar({ onReserveClick }) {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`nav-link ${onLight ? "nav-link-dark" : ""} ${active ? "active" : ""}`}
+                  className={`nav-link nav-link-dark ${active ? "active" : ""}`}
                   data-testid={`nav-${link.label.toLowerCase()}`}
                 >
                   {link.label}
@@ -66,7 +57,7 @@ export default function Navbar({ onReserveClick }) {
           <div className="hidden lg:flex items-center gap-6">
             <button
               onClick={() => navigate("/reservations")}
-              className={onLight ? "btn-burgundy" : "btn-outline-gold"}
+              className="btn-burgundy"
               data-testid="reserve-cta-desktop"
             >
               <span>Reserve a Table</span>
@@ -80,7 +71,7 @@ export default function Navbar({ onReserveClick }) {
             data-testid="mobile-menu-open"
             aria-label="Open menu"
           >
-            <Menu size={24} className={onLight ? "text-[var(--charcoal)]" : "text-[var(--warm-white)]"} />
+            <Menu size={24} className="text-[var(--charcoal)]" />
           </button>
         </div>
       </header>
@@ -97,7 +88,7 @@ export default function Navbar({ onReserveClick }) {
             data-testid="mobile-menu"
           >
             <div className="flex items-center justify-between px-6 h-20">
-              <img src={LOGO_URL} alt="" className="h-12 w-auto brightness-0 invert" />
+              <BrandMark variant="dark" size="sm" />
               <button onClick={() => setOpen(false)} data-testid="mobile-menu-close" aria-label="Close menu">
                 <X size={26} className="text-[var(--warm-white)]" />
               </button>

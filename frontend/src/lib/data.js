@@ -1,4 +1,4 @@
-export const LOGO_URL = "https://customer-assets.emergentagent.com/job_b81e028f-ddaf-4f0c-9bf3-e4e14efa46eb/artifacts/j3k8v0yp_theblackrocklagos.png";
+export const LOGO_URL = "https://customer-assets.emergentagent.com/job_fancy-upgrade/artifacts/iserhwlr_Untitled%20design-2.png";
 
 export const BRAND = {
   name: "The BlackRock",

@@ -18,9 +18,9 @@ export default function Home() {
             className="w-full h-full object-cover ken-burns"
           />
           {/* Strong layered overlays for legibility */}
-          <div className="absolute inset-0 bg-[var(--charcoal)]/70" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--charcoal)]/40 via-[var(--charcoal)]/50 to-[var(--charcoal)]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--charcoal)] via-[var(--charcoal)]/60 to-[var(--charcoal)]/30" />
+          <div className="absolute inset-0 bg-[var(--charcoal)]/75" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--charcoal)]/50 via-[var(--charcoal)]/60 to-[var(--charcoal)]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--charcoal)] via-[var(--charcoal)]/80 to-[var(--charcoal)]/40" />
         </div>
         <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-16 max-w-[1440px] mx-auto">
           <motion.span

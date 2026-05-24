@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Instagram, MapPin, Phone, Mail } from "lucide-react";
-import { LOGO_URL, BRAND, NAV_LINKS } from "../lib/data";
+import { BRAND, NAV_LINKS } from "../lib/data";
+import BrandMark from "./BrandMark";
 
 export default function Footer() {
   return (
@@ -9,7 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
           {/* Brand */}
           <div className="md:col-span-5">
-            <img src={LOGO_URL} alt="The BlackRock" className="h-20 w-auto brightness-0 invert mb-6" />
+            <BrandMark variant="dark" size="lg" className="mb-8" />
             <p className="font-serif-italic text-xl text-[var(--gold)] leading-snug max-w-md mb-6">
               "Lagos on a plate. Lagos in a glass. Lagos in the air."
             </p>
