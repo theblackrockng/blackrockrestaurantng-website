@@ -5,7 +5,7 @@ export const BRAND = {
   tagline: "Lagos",
   phone: "+234 805 523 8353",
   phoneTel: "+2348055238353",
-  email: "hello@theblackrock.ng",
+  email: "hey@blackrock.ng",
   whatsapp: "https://wa.me/2348055238353?text=Hello%20BlackRock%20Lagos%2C%20I%27d%20like%20to%20enquire%20about%20a%20reservation.",
   address: "11 Ajao Road, off Adeniyi Road, Ikeja, Lagos, Nigeria",
   hours: [

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&family=Finger+Paint&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&family=Finger+Paint&family=Rubik+Dirt&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -129,18 +129,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes zoom-pulse {
-    0%, 100% { transform: rotate(-20deg) scale(1); }
-    50%       { transform: rotate(-20deg) scale(1.08); }
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.08); }
 }
 
-/* Hero size — Finger Paint font, rotated, zoom pulse */
+/* Navbar wordmark — Finger Paint, zoom pulse, dark */
+.navbar-wordmark {
+    font-family: 'Rubik Dirt', cursive;
+    font-size: clamp(1.2rem, 2.5vw, 2rem);
+    color: var(--charcoal);
+    letter-spacing: 0.04em;
+    animation: zoom-pulse 3s ease-in-out infinite;
+    display: inline-block;
+}
+
+/* Hero size — Finger Paint font, zoom pulse */
 .brand-mark-text.size-hero {
     display: inline-flex;
     animation: zoom-pulse 3s ease-in-out infinite;
-    transform-origin: left center;
 }
 .brand-mark-text.size-hero .bm-title {
-    font-family: 'Finger Paint', cursive;
+    font-family: 'Rubik Dirt', cursive;
     font-size: clamp(1.4rem, 3.5vw, 2.67rem);
     line-height: 1;
 }

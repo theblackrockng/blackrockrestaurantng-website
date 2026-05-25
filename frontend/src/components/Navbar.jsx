@@ -28,13 +28,13 @@ export default function Navbar({ onReserveClick }) {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b ${
           scrolled ? "border-[var(--border-soft)] shadow-[0_8px_30px_rgba(0,0,0,0.06)]" : "border-transparent"
         }`}
-        style={{ backgroundColor: "var(--warm-white)" }}
+        style={{ backgroundColor: "rgba(250,248,245,0.5)" }}
         data-testid="navbar"
       >
         <div className="max-w-[1440px] mx-auto px-4 md:px-12 flex items-center justify-between h-20 md:h-28 lg:h-36">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3" data-testid="logo-link">
-            <BrandMark variant="light" size="md" className="!h-14 md:!h-24 lg:!h-32 w-auto" />
+          <Link to="/" className="flex items-center" data-testid="logo-link">
+            <span className="navbar-wordmark">BLACKROCK</span>
           </Link>
 
           {/* Desktop nav */}
