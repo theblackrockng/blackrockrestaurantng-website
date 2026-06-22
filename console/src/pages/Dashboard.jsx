@@ -51,7 +51,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="p-8 md:p-12 max-w-4xl">
+    <div className="p-8 md:p-12 max-w-5xl">
 
       {/* Header */}
       <div className="mb-12 flex items-end justify-between">
