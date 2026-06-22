@@ -3,16 +3,33 @@ import { Link } from "react-router-dom";
 import { CalendarDays, UtensilsCrossed, MessageSquare, ArrowRight } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-function StatCard({ icon: Icon, label, value, to, color = "var(--gold)" }) {
+const DAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const MONTH = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function today() {
+  const d = new Date();
+  return `${DAY[d.getDay()]}, ${d.getDate()} ${MONTH[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function StatCard({ icon: Icon, label, value, to }) {
   return (
-    <Link to={to} className="console-card flex items-center justify-between group hover:border-[var(--gold)] transition-colors">
-      <div>
-        <div className="text-xs uppercase tracking-[0.1em] text-[var(--muted)] mb-2">{label}</div>
-        <div className="text-4xl font-light" style={{ color }}>{value ?? "—"}</div>
+    <Link
+      to={to}
+      className="console-card group hover:border-[var(--gold)] transition-colors duration-200"
+      style={{ padding: "28px 28px 24px" }}
+    >
+      <div className="flex items-start justify-between mb-8">
+        <span className="text-xs uppercase tracking-[0.12em] text-[var(--muted)]">{label}</span>
+        <Icon size={16} className="text-[var(--gold)] opacity-50 mt-0.5" />
       </div>
-      <div className="flex flex-col items-end gap-3">
-        <Icon size={22} style={{ color }} className="opacity-60" />
-        <ArrowRight size={14} className="text-[var(--muted)] group-hover:text-[var(--gold)] transition-colors" />
+      <div className="flex items-end justify-between">
+        <span className="text-6xl font-light text-[var(--warm-white)]" style={{ lineHeight: 1 }}>
+          {value ?? "—"}
+        </span>
+        <ArrowRight
+          size={15}
+          className="text-[var(--muted)] group-hover:text-[var(--gold)] transition-colors duration-150 mb-1"
+        />
       </div>
     </Link>
   );
@@ -34,42 +51,67 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto">
-      <div className="mb-8">
-        <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)] mb-1">Welcome back</div>
-        <h1 className="text-2xl font-light text-[var(--warm-white)]">Dashboard</h1>
+    <div className="p-8 md:p-12 max-w-4xl">
+
+      {/* Header */}
+      <div className="mb-12 flex items-end justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)] mb-2">Overview</div>
+          <h1 className="text-3xl font-light text-[var(--warm-white)]" style={{ letterSpacing: "-0.01em" }}>
+            Dashboard
+          </h1>
+        </div>
+        <div className="text-xs text-[var(--muted)] pb-1">{today()}</div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px mb-px" style={{ background: "var(--border-soft)" }}>
         <StatCard icon={CalendarDays} label="Pending Reservations" value={stats.pending} to="/reservations" />
-        <StatCard icon={CalendarDays} label="Total Reservations" value={stats.total} to="/reservations" color="var(--muted)" />
-        <StatCard icon={MessageSquare} label="New Enquiries" value={stats.enquiries} to="/enquiries" color="#a78bfa" />
+        <StatCard icon={CalendarDays} label="Total Reservations" value={stats.total} to="/reservations" />
+        <StatCard icon={MessageSquare} label="New Enquiries" value={stats.enquiries} to="/enquiries" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="console-card">
-          <div className="text-xs uppercase tracking-[0.1em] text-[var(--muted)] mb-4">Quick Links</div>
-          <div className="space-y-2">
-            {[
-              { to: "/reservations", label: "Manage Reservations", icon: CalendarDays },
-              { to: "/menu", label: "Edit Menu", icon: UtensilsCrossed },
-              { to: "/enquiries", label: "View Enquiries", icon: MessageSquare },
-            ].map((l) => (
-              <Link key={l.to} to={l.to} className="flex items-center gap-3 py-2 text-sm text-[var(--muted)] hover:text-[var(--warm-white)] transition-colors group">
-                <l.icon size={14} className="text-[var(--gold)]" />
-                {l.label}
-                <ArrowRight size={12} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div className="console-card">
-          <div className="text-xs uppercase tracking-[0.1em] text-[var(--muted)] mb-4">Info</div>
-          <p className="text-sm text-[var(--muted)] leading-relaxed">
-            This console manages live reservations, menu content, and guest enquiries for the BLACKROCK public website. Changes to the menu take effect immediately.
-          </p>
-        </div>
+      {/* Bottom strip */}
+      <div
+        className="flex items-center justify-between"
+        style={{ background: "var(--surface)", border: "1px solid var(--border-soft)", borderTop: "none", padding: "16px 28px" }}
+      >
+        <p className="text-xs text-[var(--muted)] leading-relaxed max-w-lg">
+          Live reservations, guest enquiries, and menu content are all managed here. Menu changes take effect on the public site immediately.
+        </p>
+        <Link
+          to="/reservations"
+          className="text-xs uppercase tracking-[0.1em] text-[var(--gold)] hover:opacity-75 transition-opacity shrink-0 ml-8 flex items-center gap-2"
+        >
+          View Reservations <ArrowRight size={11} />
+        </Link>
       </div>
+
+      {/* Section links */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
+        {[
+          { to: "/reservations", label: "Reservations", sub: "Manage guest bookings", icon: CalendarDays },
+          { to: "/menu", label: "Menu Editor", sub: "Update dishes and pricing", icon: UtensilsCrossed },
+          { to: "/enquiries", label: "Enquiries", sub: "Respond to guest messages", icon: MessageSquare },
+        ].map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className="group flex items-center gap-4 hover:border-[var(--gold)] transition-colors duration-200"
+            style={{ background: "var(--surface)", border: "1px solid var(--border-soft)", padding: "18px 20px" }}
+          >
+            <item.icon size={18} className="text-[var(--gold)] opacity-60 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-[var(--warm-white)] group-hover:text-[var(--gold)] transition-colors duration-150">
+                {item.label}
+              </div>
+              <div className="text-xs text-[var(--muted)] mt-0.5">{item.sub}</div>
+            </div>
+            <ArrowRight size={13} className="ml-auto text-[var(--muted)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0" />
+          </Link>
+        ))}
+      </div>
+
     </div>
   );
 }
