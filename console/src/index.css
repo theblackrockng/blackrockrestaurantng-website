@@ -61,6 +61,36 @@ body {
 .console-table tr:last-child td { border-bottom: none; }
 .console-table tbody tr:hover td { background: var(--surface-raised); }
 
+/* ─── Design System: Light / Dark ─── */
+:root {
+  --ds-bg: #faf8f5;
+  --ds-surface: #ffffff;
+  --ds-sidebar: #ffffff;
+  --ds-text: #1a1a1a;
+  --ds-muted: #888580;
+  --ds-border: #e0d9d0;
+  --ds-nav-active: #f5f0e8;
+  --ds-gold: #c8a96e;
+  --ds-burgundy: #7a1c1c;
+  --ds-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --ds-input-bg: #f3f0ec;
+}
+[data-theme="dark"] {
+  --ds-bg: #1a1a1a;
+  --ds-surface: #242424;
+  --ds-sidebar: #1e1e1e;
+  --ds-text: #ede9e0;
+  --ds-muted: #7a7672;
+  --ds-border: #2e2e2e;
+  --ds-nav-active: #2b2418;
+  --ds-shadow: 0 1px 4px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25);
+  --ds-input-bg: #1e1e1e;
+}
+
+html, body { height: 100%; }
+[data-theme] * { transition-property: background-color, border-color, color; transition-duration: 0.18s; transition-timing-function: ease; }
+[data-theme] svg, [data-theme] img { transition: none !important; }
+
 .console-card { background: var(--surface); border: 1px solid var(--border-soft); padding: 20px; }
 
 /* Login page — light card inputs */
