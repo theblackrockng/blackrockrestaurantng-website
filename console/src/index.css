@@ -62,3 +62,10 @@ body {
 .console-table tbody tr:hover td { background: var(--surface-raised); }
 
 .console-card { background: var(--surface); border: 1px solid var(--border-soft); padding: 20px; }
+
+/* Login page — light card inputs */
+.login-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(15,13,10,0.45); margin-bottom: 7px; }
+.login-input { width: 100%; background: rgba(15,13,10,0.05); border: 1px solid rgba(15,13,10,0.15); color: var(--charcoal); padding: 11px 14px; font-size: 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; }
+.login-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.18); }
+.login-input::placeholder { color: rgba(15,13,10,0.28); }
+.login-input:disabled { opacity: 0.6; cursor: not-allowed; }
