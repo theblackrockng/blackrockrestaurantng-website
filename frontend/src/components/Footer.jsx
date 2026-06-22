@@ -64,6 +64,9 @@ export default function Footer() {
                 </li>
               ))}
               <li>
+                <Link to="/blog" className="text-white/70 hover:text-[var(--gold)] transition-colors">Blog</Link>
+              </li>
+              <li>
                 <Link to="/reservations" className="text-[var(--gold)] hover:underline">Reserve a Table</Link>
               </li>
             </ul>

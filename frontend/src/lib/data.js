@@ -18,7 +18,6 @@ export const NAV_LINKS = [
   { label: "About", to: "/about" },
   { label: "Menu", to: "/menu" },
   { label: "Gallery", to: "/gallery" },
-  { label: "Blog", to: "/blog" },
   { label: "Contact", to: "/contact" },
 ];
 
