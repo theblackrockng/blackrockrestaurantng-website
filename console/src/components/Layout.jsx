@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, CalendarDays, MessageSquare, UtensilsCrossed,
   Image, FileEdit, Users, UserCircle, Settings, Home, Search,
-  Bell, Sun, Moon, LogOut, Menu, X, Shield, Layers,
+  Bell, Sun, Moon, LogOut, Menu, X, Shield, Layers, BookUser,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -61,6 +61,7 @@ const NAV_GROUPS = [
     label: "People",
     items: [
       { to: "/users", label: "Staff Management", icon: Users },
+      { href: "/staff-directory/index.html", label: "Staff Directory", icon: BookUser },
     ],
   },
   {
@@ -76,6 +77,7 @@ function NavItem({ item, pathname, pendingCount, newEnqCount, onClick }) {
   const Icon = item.icon;
   const active = item.to !== null && pathname === item.to;
   const isLink = item.to !== null;
+  const isExternal = !!item.href;
 
   const badge = (() => {
     if (item.badge === "pending" && pendingCount > 0)
@@ -95,11 +97,25 @@ function NavItem({ item, pathname, pendingCount, newEnqCount, onClick }) {
     );
   }
 
-  if (!isLink) {
+  if (!isLink && !isExternal) {
     return (
       <div style={{ ...base, padding: "8px 12px 8px 15px", color: "var(--ds-muted)", cursor: "default", opacity: 0.5 }}>
         <Icon size={15} strokeWidth={1.75} style={{ flexShrink: 0 }} />{item.label}{badge}
       </div>
+    );
+  }
+
+  if (isExternal) {
+    return (
+      <a
+        href={item.href}
+        onClick={onClick}
+        onMouseEnter={e => { e.currentTarget.style.background = "var(--ds-nav-active)"; e.currentTarget.style.color = "var(--ds-text)"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--ds-muted)"; }}
+        style={{ ...base, padding: "8px 12px 8px 15px", color: "var(--ds-muted)", background: "transparent" }}
+      >
+        <Icon size={15} strokeWidth={1.75} style={{ flexShrink: 0 }} />{item.label}{badge}
+      </a>
     );
   }
 
