@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
-import { UploadCloud, Copy, Trash2, AlertTriangle, Check } from "lucide-react";
+import {
+  UploadCloud, Copy, Trash2, AlertTriangle, Check,
+  X, Link2, Download, ExternalLink,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ─── Constants ─── */
@@ -20,14 +23,82 @@ const GHOST_BTN = {
   cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
 };
 
-const FILTER_TABS = [
-  { key: "ALL",    label: "All" },
-  { key: "MENU",   label: "Menu" },
-  { key: "UNUSED", label: "Unused" },
+const INPUT_STYLE = {
+  width: "100%",
+  background: "var(--ds-input-bg)",
+  border: "1px solid var(--ds-border)",
+  borderRadius: 8,
+  padding: "10px 12px",
+  fontSize: 13.5,
+  color: "var(--ds-text)",
+  fontFamily: "'DM Sans', sans-serif",
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+const LABEL_STYLE = {
+  display: "block",
+  fontSize: 10.5,
+  fontWeight: 600,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--ds-muted)",
+  marginBottom: 7,
+};
+
+const SECTION_OPTIONS = [
+  { value: "", label: "— None —" },
+  { value: "hero", label: "Homepage Hero" },
+  { value: "home-food-reel", label: "Homepage Food Reel" },
+  { value: "home-instagram", label: "Homepage Instagram Strip" },
+  { value: "gallery", label: "Gallery Page" },
+  { value: "about", label: "About Page" },
+  { value: "other", label: "Other" },
 ];
 
+// Known website image filenames → section
+const WEBSITE_IMAGES = [
+  { path: "heroimage.png",                          label: "Hero Image",           section: "hero" },
+  { path: "809355C9-989D-49FD-9BD1-D6ABFFC5B395.PNG", label: "Jollof Rice",       section: "home-food-reel" },
+  { path: "PHOTO-2026-05-23-14-42-34.jpg",          label: "Pepper Soup",          section: "home-food-reel" },
+  { path: "PHOTO-2026-05-23-14-35-14.jpg",          label: "Food Photo 1",         section: "home-food-reel" },
+  { path: "PHOTO-2026-05-23-15-14-03.jpg",          label: "Food Photo 2",         section: "home-food-reel" },
+  { path: "PHOTO-2026-05-23-15-30-40.jpg",          label: "Pasta",                section: "home-food-reel" },
+  { path: "Food3.jpg",                              label: "Food 3",               section: "home-food-reel" },
+  { path: "Food4.jpg",                              label: "Food 4",               section: "home-food-reel" },
+  { path: "Food5.jpg",                              label: "Food 5",               section: "home-food-reel" },
+  { path: "Food7.jpg",                              label: "Food 7",               section: "home-food-reel" },
+  { path: "Food12.jpg",                             label: "Food 12",              section: "home-food-reel" },
+  { path: "Food13.jpg",                             label: "Food 13",              section: "home-food-reel" },
+  { path: "Food14.jpg",                             label: "Food 14",              section: "home-food-reel" },
+  { path: "Food15.jpg",                             label: "Food 15",              section: "home-food-reel" },
+  { path: "Food16.jpg",                             label: "Food 16",              section: "home-food-reel" },
+  { path: "noodles-stirfry.jpg",                    label: "Noodles Stir Fry",     section: "home-food-reel" },
+  { path: "vegetable-rolls.png",                    label: "Vegetable Rolls",      section: "home-food-reel" },
+];
+
+const FILTER_TABS = [
+  { key: "ALL",    label: "All" },
+  { key: "hero",   label: "Hero" },
+  { key: "home-food-reel", label: "Food Reel" },
+  { key: "gallery", label: "Gallery" },
+  { key: "UNUSED", label: "Unassigned" },
+];
+
+function fmt(bytes) {
+  if (!bytes) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(0) + " KB";
+  return (bytes / 1048576).toFixed(1) + " MB";
+}
+
+function fmtDate(d) {
+  if (!d) return "";
+  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
 /* ─── FilterTab ─── */
-function FilterTab({ label, active, onClick }) {
+function FilterTab({ label, active, onClick, count }) {
   return (
     <button
       onClick={onClick}
@@ -37,73 +108,414 @@ function FilterTab({ label, active, onClick }) {
         background: active ? "var(--ds-gold)" : "var(--ds-input-bg)",
         color: active ? "#1a1a1a" : "var(--ds-muted)",
         transition: "background 0.15s, color 0.15s",
+        display: "inline-flex", alignItems: "center", gap: 5,
       }}
     >
       {label}
+      {count !== undefined && (
+        <span style={{ fontSize: 10, background: active ? "rgba(0,0,0,0.15)" : "var(--ds-border)", borderRadius: 99, padding: "1px 6px", fontWeight: 600 }}>
+          {count}
+        </span>
+      )}
     </button>
   );
 }
 
+/* ─── SectionBadge ─── */
+function SectionBadge({ value }) {
+  const opt = SECTION_OPTIONS.find(o => o.value === value);
+  if (!value || !opt) return null;
+  return (
+    <span style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase",
+      background: "var(--ds-gold)", color: "#1a1a1a", borderRadius: 99, padding: "2px 7px",
+    }}>{opt.label}</span>
+  );
+}
+
 /* ─── ImageCard ─── */
-function ImageCard({ asset, onDelete, onCopyUrl }) {
+function ImageCard({ asset, onDelete, onSelect, selected }) {
   const [hovered, setHovered] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = async (e) => {
+    e.stopPropagation();
     try { await navigator.clipboard.writeText(asset.url); } catch {}
     setCopied(true);
-    onCopyUrl?.();
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const fmtDate = (d) => {
-    if (!d) return "";
-    return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  };
-
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      style={{ fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}
+      onClick={() => onSelect(asset)}
+    >
       <div
-        style={{ position: "relative", aspectRatio: "1", overflow: "hidden", borderRadius: 8, background: "var(--ds-input-bg)", cursor: "pointer", border: "1px solid var(--ds-border)" }}
+        style={{
+          position: "relative", aspectRatio: "1", overflow: "hidden", borderRadius: 8,
+          background: "var(--ds-input-bg)", border: selected ? "2.5px solid var(--ds-gold)" : "1px solid var(--ds-border)",
+          transition: "border-color 0.15s",
+        }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
         <img src={asset.url} alt={asset.filename} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        {/* used_in badge */}
+        {/* Section badge */}
         {asset.used_in && (
-          <span style={{ position: "absolute", top: 6, right: 6, fontSize: 9, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", background: "var(--ds-gold)", color: "#1a1a1a", borderRadius: 99, padding: "2px 6px" }}>{asset.used_in}</span>
+          <div style={{ position: "absolute", top: 6, left: 6 }}>
+            <SectionBadge value={asset.used_in} />
+          </div>
         )}
-        {/* hover overlay */}
+        {/* Hover overlay */}
         <AnimatePresence>
           {hovered && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.62)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+              transition={{ duration: 0.12 }}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             >
               <button
                 onClick={handleCopy}
                 title="Copy URL"
-                style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ width: 32, height: 32, borderRadius: 7, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? <Check size={13} /> : <Copy size={13} />}
               </button>
               <button
-                onClick={() => onDelete(asset)}
+                onClick={(e) => { e.stopPropagation(); onDelete(asset); }}
                 title="Delete"
-                style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.3)", cursor: "pointer", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ width: 32, height: 32, borderRadius: 7, background: "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.3)", cursor: "pointer", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                <Trash2 size={14} />
+                <Trash2 size={13} />
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
       <div style={{ marginTop: 6 }}>
-        <p style={{ fontSize: 12, color: "var(--ds-text)", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{asset.filename}</p>
-        <p style={{ fontSize: 11, color: "var(--ds-muted)", margin: 0 }}>{fmtDate(asset.uploaded_at)}</p>
+        <p style={{ fontSize: 11.5, color: "var(--ds-text)", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{asset.filename}</p>
+        <p style={{ fontSize: 10.5, color: "var(--ds-muted)", margin: 0 }}>{fmtDate(asset.uploaded_at)}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── DetailPanel ─── */
+function DetailPanel({ asset, onClose, onDeleted, onUpdated }) {
+  const [section, setSection] = useState(asset.used_in ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // "saved" | error string
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveStatus(null);
+    try {
+      const { error } = await supabase
+        .from("media_assets")
+        .update({ used_in: section || null })
+        .eq("id", asset.id);
+      if (error) throw error;
+
+      // If assigning to hero → update site_content
+      if (section === "hero") {
+        const { data: existing } = await supabase
+          .from("site_content")
+          .select("data")
+          .eq("section", "hero")
+          .maybeSingle();
+        const current = existing?.data ?? {};
+        await supabase
+          .from("site_content")
+          .upsert({ section: "hero", data: { ...current, image: asset.url } }, { onConflict: "section" });
+      }
+
+      // If assigning to gallery → add to gallery images array
+      if (section === "gallery") {
+        const { data: existing } = await supabase
+          .from("site_content")
+          .select("data")
+          .eq("section", "gallery")
+          .maybeSingle();
+        const imgs = Array.isArray(existing?.data?.images) ? existing.data.images : [];
+        if (!imgs.includes(asset.url)) {
+          await supabase
+            .from("site_content")
+            .upsert({ section: "gallery", data: { images: [...imgs, asset.url] } }, { onConflict: "section" });
+        }
+      }
+
+      setSaveStatus("saved");
+      onUpdated({ ...asset, used_in: section || null });
+      setTimeout(() => setSaveStatus(null), 2500);
+    } catch (e) {
+      setSaveStatus(e.message ?? "Error saving");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.35)" }} onClick={onClose} />
+      <motion.div
+        initial={{ x: 420, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: 420, opacity: 0 }}
+        transition={{ type: "spring", damping: 28, stiffness: 260 }}
+        style={{
+          position: "fixed", right: 0, top: 0, bottom: 0, width: 400, zIndex: 100,
+          background: "var(--ds-surface)", borderLeft: "1px solid var(--ds-border)",
+          display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif",
+          overflowY: "auto",
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--ds-border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600, color: "var(--ds-text)" }}>Image Details</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ds-muted)", display: "flex" }}><X size={18} /></button>
+        </div>
+
+        <div style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Preview */}
+          <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--ds-border)", background: "var(--ds-input-bg)", aspectRatio: "16/10" }}>
+            <img src={asset.url} alt={asset.filename} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+
+          {/* Meta */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "10px 12px" }}>
+                <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 3px" }}>Filename</p>
+                <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0, wordBreak: "break-all" }}>{asset.filename}</p>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {asset.file_size && (
+                <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 3px" }}>Size</p>
+                  <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0 }}>{fmt(asset.file_size)}</p>
+                </div>
+              )}
+              {asset.uploaded_at && (
+                <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 3px" }}>Uploaded</p>
+                  <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0 }}>{fmtDate(asset.uploaded_at)}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Assign to section */}
+          <div>
+            <label style={LABEL_STYLE}>Display on Website</label>
+            <select
+              style={{ ...INPUT_STYLE, cursor: "pointer" }}
+              value={section}
+              onChange={(e) => setSection(e.target.value)}
+            >
+              {SECTION_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <p style={{ fontSize: 11, color: "var(--ds-muted)", marginTop: 6, lineHeight: 1.5 }}>
+              {section === "hero" && "This image will be the main hero background on the homepage."}
+              {section === "home-food-reel" && "This image will appear in the scrolling food strip on the homepage."}
+              {section === "home-instagram" && "This image will appear in the Instagram strip section."}
+              {section === "gallery" && "This image will appear on the Gallery page."}
+              {section === "about" && "This image will be used on the About page."}
+              {!section && "Image won't be displayed anywhere on the website."}
+            </p>
+          </div>
+
+          {/* URL */}
+          <div>
+            <label style={LABEL_STYLE}>Image URL</label>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input style={{ ...INPUT_STYLE, fontSize: 11, color: "var(--ds-muted)" }} readOnly value={asset.url} />
+              <button
+                style={{ ...GHOST_BTN, flexShrink: 0, padding: "10px 12px" }}
+                onClick={async () => { try { await navigator.clipboard.writeText(asset.url); } catch {} }}
+                title="Copy URL"
+              >
+                <Copy size={13} />
+              </button>
+              <a
+                href={asset.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ ...GHOST_BTN, flexShrink: 0, padding: "10px 12px", textDecoration: "none" }}
+                title="Open in new tab"
+              >
+                <ExternalLink size={13} />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--ds-border)", display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
+          <button
+            style={{ ...GOLD_BTN, flex: 1, justifyContent: "center", opacity: saving ? 0.7 : 1 }}
+            onClick={handleSave}
+            disabled={saving}
+          >
+            <Check size={14} /> {saving ? "Saving…" : "Save"}
+          </button>
+          <button
+            style={{ ...GHOST_BTN, color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}
+            onClick={() => onDeleted(asset)}
+          >
+            <Trash2 size={13} />
+          </button>
+          {saveStatus && (
+            <span style={{ fontSize: 11.5, color: saveStatus === "saved" ? "#16a34a" : "#ef4444" }}>
+              {saveStatus === "saved" ? "Saved ✓" : saveStatus}
+            </span>
+          )}
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+/* ─── ImportModal ─── */
+function ImportModal({ onClose, onImported }) {
+  const [siteUrl, setSiteUrl] = useState(localStorage.getItem("bk_site_url") ?? "");
+  const [status, setStatus] = useState([]); // [{filename, state: "pending"|"ok"|"skip"|"error", msg}]
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleImport = async () => {
+    const base = siteUrl.replace(/\/$/, "");
+    if (!base) return;
+    localStorage.setItem("bk_site_url", base);
+
+    setRunning(true);
+    setDone(false);
+    const initial = WEBSITE_IMAGES.map((img) => ({ ...img, state: "pending", msg: "" }));
+    setStatus(initial);
+
+    let count = 0;
+    for (let i = 0; i < WEBSITE_IMAGES.length; i++) {
+      const img = WEBSITE_IMAGES[i];
+
+      // Check if already exists
+      const { data: existing } = await supabase
+        .from("media_assets")
+        .select("id")
+        .eq("filename", img.path)
+        .maybeSingle();
+
+      if (existing) {
+        setStatus((prev) => prev.map((s, idx) => idx === i ? { ...s, state: "skip", msg: "Already exists" } : s));
+        continue;
+      }
+
+      try {
+        // Fetch image from deployed website
+        const res = await fetch(`${base}/${img.path}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const ext = img.path.split(".").pop().toLowerCase();
+        const mimeType = ext === "png" ? "image/png" : ext === "gif" ? "image/gif" : "image/jpeg";
+        const storageBlob = new Blob([blob], { type: mimeType });
+
+        const storagePath = `website/${img.path.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error: upErr } = await supabase.storage
+          .from("media-library")
+          .upload(storagePath, storageBlob, { contentType: mimeType, upsert: true });
+
+        if (upErr) throw upErr;
+
+        const { data: { publicUrl } } = supabase.storage.from("media-library").getPublicUrl(storagePath);
+
+        const { error: insErr } = await supabase.from("media_assets").insert({
+          url: publicUrl,
+          filename: img.path,
+          file_size: blob.size,
+          used_in: img.section,
+        });
+
+        if (insErr) throw insErr;
+        setStatus((prev) => prev.map((s, idx) => idx === i ? { ...s, state: "ok", msg: img.section } : s));
+        count++;
+      } catch (e) {
+        setStatus((prev) => prev.map((s, idx) => idx === i ? { ...s, state: "error", msg: e.message } : s));
+      }
+    }
+
+    setRunning(false);
+    setDone(true);
+    if (count > 0) onImported();
+  };
+
+  const stateColor = (s) => s === "ok" ? "#16a34a" : s === "skip" ? "var(--ds-muted)" : s === "error" ? "#ef4444" : "var(--ds-muted)";
+  const stateLabel = (s) => s === "ok" ? "✓" : s === "skip" ? "—" : s === "error" ? "✗" : "…";
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.55)" }}>
+      <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 12, width: 540, maxHeight: "86vh", display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--ds-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 21, fontWeight: 600, color: "var(--ds-text)" }}>Import from Website</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ds-muted)", display: "flex" }}><X size={18} /></button>
+        </div>
+
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--ds-border)" }}>
+          <label style={LABEL_STYLE}>Your Website URL</label>
+          <input
+            style={INPUT_STYLE}
+            value={siteUrl}
+            onChange={(e) => setSiteUrl(e.target.value)}
+            placeholder="https://theblackrock.netlify.app"
+            disabled={running}
+          />
+          <p style={{ fontSize: 11, color: "var(--ds-muted)", marginTop: 6, lineHeight: 1.5 }}>
+            Enter the URL where your website is deployed. Each image will be fetched and uploaded to Supabase.
+            Requires the <strong>media-library</strong> storage bucket to exist in Supabase.
+          </p>
+          <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 8, background: "rgba(200,169,110,0.08)", border: "1px solid rgba(200,169,110,0.2)" }}>
+            <p style={{ fontSize: 11, color: "var(--ds-muted)", margin: 0, lineHeight: 1.6 }}>
+              <strong style={{ color: "var(--ds-text)" }}>First time setup:</strong> Create the{" "}
+              <strong>media-library</strong> bucket in{" "}
+              <a href="https://supabase.com/dashboard/project/jwklezuaqesptccsnesr/storage/buckets" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ds-gold)" }}>
+                Supabase Storage <ExternalLink size={10} style={{ display: "inline" }} />
+              </a>{" "}
+              as a <strong>public</strong> bucket, then come back here.
+            </p>
+          </div>
+        </div>
+
+        {/* Progress list */}
+        {status.length > 0 && (
+          <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
+            {status.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: "1px solid var(--ds-border)" }}>
+                <span style={{ width: 18, textAlign: "center", fontSize: 12, fontWeight: 700, color: stateColor(s.state) }}>{stateLabel(s.state)}</span>
+                <span style={{ flex: 1, fontSize: 12, color: "var(--ds-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.path}</span>
+                <span style={{ fontSize: 11, color: stateColor(s.state), whiteSpace: "nowrap" }}>{s.msg}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--ds-border)", display: "flex", gap: 8, alignItems: "center" }}>
+          {done ? (
+            <>
+              <button style={{ ...GOLD_BTN, flex: 1, justifyContent: "center" }} onClick={onClose}><Check size={14} /> Done</button>
+            </>
+          ) : (
+            <>
+              <button style={{ ...GOLD_BTN, flex: 1, justifyContent: "center", opacity: running || !siteUrl ? 0.6 : 1 }} onClick={handleImport} disabled={running || !siteUrl}>
+                <Download size={14} /> {running ? "Importing…" : `Import ${WEBSITE_IMAGES.length} Images`}
+              </button>
+              <button style={GHOST_BTN} onClick={onClose} disabled={running}>Cancel</button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -121,7 +533,7 @@ function DeleteConfirm({ asset, onConfirm, onClose, deleting }) {
             <p style={{ fontWeight: 600, color: "var(--ds-text)", margin: "0 0 6px", fontSize: 15 }}>Delete image?</p>
             <p style={{ color: "var(--ds-muted)", margin: 0, fontSize: 13, lineHeight: 1.5 }}>
               {hasUsage
-                ? `This image is used in "${asset.used_in}". Deleting removes it from the website.`
+                ? `This image is displayed in "${SECTION_OPTIONS.find(o => o.value === asset.used_in)?.label ?? asset.used_in}". Deleting removes it from the website.`
                 : `"${asset?.filename}" will be permanently deleted. This cannot be undone.`}
             </p>
           </div>
@@ -150,12 +562,17 @@ export default function MediaLibrary() {
   const [uploads, setUploads] = useState([]);
   const [deletingAsset, setDeletingAsset] = useState(null);
   const [confirmDeleting, setConfirmDeleting] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [showImport, setShowImport] = useState(false);
   const fileInputRef = useRef(null);
 
   const fetchAssets = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from("media_assets").select("*").order("uploaded_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("media_assets")
+        .select("*")
+        .order("uploaded_at", { ascending: false });
       if (!error && data) setAssets(data);
     } catch {}
     setLoading(false);
@@ -163,43 +580,45 @@ export default function MediaLibrary() {
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
+  const tabCount = (key) => {
+    if (key === "ALL") return assets.length;
+    if (key === "UNUSED") return assets.filter(a => !a.used_in || !a.used_in.trim()).length;
+    return assets.filter(a => a.used_in === key).length;
+  };
+
   const filtered = assets.filter((a) => {
-    if (activeTab === "MENU") return a.used_in && a.used_in.includes("menu");
-    if (activeTab === "UNUSED") return !a.used_in || a.used_in.trim() === "";
-    return true;
+    if (activeTab === "ALL") return true;
+    if (activeTab === "UNUSED") return !a.used_in || !a.used_in.trim();
+    return a.used_in === activeTab;
   });
 
   const uploadFiles = async (files) => {
     const fileArr = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (!fileArr.length) return;
-    const initial = fileArr.map((f) => ({ filename: f.name, progress: 0, done: false }));
+    const initial = fileArr.map((f) => ({ filename: f.name, progress: 0, done: false, error: false }));
     setUploads((prev) => [...prev, ...initial]);
 
+    const startIdx = uploads.length;
     for (let i = 0; i < fileArr.length; i++) {
       const file = fileArr[i];
       const path = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
-      setUploads((prev) => prev.map((u, idx) => idx === prev.length - fileArr.length + i ? { ...u, progress: 40 } : u));
+      setUploads((prev) => prev.map((u, idx) => idx === startIdx + i ? { ...u, progress: 40 } : u));
       try {
         const { error: upErr } = await supabase.storage.from("media-library").upload(path, file, { upsert: false });
         if (upErr) throw upErr;
-        setUploads((prev) => prev.map((u, idx) => idx === prev.length - fileArr.length + i ? { ...u, progress: 80 } : u));
+        setUploads((prev) => prev.map((u, idx) => idx === startIdx + i ? { ...u, progress: 80 } : u));
         const { data: { publicUrl } } = supabase.storage.from("media-library").getPublicUrl(path);
         await supabase.from("media_assets").insert({ url: publicUrl, filename: file.name, file_size: file.size, used_in: null });
-        setUploads((prev) => prev.map((u, idx) => idx === prev.length - fileArr.length + i ? { ...u, progress: 100, done: true } : u));
-      } catch (e) {
-        setUploads((prev) => prev.map((u, idx) => idx === prev.length - fileArr.length + i ? { ...u, done: true, error: true } : u));
+        setUploads((prev) => prev.map((u, idx) => idx === startIdx + i ? { ...u, progress: 100, done: true } : u));
+      } catch {
+        setUploads((prev) => prev.map((u, idx) => idx === startIdx + i ? { ...u, done: true, error: true } : u));
       }
     }
     await fetchAssets();
     setTimeout(() => setUploads([]), 2500);
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    uploadFiles(e.dataTransfer.files);
-  };
-
+  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); uploadFiles(e.dataTransfer.files); };
   const handleDragOver = (e) => { e.preventDefault(); setDragOver(true); };
   const handleDragLeave = () => setDragOver(false);
 
@@ -209,14 +628,18 @@ export default function MediaLibrary() {
     try {
       const url = deletingAsset.url;
       const parts = url.split("/storage/v1/object/public/media-library/");
-      if (parts[1]) {
-        await supabase.storage.from("media-library").remove([parts[1]]);
-      }
+      if (parts[1]) await supabase.storage.from("media-library").remove([parts[1]]);
       await supabase.from("media_assets").delete().eq("id", deletingAsset.id);
       setAssets((prev) => prev.filter((a) => a.id !== deletingAsset.id));
+      if (selectedAsset?.id === deletingAsset.id) setSelectedAsset(null);
     } catch {}
     setDeletingAsset(null);
     setConfirmDeleting(false);
+  };
+
+  const handleUpdated = (updated) => {
+    setAssets((prev) => prev.map((a) => a.id === updated.id ? updated : a));
+    setSelectedAsset(updated);
   };
 
   return (
@@ -225,11 +648,18 @@ export default function MediaLibrary() {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 600, color: "var(--ds-text)", margin: "0 0 4px" }}>Media Library</h1>
-          <p style={{ fontSize: 13, color: "var(--ds-muted)", margin: 0 }}>All uploaded images across the website</p>
+          <p style={{ fontSize: 13, color: "var(--ds-muted)", margin: 0 }}>
+            {assets.length} image{assets.length !== 1 ? "s" : ""} — click any image to assign it to a website section
+          </p>
         </div>
-        <button style={GHOST_BTN} onClick={() => fileInputRef.current?.click()}>
-          <UploadCloud size={15} /> Upload Images
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button style={GHOST_BTN} onClick={() => setShowImport(true)}>
+            <Download size={14} /> Import from Website
+          </button>
+          <button style={GHOST_BTN} onClick={() => fileInputRef.current?.click()}>
+            <UploadCloud size={14} /> Upload Images
+          </button>
+        </div>
         <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={(e) => { if (e.target.files?.length) uploadFiles(e.target.files); }} />
       </div>
 
@@ -241,22 +671,21 @@ export default function MediaLibrary() {
         onClick={() => fileInputRef.current?.click()}
         style={{
           marginBottom: 24,
-          border: dragOver ? "2px solid var(--ds-gold)" : "2px dashed var(--ds-gold)",
+          border: dragOver ? "2px solid var(--ds-gold)" : "2px dashed rgba(200,169,110,0.35)",
           borderRadius: 8,
-          background: dragOver ? "rgba(200,169,110,0.12)" : "rgba(200,169,110,0.06)",
-          padding: "28px 20px",
+          background: dragOver ? "rgba(200,169,110,0.12)" : "rgba(200,169,110,0.04)",
+          padding: "22px 20px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 8,
+          gap: 6,
           cursor: "pointer",
           transition: "background 0.15s, border 0.15s",
         }}
       >
-        <UploadCloud size={28} strokeWidth={1.5} style={{ color: "var(--ds-gold)", opacity: 0.7 }} />
-        <p style={{ fontSize: 13, color: "var(--ds-muted)", margin: 0 }}>Drag images here or click to upload</p>
-        {/* Upload progress pills */}
+        <UploadCloud size={24} strokeWidth={1.5} style={{ color: "var(--ds-gold)", opacity: 0.6 }} />
+        <p style={{ fontSize: 12.5, color: "var(--ds-muted)", margin: 0 }}>Drag & drop images here or click to upload</p>
         {uploads.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, justifyContent: "center" }}>
             {uploads.map((u, i) => (
@@ -274,9 +703,15 @@ export default function MediaLibrary() {
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, overflowX: "auto", paddingBottom: 4 }}>
         {FILTER_TABS.map((t) => (
-          <FilterTab key={t.key} label={t.label} active={activeTab === t.key} onClick={() => setActiveTab(t.key)} />
+          <FilterTab
+            key={t.key}
+            label={t.label}
+            active={activeTab === t.key}
+            count={tabCount(t.key)}
+            onClick={() => setActiveTab(t.key)}
+          />
         ))}
       </div>
 
@@ -284,11 +719,17 @@ export default function MediaLibrary() {
       {loading ? (
         <div style={{ textAlign: "center", color: "var(--ds-muted)", padding: "60px 0", fontSize: 13 }}>Loading…</div>
       ) : filtered.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: 14 }}>
           <UploadCloud size={40} strokeWidth={1.2} style={{ color: "var(--ds-muted)", opacity: 0.35 }} />
           <p style={{ color: "var(--ds-muted)", fontSize: 14, margin: 0 }}>
-            {activeTab === "ALL" ? "No images yet. Upload your first image to get started." : "No images in this category."}
+            {activeTab === "ALL" ? "No images yet." : "No images in this section."}
           </p>
+          {activeTab === "ALL" && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              <button style={GOLD_BTN} onClick={() => setShowImport(true)}><Download size={14} /> Import from Website</button>
+              <button style={GHOST_BTN} onClick={() => fileInputRef.current?.click()}><UploadCloud size={14} /> Upload Images</button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="ds-media-grid">
@@ -301,11 +742,36 @@ export default function MediaLibrary() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.18 }}
               >
-                <ImageCard asset={asset} onDelete={setDeletingAsset} />
+                <ImageCard
+                  asset={asset}
+                  onDelete={setDeletingAsset}
+                  onSelect={setSelectedAsset}
+                  selected={selectedAsset?.id === asset.id}
+                />
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* Detail Panel */}
+      <AnimatePresence>
+        {selectedAsset && (
+          <DetailPanel
+            asset={selectedAsset}
+            onClose={() => setSelectedAsset(null)}
+            onDeleted={(a) => { setSelectedAsset(null); setDeletingAsset(a); }}
+            onUpdated={handleUpdated}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Import Modal */}
+      {showImport && (
+        <ImportModal
+          onClose={() => setShowImport(false)}
+          onImported={() => { fetchAssets(); setShowImport(false); }}
+        />
       )}
 
       {/* Delete Confirm */}
@@ -321,13 +787,11 @@ export default function MediaLibrary() {
       <style>{`
         .ds-media-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+          gap: 14px;
         }
         @media (max-width: 600px) {
-          .ds-media-grid {
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          }
+          .ds-media-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
         }
       `}</style>
     </div>

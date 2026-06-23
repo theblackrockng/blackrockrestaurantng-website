@@ -1,20 +1,54 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Star, MapPin, Phone } from "lucide-react";
 import { IMAGES, BRAND, OCCASIONS } from "../lib/data";
+import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
 import BrandMark from "../components/BrandMark";
 
 const occasionPreview = OCCASIONS.slice(0, 4);
 
+const FALLBACK_FOOD_REEL = [
+  IMAGES.jollof, IMAGES.starter, IMAGES.pepperSoup, IMAGES.noodles,
+  IMAGES.pasta, IMAGES.photo1, IMAGES.photo2, IMAGES.food3,
+  IMAGES.food4, IMAGES.food5, IMAGES.food7,
+  IMAGES.food12, IMAGES.food13, IMAGES.food14, IMAGES.food15, IMAGES.food16,
+];
+
 export default function Home() {
+  const [heroImage, setHeroImage] = useState("/heroimage.png");
+  const [foodReel, setFoodReel] = useState(FALLBACK_FOOD_REEL);
+
+  useEffect(() => {
+    async function loadDynamic() {
+      try {
+        // Hero image from site_content
+        const { data: heroRow } = await supabase
+          .from("site_content")
+          .select("data")
+          .eq("section", "hero")
+          .maybeSingle();
+        if (heroRow?.data?.image) setHeroImage(heroRow.data.image);
+
+        // Food reel from media_assets
+        const { data: reelAssets } = await supabase
+          .from("media_assets")
+          .select("url")
+          .eq("used_in", "home-food-reel")
+          .order("uploaded_at", { ascending: true });
+        if (reelAssets?.length) setFoodReel(reelAssets.map((a) => a.url));
+      } catch {}
+    }
+    loadDynamic();
+  }, []);
   return (
     <div className="page-enter">
       {/* HERO */}
       <section className="relative h-screen min-h-[580px] md:min-h-[720px] w-full overflow-hidden" data-testid="hero-section">
         <div className="absolute inset-0">
           <img
-            src="/heroimage.png"
+            src={heroImage}
             alt="BlackRock Restaurant dining room"
             className="w-full h-full object-cover ken-burns"
           />
@@ -115,18 +149,7 @@ export default function Home() {
         {/* Marquee strip - same as Instagram section */}
         <div className="overflow-hidden">
           <div className="flex marquee gap-3 w-max">
-            {[
-              IMAGES.jollof, IMAGES.starter, IMAGES.pepperSoup, IMAGES.noodles,
-              IMAGES.pasta, IMAGES.photo1, IMAGES.photo2, IMAGES.food3,
-              IMAGES.food4, IMAGES.food5, IMAGES.food7,
-              IMAGES.food12, IMAGES.food13,
-              IMAGES.food14, IMAGES.food15, IMAGES.food16,
-              IMAGES.jollof, IMAGES.starter, IMAGES.pepperSoup, IMAGES.noodles,
-              IMAGES.pasta, IMAGES.photo1, IMAGES.photo2, IMAGES.food3,
-              IMAGES.food4, IMAGES.food5, IMAGES.food7,
-              IMAGES.food12, IMAGES.food13,
-              IMAGES.food14, IMAGES.food15, IMAGES.food16,
-            ].map((src, i) => (
+            {[...foodReel, ...foodReel].map((src, i) => (
               <div key={i} className="img-hover w-[160px] h-[160px] md:w-[240px] md:h-[240px] flex-shrink-0">
                 <img src={src} alt="BlackRock dish" loading="lazy" />
               </div>

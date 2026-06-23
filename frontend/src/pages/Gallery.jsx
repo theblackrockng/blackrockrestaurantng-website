@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight } from "lucide-react";
 import { IMAGES } from "../lib/data";
+import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
 
-const galleryImages = [
+const FALLBACK_GALLERY = [
   { src: IMAGES.heroRooftop, tag: "Rooftop", label: "Lagos by night" },
   { src: IMAGES.jollof, tag: "Kitchen", label: "Party jollof" },
   { src: IMAGES.interior1, tag: "Restaurant", label: "Ground floor" },
@@ -19,13 +20,54 @@ const galleryImages = [
   { src: IMAGES.riceDish, tag: "Kitchen", label: "Ofada & ayamase" },
 ];
 
-const filters = ["All", "Restaurant", "Rooftop", "Kitchen", "Bar"];
+const filters = ["All", "Restaurant", "Rooftop", "Kitchen", "Bar", "Food"];
 
 export default function Gallery() {
   const [filter, setFilter] = useState("All");
   const [lightbox, setLightbox] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
 
-  const filtered = filter === "All" ? galleryImages : galleryImages.filter(g => g.tag === filter);
+  useEffect(() => {
+    async function loadImages() {
+      try {
+        // Try site_content gallery section first
+        const { data: contentRow } = await supabase
+          .from("site_content")
+          .select("data")
+          .eq("section", "gallery")
+          .maybeSingle();
+
+        const contentUrls = Array.isArray(contentRow?.data?.images) ? contentRow.data.images : [];
+
+        // Also fetch any media_assets tagged as gallery
+        const { data: assets } = await supabase
+          .from("media_assets")
+          .select("url, filename")
+          .eq("used_in", "gallery")
+          .order("uploaded_at", { ascending: false });
+
+        const assetUrls = (assets ?? []).map((a) => a.url);
+
+        // Merge, deduplicate
+        const allUrls = [...new Set([...contentUrls, ...assetUrls])];
+
+        if (allUrls.length > 0) {
+          setGalleryImages(
+            allUrls.map((src) => ({ src, tag: "Food", label: "" }))
+          );
+        } else {
+          setGalleryImages(FALLBACK_GALLERY);
+        }
+      } catch {
+        setGalleryImages(FALLBACK_GALLERY);
+      }
+    }
+    loadImages();
+  }, []);
+
+  // While loading show fallback
+  const images = galleryImages.length > 0 ? galleryImages : FALLBACK_GALLERY;
+  const filtered = filter === "All" ? images : images.filter((g) => g.tag === filter);
 
   return (
     <div className="page-enter pt-20 md:pt-28 lg:pt-36">
@@ -81,12 +123,14 @@ export default function Gallery() {
                 }`}
                 data-testid={`gallery-item-${i}`}
               >
-                <img src={g.src} alt={g.label} loading="lazy" />
+                <img src={g.src} alt={g.label || "BlackRock"} loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-left">
-                  <div className="text-[10px] uppercase tracking-[0.28em] text-[var(--gold)] opacity-0 group-hover:opacity-100 transition-opacity">{g.tag}</div>
-                  <div className="font-serif-display text-lg text-white opacity-0 group-hover:opacity-100 transition-opacity">{g.label}</div>
-                </div>
+                {g.label && (
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-left">
+                    <div className="text-[10px] uppercase tracking-[0.28em] text-[var(--gold)] opacity-0 group-hover:opacity-100 transition-opacity">{g.tag}</div>
+                    <div className="font-serif-display text-lg text-white opacity-0 group-hover:opacity-100 transition-opacity">{g.label}</div>
+                  </div>
+                )}
               </motion.button>
             ))}
           </div>
@@ -152,14 +196,16 @@ export default function Gallery() {
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               src={lightbox.src}
-              alt={lightbox.label}
+              alt={lightbox.label || "BlackRock"}
               className="max-h-[85vh] max-w-[90vw] object-contain"
               onClick={(e) => e.stopPropagation()}
             />
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-[var(--gold)] mb-2">{lightbox.tag}</div>
-              <div className="font-serif-display text-2xl text-white">{lightbox.label}</div>
-            </div>
+            {lightbox.label && (
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
+                <div className="text-[10px] uppercase tracking-[0.3em] text-[var(--gold)] mb-2">{lightbox.tag}</div>
+                <div className="font-serif-display text-2xl text-white">{lightbox.label}</div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
