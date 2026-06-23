@@ -218,11 +218,19 @@ function MediaPickerModal({ onSelect, onClose }) {
 /* ─── DishCard ─── */
 function DishCard({ dish, onEdit, onDelete, onToggleAvailable }) {
   return (
-    <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 11, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      {/* Image */}
-      <div style={{ height: 160, overflow: "hidden", position: "relative", background: "rgba(200,169,110,0.06)" }}>
+    <div style={{
+      background: "var(--ds-surface)",
+      border: "1px solid var(--ds-border)",
+      borderRadius: 11,
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+    }}>
+      {/* Image — fixed 180px, never shrinks */}
+      <div style={{ height: 180, flexShrink: 0, overflow: "hidden", position: "relative", background: "rgba(200,169,110,0.06)" }}>
         {dish.image_url ? (
-          <img src={dish.image_url} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={dish.image_url} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 6, color: "var(--ds-muted)" }}>
             <ImageOff size={28} strokeWidth={1.5} />
@@ -230,25 +238,64 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable }) {
           </div>
         )}
       </div>
-      {/* Body */}
-      <div style={{ padding: "12px 14px 10px", flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
+
+      {/* Body — grows to fill space, pushes footer down */}
+      <div style={{ padding: "12px 14px 10px", flex: 1, display: "flex", flexDirection: "column", gap: 6, minHeight: 0 }}>
+        {/* Name (max 2 lines) + price */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ds-text)", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.3 }}>{dish.name}</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ds-gold)", whiteSpace: "nowrap" }}>₦{Number(dish.price).toLocaleString()}</span>
+          <span style={{
+            fontSize: 13.5, fontWeight: 600, color: "var(--ds-text)",
+            lineHeight: 1.35,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            flex: 1,
+          }}>
+            {dish.name}
+          </span>
+          <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ds-gold)", whiteSpace: "nowrap", flexShrink: 0, paddingTop: 2 }}>
+            ₦{Number(dish.price).toLocaleString()}
+          </span>
         </div>
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--ds-muted)", background: "var(--ds-input-bg)", borderRadius: 99, padding: "2px 8px", alignSelf: "flex-start" }}>{dish.category}</span>
-        {dish.description && (
-          <p style={{ fontSize: 12, color: "var(--ds-muted)", margin: 0, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{dish.description}</p>
-        )}
+
+        {/* Category badge */}
+        <span style={{
+          fontSize: 10, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase",
+          color: "var(--ds-muted)", background: "var(--ds-input-bg)",
+          borderRadius: 99, padding: "2px 8px", alignSelf: "flex-start", flexShrink: 0,
+        }}>
+          {dish.category}
+        </span>
+
+        {/* Description (max 2 lines) */}
+        <p style={{
+          fontSize: 12, color: "var(--ds-muted)", margin: 0, lineHeight: 1.5,
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          flexShrink: 0,
+        }}>
+          {dish.description || ""}
+        </p>
       </div>
-      {/* Footer */}
-      <div style={{ padding: "8px 14px 12px", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid var(--ds-border)" }}>
+
+      {/* Footer — always pinned at bottom */}
+      <div style={{
+        padding: "8px 14px 12px",
+        display: "flex", alignItems: "center", gap: 8,
+        borderTop: "1px solid var(--ds-border)",
+        flexShrink: 0,
+      }}>
         <button
           onClick={() => onToggleAvailable(dish)}
           style={{
-            fontSize: 11, fontWeight: 600, borderRadius: 99, padding: "4px 10px", border: "none", cursor: "pointer",
+            fontSize: 11, fontWeight: 600, borderRadius: 99,
+            padding: "4px 10px", border: "none", cursor: "pointer",
             background: dish.available ? "var(--ds-gold)" : "var(--ds-input-bg)",
             color: dish.available ? "#1a1a1a" : "var(--ds-muted)",
+            flexShrink: 0,
           }}
         >
           {dish.available ? "Available" : "Unavailable"}
@@ -590,6 +637,7 @@ export default function MenuManagement() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={{ duration: 0.2 }}
+                style={{ display: "flex" }}
               >
                 <DishCard
                   dish={dish}
@@ -627,8 +675,18 @@ export default function MenuManagement() {
       <style>{`
         .ds-menu-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          grid-template-columns: repeat(4, 1fr);
           gap: 16px;
+          align-items: stretch;
+        }
+        @media (max-width: 1100px) {
+          .ds-menu-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 780px) {
+          .ds-menu-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+          .ds-menu-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </div>
