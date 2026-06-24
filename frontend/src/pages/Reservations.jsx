@@ -79,7 +79,7 @@ export default function Reservations() {
 
     // Fire confirmation email (non-blocking — don't fail submission on email error)
     if (form.email) {
-      fetch("/.netlify/functions/send-confirmation", {
+      fetch("/api/send-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
