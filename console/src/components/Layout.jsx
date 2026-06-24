@@ -34,6 +34,7 @@ function useCurrentPage() {
     "/menu": "Menu Management", "/enquiries": "Enquiries",
     "/media": "Media Library", "/content": "Site Content",
     "/users": "Staff Management", "/content-hub": "Content Hub",
+    "/settings": "Settings",
   };
   return map[pathname] ?? "Console";
 }
@@ -67,7 +68,7 @@ const NAV_GROUPS = [
   {
     label: "System",
     items: [
-      { to: null, label: "Settings", icon: Settings },
+      { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];

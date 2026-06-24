@@ -13,6 +13,7 @@ import UserManagement from "./pages/users/UserManagement";
 import ResetPassword from "./pages/ResetPassword";
 import ContentHub from "./pages/content-hub/ContentHub";
 import AssetDetail from "./pages/content-hub/AssetDetail";
+import Settings from "./pages/settings/Settings";
 
 function ProtectedRoute({ children }) {
   const { session, loading } = useAuth();
@@ -41,6 +42,7 @@ function AppRoutes() {
       <Route path="/users"              element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
       <Route path="/content-hub"        element={<ProtectedRoute><ContentHub /></ProtectedRoute>} />
       <Route path="/content-hub/asset/:id" element={<ProtectedRoute><AssetDetail /></ProtectedRoute>} />
+      <Route path="/settings"              element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*"                   element={<Navigate to="/" replace />} />
     </Routes>
   );
