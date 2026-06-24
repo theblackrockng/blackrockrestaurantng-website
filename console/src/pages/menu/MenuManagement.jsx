@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Plus, Pencil, Trash2, ImageOff, UtensilsCrossed,
-  X, AlertTriangle, Check, Download,
+  X, AlertTriangle, Check, Download, GripVertical,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -216,19 +216,36 @@ function MediaPickerModal({ onSelect, onClose }) {
 }
 
 /* ─── DishCard ─── */
-function DishCard({ dish, onEdit, onDelete, onToggleAvailable }) {
+function DishCard({ dish, onEdit, onDelete, onToggleAvailable, dragProps }) {
   return (
     <div style={{
       background: "var(--ds-surface)",
-      border: "1px solid var(--ds-border)",
+      border: `1px solid ${dragProps?.isOver ? "var(--ds-gold)" : "var(--ds-border)"}`,
       borderRadius: 11,
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
       height: "100%",
+      opacity: dragProps?.isDragging ? 0.35 : 1,
+      transition: "opacity 0.15s, border-color 0.15s, transform 0.15s",
+      transform: dragProps?.isOver ? "scale(1.02)" : "scale(1)",
     }}>
       {/* Image — fixed 180px, never shrinks */}
       <div style={{ height: 180, flexShrink: 0, overflow: "hidden", position: "relative", background: "rgba(200,169,110,0.06)" }}>
+        {/* Drag handle */}
+        <div
+          {...(dragProps?.handleProps || {})}
+          title="Drag to reorder"
+          style={{
+            position: "absolute", top: 8, left: 8, zIndex: 2,
+            width: 26, height: 26, borderRadius: 6,
+            background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "grab", color: "rgba(255,255,255,0.7)",
+          }}
+        >
+          <GripVertical size={14} />
+        </div>
         {dish.image_url ? (
           <img src={dish.image_url} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         ) : (
@@ -547,6 +564,10 @@ export default function MenuManagement() {
     }
   };
 
+  const [dragId, setDragId]     = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+  const [saving, setSaving]     = useState(false);
+
   const fetchDishes = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase.from("menu_items").select("*").order("sort_order", { ascending: true, nullsFirst: false });
@@ -557,6 +578,45 @@ export default function MenuManagement() {
   useEffect(() => { fetchDishes(); }, [fetchDishes]);
 
   const filtered = activeCategory === "All" ? dishes : dishes.filter((d) => d.category === activeCategory);
+
+  /* ─── Drag handlers ─── */
+  const handleDragStart = (id) => setDragId(id);
+  const handleDragEnd   = () => { setDragId(null); setDragOverId(null); };
+
+  const handleDrop = async (targetId) => {
+    if (!dragId || dragId === targetId) { handleDragEnd(); return; }
+
+    // Reorder within the filtered view
+    const filteredIds = filtered.map((d) => d.id);
+    const from = filteredIds.indexOf(dragId);
+    const to   = filteredIds.indexOf(targetId);
+    if (from === -1 || to === -1) { handleDragEnd(); return; }
+
+    const reordered = [...filtered];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
+
+    // Rebuild full dishes array: replace filtered slots with reordered items
+    let reorderedIdx = 0;
+    const newDishes = dishes.map((d) => {
+      if (filteredIds.includes(d.id)) return reordered[reorderedIdx++];
+      return d;
+    });
+
+    // Assign new sort_order values
+    const withOrder = newDishes.map((d, i) => ({ ...d, sort_order: i }));
+    setDishes(withOrder);
+    handleDragEnd();
+
+    // Persist to Supabase
+    setSaving(true);
+    await Promise.all(
+      withOrder.map((d) =>
+        supabase.from("menu_items").update({ sort_order: d.sort_order }).eq("id", d.id)
+      )
+    );
+    setSaving(false);
+  };
 
   const handleToggleAvailable = async (dish) => {
     await supabase.from("menu_items").update({ available: !dish.available }).eq("id", dish.id);
@@ -628,27 +688,45 @@ export default function MenuManagement() {
           )}
         </div>
       ) : (
-        <div className="ds-menu-grid">
-          <AnimatePresence>
-            {filtered.map((dish) => (
-              <motion.div
-                key={dish.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.2 }}
-                style={{ display: "flex" }}
-              >
-                <DishCard
-                  dish={dish}
-                  onEdit={openEdit}
-                  onDelete={setDeletingDish}
-                  onToggleAvailable={handleToggleAvailable}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        <>
+          {saving && (
+            <div style={{ fontSize: 11.5, color: "var(--ds-gold)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ds-gold)", display: "inline-block", animation: "pulse 1s infinite" }} />
+              Saving order…
+            </div>
+          )}
+          <div className="ds-menu-grid">
+            <AnimatePresence>
+              {filtered.map((dish) => (
+                <motion.div
+                  key={dish.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ display: "flex" }}
+                  draggable
+                  onDragStart={() => handleDragStart(dish.id)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverId(dish.id); }}
+                  onDrop={() => handleDrop(dish.id)}
+                >
+                  <DishCard
+                    dish={dish}
+                    onEdit={openEdit}
+                    onDelete={setDeletingDish}
+                    onToggleAvailable={handleToggleAvailable}
+                    dragProps={{
+                      isDragging: dragId === dish.id,
+                      isOver: dragOverId === dish.id && dragId !== dish.id,
+                      handleProps: {},
+                    }}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </>
       )}
 
       {/* Edit/Add Panel */}
@@ -673,6 +751,7 @@ export default function MenuManagement() {
       )}
 
       <style>{`
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
         .ds-menu-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
