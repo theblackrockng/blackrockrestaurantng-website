@@ -465,7 +465,7 @@ function SuccessModal({ form, occasion, onClose }) {
             <Row label="Address" value={BRAND.address} />
           </div>
           <div className="p-6 bg-[var(--charcoal-soft)] text-center text-xs uppercase tracking-[0.28em] text-[var(--muted)]">
-            For changes, call <a href={`tel:${BRAND.phoneTel}`} className="text-[var(--burgundy)]">{BRAND.phone}</a>
+            For changes, call <a href={`tel:${BRAND.phoneTel}`} className="text-[var(--gold)]">{BRAND.phone}</a>
           </div>
         </div>
       </motion.div>
