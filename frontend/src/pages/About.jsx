@@ -16,7 +16,7 @@ export default function About() {
       {/* Hero */}
       <section className="relative h-[70vh] min-h-[480px] overflow-hidden" data-testid="about-hero">
         <img src="/heroimage.png" alt="" className="w-full h-full object-cover object-center" />
-        <div className="absolute inset-0 bg-[#8B1A2B]/60" />
+        <div className="absolute inset-0 bg-black/55" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
           <motion.span
             initial={{ opacity: 0, y: 14 }}
