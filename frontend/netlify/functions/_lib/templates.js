@@ -1,8 +1,8 @@
 const BRAND = {
   name: 'BLACKROCK',
-  address: 'Ajao Road, off Adeniyi Jones Road, Ikeja, Lagos',
+  address: '11 Ajao Road, off Adeniyi Jones Road, Ikeja, Lagos',
   phone: '08055238353 / 09030482774',
-  email: 'theblackrock.ng@gmail.com',
+  email: 'reservations@blackrockrestaurantng.com',
   website: 'blackrockrestaurantng.com',
   instagram: '@blackrockrestaurantng',
   googleReview: 'https://g.page/r/blackrock-restaurant-ng/review',
@@ -56,7 +56,7 @@ function shell({ preheader, content }) {
           <p style="margin:0 0 6px;font-family:Georgia,serif;font-size:12px;color:#9C8E7A;">${BRAND.phone}</p>
           <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:12px;color:#9C8E7A;">${BRAND.email}</p>
           <div style="width:32px;height:1px;background:#C9A84C;margin:0 auto 16px;opacity:0.3;"></div>
-          <p style="margin:0;font-family:Georgia,serif;font-size:10px;color:#3d3830;letter-spacing:1px;">© 2025 BLACKROCK. All rights reserved.</p>
+          <p style="margin:0;font-family:Georgia,serif;font-size:10px;color:#9C8E7A;letter-spacing:1px;">© 2025 BLACKROCK. All rights reserved.</p>
         </td>
       </tr>
 
@@ -121,7 +121,7 @@ exports.confirmationEmail = ({ name, date, time, party, occasion, notes }) => {
     <!-- Closing note -->
     <div style="padding:32px 40px;text-align:center;">
       <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.8;font-style:italic;">"Clean food. Natural ingredients. Exceptional experience."</p>
-      <p style="margin:12px 0 0;font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#4a4440;">That's the BLACKROCK promise.</p>
+      <p style="margin:12px 0 0;font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9C8E7A;">That's the BLACKROCK promise.</p>
     </div>
   `;
 
