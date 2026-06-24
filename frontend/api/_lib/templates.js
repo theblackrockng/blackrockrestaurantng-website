@@ -246,3 +246,41 @@ exports.thankYouEmail = ({ name, occasion }) => {
     content,
   });
 };
+
+/* ── EMAIL 5: ENQUIRY AUTO-REPLY ── */
+exports.enquiryReplyEmail = ({ name, message }) => {
+  const firstName = (name || 'friend').split(' ')[0];
+
+  const content = `
+    <div style="padding:48px 40px 32px;text-align:center;border-bottom:1px solid #2e2820;">
+      <div style="font-family:Georgia,serif;font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:12px;">— We Heard You —</div>
+      <h1 style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#F5F0E8;line-height:1.3;">Thank you,<br><em style="color:#C9A84C;">${firstName}.</em></h1>
+      <p style="margin:16px 0 0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.7;">We've received your enquiry and one of our team<br>will get back to you shortly.</p>
+    </div>
+
+    <div style="padding:32px 40px;border-bottom:1px solid #2e2820;">
+      <p style="margin:0 0 10px;font-family:Georgia,serif;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#C9A84C;">Your message</p>
+      <div style="background:#0f0d0a;border-left:2px solid #C9A84C;padding:16px 20px;border-radius:2px;">
+        <p style="margin:0;font-family:Georgia,serif;font-size:13.5px;color:#9C8E7A;line-height:1.8;font-style:italic;">"${(message || '').replace(/"/g, '&quot;')}"</p>
+      </div>
+    </div>
+
+    <div style="padding:32px 40px;text-align:center;border-bottom:1px solid #2e2820;">
+      <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.8;">If your enquiry is urgent, you can reach us directly:</p>
+      <p style="margin:14px 0 0;font-family:Georgia,serif;font-size:13px;color:#F5F0E8;">
+        <a href="tel:08055238353" style="color:#C9A84C;text-decoration:none;font-weight:600;">08055238353</a>
+        &nbsp;/&nbsp;
+        <a href="tel:09030482774" style="color:#C9A84C;text-decoration:none;font-weight:600;">09030482774</a>
+      </p>
+    </div>
+
+    <div style="padding:32px 40px;text-align:center;">
+      <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:#9C8E7A;line-height:1.8;font-style:italic;">Warm regards,<br><strong style="color:#F5F0E8;font-style:normal;">The BLACKROCK Team</strong></p>
+    </div>
+  `;
+
+  return shell({
+    preheader: `We've received your enquiry, ${firstName}. We'll get back to you shortly.`,
+    content,
+  });
+};

@@ -24,6 +24,14 @@ export default function Contact() {
     });
     setSending(false);
     if (error) { setSendError("Something went wrong. Please try again or email us directly."); return; }
+
+    // Auto-reply email (non-blocking)
+    fetch("/api/send-enquiry-reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: form.name, email: form.email, message: form.message }),
+    }).catch(() => {});
+
     notifyTelegram(enquiryMessage(form));
     setSent(true);
     setTimeout(() => {
