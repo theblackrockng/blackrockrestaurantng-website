@@ -73,7 +73,7 @@ export default function Contact() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: i * 0.08 }}
-              className="block p-5 md:p-8 bg-[var(--charcoal-soft)] hover:bg-[var(--burgundy)] hover:text-[var(--warm-white)] transition-all duration-500 group border border-[var(--border-soft)] hover:border-[var(--burgundy)]"
+              className="block p-5 md:p-8 bg-[var(--charcoal-soft)] hover:bg-[var(--burgundy)] hover:text-[var(--warm-white)] transition-all duration-500 group border border-[var(--border-soft)] hover:border-[var(--burgundy)] overflow-hidden"
               data-testid={`contact-${c.label.toLowerCase()}`}
             >
               <div className="flex items-start justify-between mb-8">
@@ -81,7 +81,7 @@ export default function Contact() {
                 <span className="text-[10px] uppercase tracking-[0.28em] opacity-50">{c.tag}</span>
               </div>
               <div className="text-xs uppercase tracking-[0.28em] opacity-60 mb-2">{c.label}</div>
-              <div className="font-serif-display text-lg md:text-2xl leading-snug">{c.value}</div>
+              <div className="font-serif-display text-lg md:text-2xl leading-snug" style={{ wordBreak: "break-all", overflowWrap: "break-word" }}>{c.value}</div>
             </motion.a>
           ))}
         </div>
