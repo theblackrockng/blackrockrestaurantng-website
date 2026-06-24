@@ -549,7 +549,7 @@ export default function MenuManagement() {
 
   const fetchDishes = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("menu_items").select("*").order("id", { ascending: true });
+    const { data, error } = await supabase.from("menu_items").select("*").order("sort_order", { ascending: true, nullsFirst: false });
     if (!error && data) setDishes(data);
     setLoading(false);
   }, []);
