@@ -5,7 +5,7 @@ export const BRAND = {
   tagline: "Restaurant & Lounge",
   phone: "+234 805 523 8353 / +234 903 048 2774",
   phoneTel: "+2348055238353",
-  email: "theblackrock.ng@gmail.com",
+  email: "info@blackrockrestaurantng.com",
   whatsapp: "https://wa.me/2348055238353?text=Hello%20BLACKROCK%2C%20I%27d%20like%20to%20enquire%20about%20a%20reservation.",
   address: "11 Ajao Road, off Adeniyi Jones Road, Ikeja, Lagos",
   hours: [
