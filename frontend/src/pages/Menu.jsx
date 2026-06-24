@@ -30,7 +30,7 @@ export default function MenuPage() {
       .from("menu_items")
       .select("*")
       .eq("available", true)
-      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
       .then(({ data }) => {
         if (!data || data.length === 0) { setLoading(false); return; }
         const grouped = {};
