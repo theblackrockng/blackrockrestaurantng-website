@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -23,10 +23,15 @@ function inputStyle(focused) {
 export default function ResetPassword() {
   const { updatePassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
 
   const [ready, setReady]       = useState(false);
-  const [isInvite, setIsInvite] = useState(false);
+  // isInvite: set from router state (passed by App.jsx hash intercept)
+  // or fall back to reading the hash directly (when redirectTo lands here natively)
+  const [isInvite, setIsInvite] = useState(
+    location.state?.isInvite ?? window.location.hash.includes("type=invite")
+  );
   const [password, setPassword] = useState("");
   const [confirm, setConfirm]   = useState("");
   const [showPwd, setShowPwd]   = useState(false);
@@ -36,11 +41,6 @@ export default function ResetPassword() {
   const [error, setError]       = useState("");
 
   useEffect(() => {
-    // Detect invite vs password-reset from URL hash
-    const hash = window.location.hash;
-    const isInviteFlow = hash.includes("type=invite");
-    if (isInviteFlow) setIsInvite(true);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });

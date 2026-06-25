@@ -40,7 +40,10 @@ function AppRoutes() {
   const [initialHash] = useState(() => window.location.hash);
   useEffect(() => {
     if (initialHash.includes("type=invite") || initialHash.includes("type=recovery")) {
-      navigate("/reset-password", { replace: true });
+      navigate("/reset-password", {
+        replace: true,
+        state: { isInvite: initialHash.includes("type=invite") },
+      });
     }
   }, []);
 
