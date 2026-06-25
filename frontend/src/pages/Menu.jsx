@@ -56,8 +56,9 @@ export default function MenuPage() {
             alt="BlackRock dishes"
             className="w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-[var(--charcoal)]/70" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--charcoal)]/40 via-transparent to-[var(--charcoal)]" />
+          <div className="absolute inset-0 bg-[var(--charcoal)]/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--charcoal)]/60 via-[var(--charcoal)]/50 to-[var(--charcoal)]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--charcoal)]/60 via-transparent to-[var(--charcoal)]/60" />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-6 md:px-12 text-center pt-32 pb-24 md:pt-44 md:pb-32">
           <motion.span
