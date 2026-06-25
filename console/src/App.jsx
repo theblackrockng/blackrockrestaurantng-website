@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { StaffProvider } from "./context/StaffContext";
 import Layout from "./components/Layout";
@@ -30,6 +31,18 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Capture the hash synchronously at first render, before Supabase clears it.
+  // This ensures invite/recovery links always land on the password setup page
+  // regardless of whether the user is already logged in or where Supabase redirects.
+  const [initialHash] = useState(() => window.location.hash);
+  useEffect(() => {
+    if (initialHash.includes("type=invite") || initialHash.includes("type=recovery")) {
+      navigate("/reset-password", { replace: true });
+    }
+  }, []);
+
   if (loading) return null;
   return (
     <Routes>
