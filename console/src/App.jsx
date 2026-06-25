@@ -12,6 +12,7 @@ import SiteContent from "./pages/content/SiteContent";
 import Enquiries from "./pages/enquiries/Enquiries";
 import UserManagement from "./pages/users/UserManagement";
 import ResetPassword from "./pages/ResetPassword";
+import Welcome from "./pages/Welcome";
 import ContentHub from "./pages/content-hub/ContentHub";
 import AssetDetail from "./pages/content-hub/AssetDetail";
 import Settings from "./pages/settings/Settings";
@@ -48,6 +49,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
       <Route path="/"            element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
       <Route path="/menu"        element={<ProtectedRoute><MenuManagement /></ProtectedRoute>} />

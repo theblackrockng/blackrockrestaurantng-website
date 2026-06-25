@@ -61,7 +61,7 @@ export default function ResetPassword() {
     setLoading(false);
     if (err) { setError(err.message); return; }
     setDone(true);
-    setTimeout(() => navigate("/"), 2500);
+    setTimeout(() => navigate(isInvite ? "/welcome" : "/"), 2500);
   };
 
   return (
