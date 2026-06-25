@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, CalendarDays, MessageSquare, UtensilsCrossed,
   Image, FileEdit, Users, UserCircle, Settings, Home, Search,
-  Bell, Sun, Moon, LogOut, Menu, X, Shield, Layers, BookUser,
+  Bell, Sun, Moon, LogOut, Menu, X, Shield, Layers, BookUser, BookOpen,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -34,7 +34,7 @@ function useCurrentPage() {
     "/menu": "Menu Management", "/enquiries": "Enquiries",
     "/media": "Media Library", "/content": "Site Content",
     "/users": "Staff Management", "/content-hub": "Content Hub",
-    "/settings": "Settings",
+    "/settings": "Settings", "/blog": "Blog",
   };
   return map[pathname] ?? "Console";
 }
@@ -56,6 +56,7 @@ const NAV_GROUPS = [
       { to: "/media",        label: "Media Library",   icon: Image },
       { to: "/content",      label: "Site Content",    icon: FileEdit },
       { to: "/content-hub",  label: "Content Hub",     icon: Layers },
+      { to: "/blog",         label: "Blog",            icon: BookOpen },
     ],
   },
   {

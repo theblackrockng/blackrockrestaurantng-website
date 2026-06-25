@@ -17,6 +17,7 @@ import Reservations from "./pages/Reservations";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import ContentHub from "./pages/ContentHub";
 import ContentHubAsset from "./pages/ContentHubAsset";
 import ContentHubGuide from "./pages/ContentHubGuide";
@@ -79,6 +80,7 @@ function App() {
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
                   </Routes>
                 </main>
                 <Footer />
