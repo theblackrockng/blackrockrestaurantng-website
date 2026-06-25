@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { IMAGES } from "../lib/data";
+import { IMAGES, LOGO_URL } from "../lib/data";
 import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
 
@@ -19,11 +19,18 @@ const imgByCat = {
   "Traditional Specials": IMAGES.riceDish,
 };
 
+function formatPrice(price) {
+  const num = parseFloat(String(price).replace(/[^0-9.]/g, ""));
+  if (isNaN(num)) return String(price);
+  return `₦${num.toLocaleString("en-NG")}`;
+}
+
 export default function MenuPage() {
   const [menuByCategory, setMenuByCategory] = useState({});
   const [categories, setCategories] = useState([]);
   const [active, setActive] = useState("");
   const [loading, setLoading] = useState(true);
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   useEffect(() => {
     supabase
@@ -45,6 +52,9 @@ export default function MenuPage() {
         setLoading(false);
       });
   }, []);
+
+  // Reset hover when switching categories
+  useEffect(() => { setHoveredItem(null); }, [active]);
 
   return (
     <div className="page-enter">
@@ -95,24 +105,34 @@ export default function MenuPage() {
         data-testid="menu-tabs"
       >
         <div className="max-w-[1440px] mx-auto px-6 md:px-12">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar py-4">
-            {categories.map((cat) => (
-              <motion.button
-                key={cat}
-                onClick={() => setActive(cat)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                transition={{ duration: 0.15 }}
-                className={`flex-shrink-0 px-4 py-2 md:px-6 md:py-3 text-xs uppercase tracking-[0.22em] font-medium transition-all duration-300 border ${
-                  active === cat
-                    ? "bg-[var(--gold)] text-[var(--charcoal)] border-[var(--gold)]"
-                    : "bg-transparent text-[var(--muted)] border-[var(--border-soft)] hover:border-[var(--gold)] hover:text-[var(--warm-white)]"
-                }`}
-                data-testid={`menu-tab-${cat.toLowerCase()}`}
-              >
-                {cat}
-              </motion.button>
-            ))}
+          <div className="relative">
+            <div
+              className="flex gap-2 py-4"
+              style={{ overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+            >
+              {categories.map((cat) => (
+                <motion.button
+                  key={cat}
+                  onClick={() => setActive(cat)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className={`flex-shrink-0 px-4 py-2 md:px-6 md:py-3 text-xs uppercase tracking-[0.22em] font-medium transition-all duration-300 border whitespace-nowrap ${
+                    active === cat
+                      ? "bg-[var(--gold)] text-[var(--charcoal)] border-[var(--gold)]"
+                      : "bg-transparent text-[var(--muted)] border-[var(--border-soft)] hover:border-[var(--gold)] hover:text-[var(--warm-white)]"
+                  }`}
+                  data-testid={`menu-tab-${cat.toLowerCase()}`}
+                >
+                  {cat}
+                </motion.button>
+              ))}
+            </div>
+            {/* Right fade gradient */}
+            <div
+              className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none"
+              style={{ background: "linear-gradient(to right, transparent, rgba(15,13,10,0.96))" }}
+            />
           </div>
         </div>
       </section>
@@ -138,40 +158,125 @@ export default function MenuPage() {
                 transition={{ duration: 0.5 }}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16"
               >
-                {/* Featured image */}
+                {/* Dynamic featured image */}
                 <div className="lg:col-span-5 lg:sticky lg:top-44 self-start">
-                  <div className="img-hover aspect-[4/5]">
-                    <img src={imgByCat[active]} alt={active} className="w-full h-full object-cover" />
+                  <div className="relative aspect-[4/5] overflow-hidden">
+                    {/* Default category image */}
+                    <img
+                      src={imgByCat[active]}
+                      alt={active}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{
+                        opacity: hoveredItem ? 0 : 1,
+                        transition: "opacity 0.3s ease",
+                      }}
+                    />
+                    {/* Hovered dish image or branded placeholder */}
+                    <AnimatePresence>
+                      {hoveredItem && (
+                        hoveredItem.image ? (
+                          <motion.img
+                            key={`img-${hoveredItem.id}`}
+                            src={hoveredItem.image}
+                            alt={hoveredItem.name}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        ) : (
+                          <motion.div
+                            key="placeholder"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 flex flex-col items-center justify-center gap-4"
+                            style={{ background: "var(--charcoal-soft)" }}
+                          >
+                            <img
+                              src={LOGO_URL}
+                              alt="BLACKROCK"
+                              style={{ width: 72, opacity: 0.3 }}
+                            />
+                            <span
+                              className="font-serif-display text-sm tracking-widest"
+                              style={{ color: "rgba(200,169,110,0.4)" }}
+                            >
+                              {hoveredItem.name}
+                            </span>
+                          </motion.div>
+                        )
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <div className="mt-8">
-                    <span className="gold-line left">Category</span>
-                    <h2 className="font-serif-display text-4xl md:text-5xl mt-4 text-[var(--charcoal)]">{active}</h2>
+
+                  {/* Active category label */}
+                  <div className="mt-6">
+                    <span
+                      className="text-[10px] uppercase tracking-[0.28em]"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      {active}
+                    </span>
                   </div>
                 </div>
 
-                {/* Items */}
-                <div className="lg:col-span-7 space-y-1">
+                {/* Dish list */}
+                <div className="lg:col-span-7">
                   {(menuByCategory[active] || []).map((item, i) => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: i * 0.08 }}
-                      whileHover={{ x: 4, transition: { duration: 0.2 } }}
-                      className="py-8 border-b border-[var(--border-soft)] hover:bg-[var(--charcoal-soft)]/40 transition-colors px-2 -mx-2"
+                      transition={{ duration: 0.5, delay: i * 0.06 }}
+                      onMouseEnter={() => setHoveredItem(item)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      className="border-b border-[var(--border-soft)] px-3 -mx-3"
+                      style={{
+                        paddingTop: "2.8rem",
+                        paddingBottom: "2.8rem",
+                        backgroundColor: hoveredItem?.id === item.id ? "rgba(200,169,110,0.05)" : "transparent",
+                        transition: "background-color 0.15s ease",
+                      }}
                       data-testid={`menu-item-${item.name.toLowerCase().replace(/\s+/g, "-")}`}
                     >
-                      <div className="flex items-start justify-between gap-6">
-                        <h3 className="font-serif-display text-lg md:text-2xl text-[var(--warm-white)] leading-snug">
+                      {/* Name + price on same baseline row */}
+                      <div className="flex items-baseline justify-between gap-4">
+                        <h3
+                          className="font-serif-display leading-snug"
+                          style={{
+                            fontSize: "1.05rem",
+                            fontWeight: 600,
+                            color: "var(--warm-white)",
+                          }}
+                        >
                           {item.name}
                         </h3>
-                        <div className="flex-shrink-0 bg-[var(--gold)] text-[var(--charcoal)] font-sans font-bold text-sm md:text-base px-3 py-1 tracking-wide mt-1">
-                          {item.price}
-                        </div>
+                        <span
+                          className="flex-shrink-0 font-sans"
+                          style={{
+                            fontSize: "1.05rem",
+                            fontWeight: 500,
+                            color: "#c8a96e",
+                          }}
+                        >
+                          {formatPrice(item.price)}
+                        </span>
                       </div>
-                      <p className="text-[var(--muted)] text-sm md:text-base font-light mt-3 leading-relaxed max-w-2xl">
-                        {item.description}
-                      </p>
+                      {/* Description below */}
+                      {item.description && (
+                        <p
+                          className="font-light mt-2 leading-relaxed"
+                          style={{
+                            fontSize: "0.83rem",
+                            color: "#888580",
+                          }}
+                        >
+                          {item.description}
+                        </p>
+                      )}
                     </motion.div>
                   ))}
                 </div>
@@ -194,6 +299,10 @@ export default function MenuPage() {
           </Link>
         </div>
       </section>
+
+      <style>{`
+        [data-testid="menu-tabs"] div::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
   );
 }
