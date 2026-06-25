@@ -2,21 +2,20 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { IMAGES, LOGO_URL } from "../lib/data";
 import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
 
-const imgByCat = {
-  Starters: IMAGES.starter,
-  Salads: IMAGES.salad,
-  Rice: IMAGES.jollof,
-  Noodles: IMAGES.noodles,
-  "Pepper Soup & Specials": IMAGES.pepperSoup,
-  Continental: IMAGES.steak,
-  Sauces: IMAGES.pasta,
-  "Charcoal Grills": IMAGES.grill,
-  "National Dishes": IMAGES.grilledFish,
-  "Traditional Specials": IMAGES.riceDish,
+const categoryImages = {
+  "Starters":                "/images/menu/starters.jpg",
+  "Salads":                  "/images/menu/salads.jpg",
+  "Rice":                    "/images/menu/rice.jpg",
+  "Noodles":                 "/images/menu/noodles.jpg",
+  "Pepper Soup & Specials":  "/images/menu/pepper-soup.jpg",
+  "Continental":             "/images/menu/continental.jpg",
+  "Sauces":                  "/images/menu/sauces.jpg",
+  "Charcoal Grills":         "/images/menu/grills.jpg",
+  "National Dishes":         "/images/menu/national.jpg",
+  "Traditional Specials":    "/images/menu/traditional.jpg",
 };
 
 function formatPrice(price) {
@@ -25,12 +24,62 @@ function formatPrice(price) {
   return `₦${num.toLocaleString("en-NG")}`;
 }
 
+function CategoryImage({ category }) {
+  const [errorCats, setErrorCats] = useState(new Set());
+  const src = categoryImages[category];
+  const hasError = errorCats.has(category);
+  const showImage = src && !hasError;
+
+  return (
+    <div className="relative aspect-[4/5] overflow-hidden">
+      <AnimatePresence mode="wait">
+        {showImage ? (
+          <motion.img
+            key={category}
+            src={src}
+            alt={category}
+            onError={() => setErrorCats(prev => new Set([...prev, category]))}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <motion.div
+            key={`placeholder-${category}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: "#1a1a1a" }}
+          >
+            <span style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: "1.5rem",
+              letterSpacing: "0.2em",
+              color: "#c8a96e",
+            }}>
+              BLACKROCK
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Bottom gradient to blend into dark background */}
+      <div
+        className="absolute inset-x-0 bottom-0 pointer-events-none"
+        style={{ height: "30%", background: "linear-gradient(to top, rgba(0,0,0,0.5), transparent)" }}
+      />
+    </div>
+  );
+}
+
 export default function MenuPage() {
   const [menuByCategory, setMenuByCategory] = useState({});
   const [categories, setCategories] = useState([]);
   const [active, setActive] = useState("");
   const [loading, setLoading] = useState(true);
-  const [hoveredItem, setHoveredItem] = useState(null);
 
   useEffect(() => {
     supabase
@@ -52,9 +101,6 @@ export default function MenuPage() {
         setLoading(false);
       });
   }, []);
-
-  // Reset hover when switching categories
-  useEffect(() => { setHoveredItem(null); }, [active]);
 
   return (
     <div className="page-enter">
@@ -128,7 +174,6 @@ export default function MenuPage() {
                 </motion.button>
               ))}
             </div>
-            {/* Right fade gradient */}
             <div
               className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none"
               style={{ background: "linear-gradient(to right, transparent, rgba(15,13,10,0.96))" }}
@@ -149,139 +194,63 @@ export default function MenuPage() {
               Menu coming soon.
             </div>
           ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16"
-              >
-                {/* Dynamic featured image */}
-                <div className="lg:col-span-5 lg:sticky lg:top-44 self-start">
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    {/* Default category image */}
-                    <img
-                      src={imgByCat[active]}
-                      alt={active}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      style={{
-                        opacity: hoveredItem ? 0 : 1,
-                        transition: "opacity 0.3s ease",
-                      }}
-                    />
-                    {/* Hovered dish image or branded placeholder */}
-                    <AnimatePresence>
-                      {hoveredItem && (
-                        hoveredItem.image ? (
-                          <motion.img
-                            key={`img-${hoveredItem.id}`}
-                            src={hoveredItem.image}
-                            alt={hoveredItem.name}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                        ) : (
-                          <motion.div
-                            key="placeholder"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="absolute inset-0 flex flex-col items-center justify-center gap-4"
-                            style={{ background: "var(--charcoal-soft)" }}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+              {/* Category image — transitions on tab change, never on dish hover */}
+              <div className="lg:col-span-5 lg:sticky lg:top-44 self-start">
+                <CategoryImage category={active} />
+                <div className="mt-6">
+                  <span className="gold-line">{active}</span>
+                </div>
+              </div>
+
+              {/* Dish list */}
+              <div className="lg:col-span-7">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={active}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {(menuByCategory[active] || []).map((item, i) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: i * 0.06 }}
+                        className="border-b border-[var(--border-soft)] px-3 -mx-3"
+                        style={{ paddingTop: "2.8rem", paddingBottom: "2.8rem" }}
+                        data-testid={`menu-item-${item.name.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
+                        <div className="flex items-baseline justify-between gap-4">
+                          <h3
+                            className="font-serif-display leading-snug"
+                            style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--warm-white)" }}
                           >
-                            <img
-                              src={LOGO_URL}
-                              alt="BLACKROCK"
-                              style={{ width: 72, opacity: 0.3 }}
-                            />
-                            <span
-                              className="font-serif-display text-sm tracking-widest"
-                              style={{ color: "rgba(200,169,110,0.4)" }}
-                            >
-                              {hoveredItem.name}
-                            </span>
-                          </motion.div>
-                        )
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Active category label */}
-                  <div className="mt-6">
-                    <span
-                      className="text-[10px] uppercase tracking-[0.28em]"
-                      style={{ color: "var(--muted)" }}
-                    >
-                      {active}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Dish list */}
-                <div className="lg:col-span-7">
-                  {(menuByCategory[active] || []).map((item, i) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: i * 0.06 }}
-                      onMouseEnter={() => setHoveredItem(item)}
-                      onMouseLeave={() => setHoveredItem(null)}
-                      className="border-b border-[var(--border-soft)] px-3 -mx-3"
-                      style={{
-                        paddingTop: "2.8rem",
-                        paddingBottom: "2.8rem",
-                        backgroundColor: hoveredItem?.id === item.id ? "rgba(200,169,110,0.05)" : "transparent",
-                        transition: "background-color 0.15s ease",
-                      }}
-                      data-testid={`menu-item-${item.name.toLowerCase().replace(/\s+/g, "-")}`}
-                    >
-                      {/* Name + price on same baseline row */}
-                      <div className="flex items-baseline justify-between gap-4">
-                        <h3
-                          className="font-serif-display leading-snug"
-                          style={{
-                            fontSize: "1.05rem",
-                            fontWeight: 600,
-                            color: "var(--warm-white)",
-                          }}
-                        >
-                          {item.name}
-                        </h3>
-                        <span
-                          className="flex-shrink-0 font-sans"
-                          style={{
-                            fontSize: "1.05rem",
-                            fontWeight: 500,
-                            color: "#c8a96e",
-                          }}
-                        >
-                          {formatPrice(item.price)}
-                        </span>
-                      </div>
-                      {/* Description below */}
-                      {item.description && (
-                        <p
-                          className="font-light mt-2 leading-relaxed"
-                          style={{
-                            fontSize: "0.83rem",
-                            color: "#888580",
-                          }}
-                        >
-                          {item.description}
-                        </p>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                            {item.name}
+                          </h3>
+                          <span
+                            className="flex-shrink-0 font-sans"
+                            style={{ fontSize: "1.05rem", fontWeight: 500, color: "#c8a96e" }}
+                          >
+                            {formatPrice(item.price)}
+                          </span>
+                        </div>
+                        {item.description && (
+                          <p
+                            className="font-light mt-2 leading-relaxed"
+                            style={{ fontSize: "0.83rem", color: "#888580" }}
+                          >
+                            {item.description}
+                          </p>
+                        )}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
           )}
         </div>
       </section>
