@@ -43,7 +43,7 @@ export default function Contact() {
       {/* Header */}
       <section className="relative h-[420px] md:h-[520px] overflow-hidden flex items-center justify-center" data-testid="contact-header">
         <img src="/contactushero.jpg" alt="BlackRock dining room" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.88) 60%, rgba(0,0,0,0.95) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0.78) 100%)" }} />
         <div className="relative z-10 text-center px-6 md:px-12">
           <span className="gold-line">Contact</span>
           <h1 className="font-serif-display text-3xl md:text-5xl lg:text-8xl leading-[0.95] mt-6 md:mt-8 text-[var(--warm-white)]" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.8)" }}>
