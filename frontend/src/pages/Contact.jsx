@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, MessageCircle, Clock, Send, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Phone, Mail, MapPin, MessageCircle, Clock, Send, Check, ExternalLink } from "lucide-react";
 import { BRAND } from "../lib/data";
 import SectionHeader from "../components/SectionHeader";
 import { supabase } from "../lib/supabase";
@@ -34,10 +34,8 @@ export default function Contact() {
 
     notifyTelegram(enquiryMessage(form));
     setSent(true);
-    setTimeout(() => {
-      setSent(false);
-      setForm({ name: "", email: "", message: "" });
-    }, 4000);
+    setForm({ name: "", email: "", message: "" });
+    setTimeout(() => setSent(false), 8000);
   };
 
   return (
@@ -56,18 +54,18 @@ export default function Contact() {
       </section>
 
       {/* Contact methods */}
-      <section className="bg-[var(--charcoal)] py-12 md:py-20" data-testid="contact-methods">
+      <section className="bg-[var(--charcoal)] pt-12 pb-0 md:pt-20 md:pb-0" data-testid="contact-methods">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: Phone, label: "Call", value: <span>+234 805 523 8353<br />+234 903 048 2774</span>, href: `tel:${BRAND.phoneTel}`, tag: "Fastest" },
-            { icon: MessageCircle, label: "WhatsApp", value: "Chat with a host", href: BRAND.whatsapp, tag: "Mobile" },
-            { icon: Mail, label: "Email", value: BRAND.email, href: `mailto:${BRAND.email}`, tag: "Anytime" },
-            { icon: MapPin, label: "Visit", value: BRAND.address, href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.address)}`, tag: "Ikeja" },
+            { icon: Phone,         label: "Call",      value: <span>+234 805 523 8353<br />+234 903 048 2774</span>, href: `tel:${BRAND.phoneTel}`, tag: "Fastest",  newTab: false, external: false, valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
+            { icon: MessageCircle, label: "WhatsApp",  value: "Chat with a host",                                    href: BRAND.whatsapp,           tag: "Mobile",   newTab: true,  external: true,  valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
+            { icon: Mail,          label: "Email",     value: BRAND.email,                                           href: `mailto:${BRAND.email}`,  tag: "Anytime",  newTab: false, external: false, valueStyle: { wordBreak: "break-all", overflowWrap: "anywhere"   } },
+            { icon: MapPin,        label: "Visit",     value: BRAND.address,                                         href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.address)}`, tag: "Ikeja", newTab: true, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
           ].map((c, i) => (
             <motion.a
               key={c.label}
               href={c.href}
-              target={c.icon === MessageCircle || c.icon === MapPin ? "_blank" : undefined}
+              target={c.newTab ? "_blank" : undefined}
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -80,17 +78,20 @@ export default function Contact() {
             >
               <div className="flex items-start justify-between mb-8">
                 <c.icon size={22} className="text-[var(--gold)] group-hover:text-[var(--warm-white)] transition-colors" />
-                <span className="text-[10px] uppercase tracking-[0.28em] opacity-50">{c.tag}</span>
+                <div className="flex items-center gap-2">
+                  {c.external && <ExternalLink size={12} className="text-[var(--gold)] group-hover:text-[var(--warm-white)] transition-colors opacity-60" />}
+                  <span className="text-[10px] uppercase tracking-[0.28em] opacity-50">{c.tag}</span>
+                </div>
               </div>
               <div className="text-xs uppercase tracking-[0.28em] opacity-60 mb-2">{c.label}</div>
-              <div className="font-serif-display text-lg md:text-2xl leading-snug" style={{ wordBreak: "break-all", overflowWrap: "break-word" }}>{c.value}</div>
+              <div className="font-serif-display text-lg md:text-2xl leading-snug" style={c.valueStyle}>{c.value}</div>
             </motion.a>
           ))}
         </div>
       </section>
 
       {/* Hours + Form */}
-      <section className="bg-[var(--charcoal-soft)] py-24 md:py-32" data-testid="contact-form-section">
+      <section className="bg-[var(--charcoal-soft)] pt-[60px] pb-24 md:pb-32" data-testid="contact-form-section">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-16">
           {/* Hours */}
           <div className="lg:col-span-5">
@@ -139,56 +140,86 @@ export default function Contact() {
             <p className="text-[var(--muted)] mt-4 font-light">
               Press, partnerships, private events, or just to say hello.
             </p>
-            <form onSubmit={submit} className="mt-10 space-y-8" data-testid="contact-form">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label className="tbr-label">Name</label>
-                  <input
-                    required
-                    className="tbr-input"
-                    placeholder="Your name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    data-testid="contact-input-name"
-                  />
-                </div>
-                <div>
-                  <label className="tbr-label">Email</label>
-                  <input
-                    required
-                    type="email"
-                    className="tbr-input"
-                    placeholder="you@example.com"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    data-testid="contact-input-email"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="tbr-label">Message</label>
-                <textarea
-                  required
-                  rows={5}
-                  className="tbr-input resize-none"
-                  placeholder="Tell us what you're thinking..."
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  data-testid="contact-input-message"
-                />
-              </div>
-              {sendError && (
-                <p className="text-sm text-red-400 border border-red-400/20 bg-red-400/5 px-4 py-3">{sendError}</p>
+            <AnimatePresence mode="wait">
+              {sent ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="mt-10 p-8 border border-[var(--gold)]/30 bg-[var(--gold)]/5"
+                  data-testid="contact-success"
+                >
+                  <Check size={22} className="text-[var(--gold)] mb-4" />
+                  <p className="font-serif-display text-xl text-[var(--gold)] leading-snug">
+                    Thank you for reaching out. We will get back to you shortly.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onSubmit={submit}
+                  className="mt-10 space-y-8"
+                  data-testid="contact-form"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className="tbr-label">Name</label>
+                      <input
+                        required
+                        className="tbr-input"
+                        placeholder="Your name"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        data-testid="contact-input-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="tbr-label">Email</label>
+                      <input
+                        required
+                        type="email"
+                        className="tbr-input"
+                        placeholder="you@example.com"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        data-testid="contact-input-email"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="tbr-label">Message</label>
+                    <textarea
+                      required
+                      rows={5}
+                      className="tbr-input resize-none"
+                      placeholder="Tell us what you're thinking..."
+                      value={form.message}
+                      onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      data-testid="contact-input-message"
+                    />
+                  </div>
+                  {sendError && (
+                    <p className="text-sm text-red-400/80 border border-red-400/20 bg-red-400/5 px-4 py-3" data-testid="contact-error">
+                      Something went wrong. Please try again or call us directly.
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={sending}
+                    className="btn-burgundy"
+                    data-testid="contact-submit"
+                  >
+                    {sending ? <span>Sending...</span> : <><Send size={14} /><span>Send Message</span></>}
+                  </button>
+                </motion.form>
               )}
-              <button
-                type="submit"
-                disabled={sent || sending}
-                className="btn-burgundy"
-                data-testid="contact-submit"
-              >
-                {sent ? (<><Check size={14} /> <span>Sent. We'll be in touch</span></>) : sending ? (<><span>Sending...</span></>) : (<><Send size={14} /> <span>Send Message</span></>)}
-              </button>
-            </form>
+            </AnimatePresence>
           </motion.div>
         </div>
       </section>
