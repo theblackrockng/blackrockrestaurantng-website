@@ -374,7 +374,7 @@ export default function Home() {
       </section>
 
       {/* RESERVATION CTA */}
-      <section className="bg-[var(--charcoal-soft)] py-20 md:py-24" data-testid="reservation-cta">
+      <section className="bg-[var(--charcoal-soft)] py-[60px]" data-testid="reservation-cta">
         <div className="max-w-2xl mx-auto px-6 md:px-12 text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -442,7 +442,7 @@ export default function Home() {
             </div>
             <div className="mt-12 flex flex-wrap gap-4">
               <Link to="/reservations" className="btn-outline-gold" data-testid="location-reserve">Reserve a Table</Link>
-              <a href="https://maps.google.com/?q=11+Ajao+Road+Adeniyi+Jones+Ikeja+Lagos" target="_blank" rel="noopener noreferrer" className="btn-ghost-dark text-[var(--gold)] border-[var(--gold)]" style={{borderBottomColor: "var(--gold)", color: "var(--gold)"}}>
+              <a href="https://www.google.com/maps/dir/?api=1&destination=11+Ajao+Road+Ikeja+Lagos+Nigeria" target="_blank" rel="noopener noreferrer" className="btn-ghost-dark text-[var(--gold)] border-[var(--gold)]" style={{borderBottomColor: "var(--gold)", color: "var(--gold)"}}>
                 Get Directions <ArrowRight size={14} />
               </a>
             </div>

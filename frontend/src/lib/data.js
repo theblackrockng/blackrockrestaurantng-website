@@ -9,7 +9,7 @@ export const BRAND = {
   whatsapp: "https://wa.me/2348055238353?text=Hello%20BLACKROCK%2C%20I%27d%20like%20to%20enquire%20about%20a%20reservation.",
   address: "11 Ajao Road, off Adeniyi Jones Road, Ikeja, Lagos",
   hours: [
-    { day: "Daily", time: "10:00 AM – 11:59 PM" },
+    { day: "Daily", time: "10:00 AM — 1:00 AM" },
   ],
 };
 

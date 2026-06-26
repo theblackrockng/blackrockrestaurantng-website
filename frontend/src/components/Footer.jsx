@@ -18,11 +18,8 @@ export default function Footer() {
             className="md:col-span-5"
           >
             <BrandMark variant="dark" size="lg" className="mb-8" />
-            <p className="font-serif-italic text-xl text-[var(--gold)] leading-snug max-w-md mb-6">
-              "Flavor on a plate. Wine in the glass. Joy filling the air."
-            </p>
-            <p className="text-sm text-white/60 leading-relaxed max-w-md">
-              Where exceptional food meets beautiful ambience, and every meal feels like home.
+            <p className="font-serif-italic text-xl text-[var(--gold)] leading-snug max-w-md">
+              "Flavor on a plate. Wine in your glass. Connection in the air."
             </p>
           </motion.div>
 
