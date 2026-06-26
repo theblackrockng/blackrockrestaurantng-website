@@ -202,6 +202,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Gold divider */}
+      <div className="w-full h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.45) 30%, rgba(201,168,76,0.45) 70%, transparent 100%)" }} />
+
       {/* OCCASIONS PREVIEW */}
       <section className="bg-[var(--charcoal)] py-24 md:py-32" data-testid="occasions-preview">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12">
