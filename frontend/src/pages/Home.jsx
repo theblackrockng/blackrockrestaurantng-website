@@ -58,13 +58,17 @@ export default function Home() {
           .maybeSingle();
         if (heroRow?.data?.image) setHeroImage(heroRow.data.image);
 
-        // Food reel from media_assets
+        // Food reel from media_assets — merge with FALLBACK so menu category images always appear
         const { data: reelAssets } = await supabase
           .from("media_assets")
           .select("url")
           .eq("used_in", "home-food-reel")
           .order("uploaded_at", { ascending: true });
-        if (reelAssets?.length) setFoodReel(reelAssets.map((a) => a.url));
+        if (reelAssets?.length) {
+          const dbUrls = reelAssets.map((a) => a.url);
+          const menuCategoryImages = FALLBACK_FOOD_REEL.filter((s) => typeof s === "string" && s.startsWith("/images/menu/"));
+          setFoodReel([...dbUrls, ...menuCategoryImages]);
+        }
       } catch {}
     }
     loadDynamic();
