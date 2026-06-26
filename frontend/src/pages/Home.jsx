@@ -332,7 +332,7 @@ export default function Home() {
       </section>
 
       {/* TWO SPACES */}
-      <section className="bg-[var(--charcoal)] text-[var(--warm-white)] py-24 md:py-36 grain relative" data-testid="three-spaces">
+      <section className="bg-[var(--charcoal)] text-[var(--warm-white)] pt-10 pb-24 md:pt-10 md:pb-36 grain relative" data-testid="three-spaces">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12">
           <SectionHeader
             kicker="Two Spaces, One Address"
@@ -340,10 +340,10 @@ export default function Home() {
             subtitle="A restaurant downstairs, a rooftop lounge above. Two moods, one destination."
             dark
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
             {[
               { img: IMAGES.interior1, name: "The Restaurant", desc: "Continental and traditional. White linen, warm light, full flavours.", floor: "Ground Floor" },
-              { img: IMAGES.rooftopNight, name: "The Rooftop Lounge", desc: "Open sky, the Ikeja skyline around you. Good company, longer pours, the night stretches.", floor: "Rooftop" },
+              { img: "/rooftop.jpg", name: "The Rooftop Lounge", desc: "Open sky, the Ikeja skyline around you. Good company, longer pours, the night stretches.", floor: "Rooftop" },
             ].map((s, i) => (
               <motion.div
                 key={s.name}
@@ -352,14 +352,17 @@ export default function Home() {
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.8, delay: i * 0.15 }}
                 whileHover={{ y: -6, transition: { duration: 0.3 } }}
-                className="group relative"
+                className="group relative overflow-hidden h-[380px] md:h-[520px]"
                 data-testid={`space-${s.floor.toLowerCase().replace(" ", "-")}`}
               >
-                <div className="img-hover aspect-[3/4]">
-                  <img src={s.img} alt={s.name} loading="lazy" />
-                </div>
+                <img
+                  src={s.img}
+                  alt={s.name}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8">
+                <div className="absolute bottom-0 left-0 right-0 p-8" style={{ paddingBottom: 28 }}>
                   <div className="text-xs uppercase tracking-[0.3em] text-[var(--gold)] mb-3">{s.floor}</div>
                   <h3 className="font-serif-display text-3xl md:text-4xl mb-3">{s.name}</h3>
                   <p className="text-sm text-white/70 leading-relaxed font-light">{s.desc}</p>
