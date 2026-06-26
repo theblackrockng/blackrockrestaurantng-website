@@ -40,6 +40,9 @@ function fmtDate(d) {
 
 function fmtTime(t) {
   if (!t) return "";
+  // Already in 12-hour format (e.g. "7:30 PM") — return as-is
+  if (/[AaPp][Mm]/.test(t)) return t.trim();
+  // 24-hour format (e.g. "19:30") — convert
   const [h, m] = t.split(":");
   const hr = parseInt(h);
   return `${hr > 12 ? hr - 12 : hr || 12}:${m} ${hr >= 12 ? "PM" : "AM"}`;
