@@ -223,9 +223,6 @@ function EmptyState({ message, onRefresh }) {
 }
 
 /* ─── Email compose modal ─── */
-const INPUT_STYLE  = { width: "100%", background: "var(--ds-input-bg)", border: "1px solid var(--ds-border)", borderRadius: 8, padding: "10px 12px", fontSize: 13.5, color: "var(--ds-text)", fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" };
-const LABEL_STYLE  = { display: "block", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ds-muted)", marginBottom: 7 };
-
 function reservationEmailBody(r) {
   return `Dear ${r.name},\n\nThank you for your reservation at BLACKROCK Restaurant & Lounge.\n\n` +
     `Your table is confirmed for ${fmtDate(r.date)}${r.time ? ` at ${fmtTime(r.time)}` : ""}, party of ${r.party === "other" ? (r.party_other ?? "—") : (r.party ?? "—")}.\n\n` +
