@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
 import BrandMark from "../components/BrandMark";
 
-const occasionPreview = OCCASIONS.slice(0, 4);
+const occasionPreview = OCCASIONS;
 
 const KITCHEN_IMAGES = [
   { src: "/images/menu/pepper-soup.jpg", alt: "Pepper soup" },
@@ -16,14 +16,14 @@ const KITCHEN_IMAGES = [
 ];
 
 const OCCASION_TINTS = {
-  "date-night":    "linear-gradient(135deg, rgba(139,26,43,0.32) 0%, rgba(15,13,10,0.88) 100%)",
-  "birthday":      "linear-gradient(135deg, rgba(201,140,76,0.28) 0%, rgba(15,13,10,0.88) 100%)",
-  "family":        "linear-gradient(135deg, rgba(76,139,76,0.22) 0%, rgba(15,13,10,0.88) 100%)",
-  "corporate":     "linear-gradient(135deg, rgba(76,100,139,0.25) 0%, rgba(15,13,10,0.88) 100%)",
-  "anniversary":   "linear-gradient(135deg, rgba(100,18,32,0.38) 0%, rgba(15,13,10,0.88) 100%)",
-  "proposal":      "linear-gradient(135deg, rgba(201,168,76,0.22) 0%, rgba(15,13,10,0.88) 100%)",
-  "private-dining":"linear-gradient(135deg, rgba(25,22,18,0.95) 0%, rgba(15,13,10,0.98) 100%)",
-  "special":       "linear-gradient(135deg, rgba(156,142,122,0.22) 0%, rgba(15,13,10,0.88) 100%)",
+  "date-night":    "linear-gradient(135deg, rgba(185,30,55,0.42) 0%, rgba(15,13,10,0.92) 100%)",
+  "birthday":      "linear-gradient(135deg, rgba(220,145,40,0.40) 0%, rgba(15,13,10,0.92) 100%)",
+  "family":        "linear-gradient(135deg, rgba(45,145,75,0.36) 0%, rgba(15,13,10,0.92) 100%)",
+  "corporate":     "linear-gradient(135deg, rgba(65,100,185,0.38) 0%, rgba(15,13,10,0.92) 100%)",
+  "anniversary":   "linear-gradient(135deg, rgba(145,18,38,0.50) 0%, rgba(15,13,10,0.92) 100%)",
+  "proposal":      "linear-gradient(135deg, rgba(210,178,60,0.40) 0%, rgba(15,13,10,0.92) 100%)",
+  "private-dining":"linear-gradient(135deg, rgba(40,36,30,0.98) 0%, rgba(15,13,10,0.99) 100%)",
+  "special":       "linear-gradient(135deg, rgba(185,162,120,0.36) 0%, rgba(15,13,10,0.92) 100%)",
 };
 
 const FALLBACK_FOOD_REEL = [
@@ -223,7 +223,7 @@ export default function Home() {
       <div className="w-full h-px" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.45) 30%, rgba(201,168,76,0.45) 70%, transparent 100%)" }} />
 
       {/* OCCASIONS PREVIEW */}
-      <section className="bg-[var(--charcoal)] pt-12 pb-24 md:pt-16 md:pb-32" data-testid="occasions-preview">
+      <section className="bg-[var(--charcoal)] pt-12 pb-10 md:pt-16 md:pb-10" data-testid="occasions-preview">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12">
           <SectionHeader
             kicker="Made for moments"
@@ -245,7 +245,7 @@ export default function Home() {
                   style={{ background: OCCASION_TINTS[o.id] }}
                   data-testid={`occasion-preview-${o.id}`}
                 >
-                  <div className="text-xs uppercase tracking-[0.3em] opacity-60 mb-4">0{i + 1}</div>
+                  <div className="text-sm uppercase tracking-[0.3em] opacity-85 mb-4 font-medium">{String(i + 1).padStart(2, "0")}</div>
                   <h3 className="font-serif-display text-2xl md:text-3xl mb-3">{o.label}</h3>
                   <p className="text-sm leading-relaxed opacity-75">{o.note}</p>
                   <div className="mt-8 inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] opacity-90">
@@ -259,8 +259,8 @@ export default function Home() {
       </section>
 
       {/* SIGNATURE EXPERIENCE - SPLIT */}
-      <section className="bg-[var(--charcoal)] py-24 md:py-36" data-testid="signature-section">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <section className="bg-[var(--charcoal)] pt-10 pb-24 md:pt-10 md:pb-36" data-testid="signature-section">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
 
           {/* Crossfade image carousel */}
           <motion.div
@@ -268,7 +268,7 @@ export default function Home() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.9 }}
-            className="relative aspect-[4/5] overflow-hidden order-2 lg:order-1"
+            className="relative overflow-hidden order-2 lg:order-1 self-stretch min-h-[420px]"
           >
             {KITCHEN_IMAGES.map((img, i) => (
               <img
