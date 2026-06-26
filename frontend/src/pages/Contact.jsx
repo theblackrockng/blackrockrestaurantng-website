@@ -57,9 +57,9 @@ export default function Contact() {
       <section className="bg-[var(--charcoal)] pt-12 md:pt-20" style={{ paddingBottom: "80px" }} data-testid="contact-methods">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: Phone,         label: "Call",     value: "+234 903 048 2774",  href: `tel:${BRAND.phoneTel}`, tag: "Fastest", newTab: false, external: false, valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
-            { icon: MessageCircle, label: "WhatsApp", value: "Chat with a host",   href: BRAND.whatsapp,          tag: "Mobile",  newTab: true,  external: true,  valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
-            { icon: Mail,          label: "Email",    value: BRAND.email,          href: `mailto:${BRAND.email}`, tag: "Anytime", newTab: false, external: false, valueStyle: { fontSize: "0.8rem",    wordBreak: "break-all",    overflowWrap: "anywhere"  } },
+            { icon: Phone,         label: "Call",     value: "+234 903 048 2774",  href: `tel:${BRAND.phoneTel}`, tag: "Fastest", newTab: false, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
+            { icon: MessageCircle, label: "WhatsApp", value: "Chat with a host",   href: BRAND.whatsapp,          tag: "Mobile",  newTab: true,  external: true,  valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
+            { icon: Mail,          label: "Email",    value: BRAND.email,          href: `mailto:${BRAND.email}`, tag: "Anytime", newTab: false, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
             { icon: MapPin,        label: "Visit",    value: BRAND.address,        href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.address)}`, tag: "Ikeja", newTab: true, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
           ].map((c, i) => (
             <motion.a
@@ -87,7 +87,7 @@ export default function Contact() {
                 </div>
               </div>
               <div className="text-xs uppercase tracking-[0.28em] opacity-60 mb-2">{c.label}</div>
-              <div className="font-serif-display text-lg md:text-2xl leading-snug" style={c.valueStyle}>{c.value}</div>
+              <div className="font-serif-display leading-snug" style={{ fontSize: "0.9rem", ...c.valueStyle }}>{c.value}</div>
             </motion.a>
           ))}
         </div>
