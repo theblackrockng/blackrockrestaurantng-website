@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Star, MapPin, Phone } from "lucide-react";
+import { ArrowRight, MapPin, Phone } from "lucide-react";
 import { IMAGES, BRAND, OCCASIONS } from "../lib/data";
 import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
@@ -373,53 +373,44 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TESTIMONIAL */}
-      <section className="bg-[var(--charcoal-soft)] py-24 md:py-36" data-testid="testimonial-section">
-        <div className="max-w-4xl mx-auto px-6 md:px-12 text-center">
-          <div className="flex justify-center gap-1 mb-8">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={16} className="text-[var(--gold)] fill-[var(--gold)]" />
-            ))}
-          </div>
-          <motion.blockquote
+      {/* RESERVATION CTA */}
+      <section className="bg-[var(--charcoal-soft)] py-20 md:py-24" data-testid="reservation-cta">
+        <div className="max-w-2xl mx-auto px-6 md:px-12 text-center">
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.9 }}
-            className="font-serif-italic text-3xl md:text-4xl lg:text-5xl leading-[1.25] text-[var(--warm-white)]"
+            transition={{ duration: 0.8 }}
+            className="font-serif-display text-3xl md:text-5xl text-[var(--warm-white)] leading-snug"
           >
-            "Best jollof in Ikeja, and I don't say that lightly. We came for dinner, stayed for the asun. Lagos at its finest."
-          </motion.blockquote>
-          <div className="mt-10 text-xs uppercase tracking-[0.32em] text-[var(--muted)]">
-            Tomi A. · Google Review
-          </div>
-        </div>
-      </section>
-
-      {/* INSTAGRAM STRIP */}
-      <section className="bg-[var(--charcoal)] py-20 overflow-hidden" data-testid="instagram-strip">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 mb-12">
-          <div className="flex items-end justify-between flex-wrap gap-4">
-            <div>
-              <span className="gold-line left">@theblackrock.lagos</span>
-              <h3 className="font-serif-display text-3xl md:text-4xl mt-4">Lately, on the gram.</h3>
-            </div>
-            <a href="#" className="btn-ghost-dark hidden md:inline-flex">Follow Us <ArrowRight size={14} /></a>
-          </div>
-        </div>
-        <div className="overflow-hidden">
-          <div className="flex marquee gap-3 w-max">
-            {[...IMAGES.ig, ...IMAGES.ig].map((src, i) => (
-              <div key={i} className="img-hover w-[220px] h-[220px] md:w-[280px] md:h-[280px] flex-shrink-0">
-                <img src={src} alt={`Instagram ${i}`} loading="lazy" />
-              </div>
-            ))}
-          </div>
+            Ready to experience it yourself?
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.15 }}
+            className="mt-5 text-sm text-[var(--muted)] leading-relaxed"
+          >
+            Reserve your table and let us take care of the rest.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.28 }}
+            className="mt-10"
+          >
+            <Link to="/reservations" className="btn-burgundy">
+              <span>Reserve a Table</span>
+              <ArrowRight size={14} />
+            </Link>
+          </motion.div>
         </div>
       </section>
 
       {/* LOCATION / FIND US */}
-      <section className="bg-[var(--charcoal)] text-[var(--warm-white)] pt-24 pb-0 md:pt-36 md:pb-0" data-testid="location-section">
+      <section className="bg-[var(--charcoal)] text-[var(--warm-white)] pt-16 pb-0 md:pt-20 md:pb-0" data-testid="location-section">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
