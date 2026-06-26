@@ -41,13 +41,16 @@ export default function Contact() {
   return (
     <div className="page-enter pt-20 md:pt-28 lg:pt-36">
       {/* Header */}
-      <section className="bg-[var(--charcoal)] pt-16 pb-12 md:pt-24" data-testid="contact-header">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12 text-center">
+      <section className="relative h-[420px] md:h-[520px] overflow-hidden flex items-center justify-center" data-testid="contact-header">
+        <img src="/contactushero.jpg" alt="BlackRock dining room" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-[var(--charcoal)]/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--charcoal)]/40 via-transparent to-[var(--charcoal)]/80" />
+        <div className="relative z-10 text-center px-6 md:px-12">
           <span className="gold-line">Contact</span>
           <h1 className="font-serif-display text-3xl md:text-5xl lg:text-8xl leading-[0.95] mt-6 md:mt-8 text-[var(--warm-white)]">
             Say <span className="font-serif-italic text-[var(--gold)]">hello.</span>
           </h1>
-          <p className="text-[var(--muted)] mt-8 max-w-xl mx-auto font-light text-base md:text-lg">
+          <p className="text-white/70 mt-8 max-w-xl mx-auto font-light text-base md:text-lg">
             We'll respond quickly. For tonight's bookings, the phone is always faster.
           </p>
         </div>
