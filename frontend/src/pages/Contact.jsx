@@ -57,7 +57,7 @@ export default function Contact() {
       <section className="bg-[var(--charcoal)] pt-12 pb-0 md:pt-20 md:pb-0" data-testid="contact-methods">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: Phone,         label: "Call",      value: <span>+234 805 523 8353<br />+234 903 048 2774</span>, href: `tel:${BRAND.phoneTel}`, tag: "Fastest",  newTab: false, external: false, valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
+            { icon: Phone,         label: "Call",      value: <span>+234 903 048 2774</span>, href: `tel:${BRAND.phoneTel}`, tag: "Fastest",  newTab: false, external: false, valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
             { icon: MessageCircle, label: "WhatsApp",  value: "Chat with a host",                                    href: BRAND.whatsapp,           tag: "Mobile",   newTab: true,  external: true,  valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
             { icon: Mail,          label: "Email",     value: BRAND.email,                                           href: `mailto:${BRAND.email}`,  tag: "Anytime",  newTab: false, external: false, valueStyle: { wordBreak: "break-all", overflowWrap: "anywhere"   } },
             { icon: MapPin,        label: "Visit",     value: BRAND.address,                                         href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.address)}`, tag: "Ikeja", newTab: true, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
