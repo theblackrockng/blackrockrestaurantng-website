@@ -98,6 +98,7 @@ export default function Contact() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-16">
           {/* Hours */}
           <div className="lg:col-span-5">
+            <div className="p-8 md:p-10" style={{ background: "linear-gradient(135deg, #1e1c18 0%, #161410 100%)", border: "1px solid rgba(200,169,110,0.4)" }}>
             <span className="gold-line left">Opening Hours</span>
             <h2 className="font-serif-display text-4xl md:text-5xl mt-6 text-[var(--warm-white)]">
               When we're <span className="font-serif-italic text-[var(--gold)]">open.</span>
@@ -126,6 +127,7 @@ export default function Contact() {
                 Last orders 90 minutes before closing. The bar runs a little longer. Always.
               </div>
             </div>
+            </div>
           </div>
 
           {/* Form */}
@@ -136,7 +138,7 @@ export default function Contact() {
             transition={{ duration: 0.8 }}
             className="lg:col-span-7"
           >
-            <div className="p-8 md:p-10" style={{ background: "linear-gradient(135deg, #1e1c18 0%, #161410 100%)", border: "1px solid rgba(200,169,110,0.15)" }}>
+            <div className="p-8 md:p-10" style={{ background: "linear-gradient(135deg, #1e1c18 0%, #161410 100%)", border: "1px solid rgba(200,169,110,0.4)" }}>
             <span className="gold-line left">Send a Note</span>
             <h2 className="font-serif-display text-4xl md:text-5xl mt-6 text-[var(--warm-white)]">
               General <span className="font-serif-italic text-[var(--gold)]">enquiries.</span>
