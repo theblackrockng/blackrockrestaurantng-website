@@ -175,12 +175,12 @@ export default function Contact() {
                   className="mt-10 space-y-8"
                   data-testid="contact-form"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="tbr-label">Name</label>
                       <input
                         required
-                        className="tbr-input"
+                        className="tbr-input-box"
                         placeholder="Your name"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -192,7 +192,7 @@ export default function Contact() {
                       <input
                         required
                         type="email"
-                        className="tbr-input"
+                        className="tbr-input-box"
                         placeholder="you@example.com"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -204,8 +204,7 @@ export default function Contact() {
                     <label className="tbr-label">Message</label>
                     <textarea
                       required
-                      rows={5}
-                      className="tbr-input resize-none"
+                      className="tbr-input-box"
                       placeholder="Tell us what you're thinking..."
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
