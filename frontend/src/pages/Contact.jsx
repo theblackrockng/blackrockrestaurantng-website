@@ -57,10 +57,10 @@ export default function Contact() {
       <section className="bg-[var(--charcoal)] pt-12 md:pt-20" style={{ paddingBottom: "80px" }} data-testid="contact-methods">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: Phone,         label: "Call",     value: "+234 903 048 2774",  href: `tel:${BRAND.phoneTel}`, tag: "Fastest", newTab: false, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
-            { icon: MessageCircle, label: "WhatsApp", value: "Chat with a host",   href: BRAND.whatsapp,          tag: "Mobile",  newTab: true,  external: true,  valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
-            { icon: Mail,          label: "Email",    value: BRAND.email,          href: `mailto:${BRAND.email}`, tag: "Anytime", newTab: false, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
-            { icon: MapPin,        label: "Visit",    value: BRAND.address,        href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.address)}`, tag: "Ikeja", newTab: true, external: false, valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
+            { icon: Phone,         label: "Call",     value: "+234 903 048 2774", href: `tel:${BRAND.phoneTel}`,  tag: "Fastest", newTab: false, external: false, bg: "linear-gradient(135deg, #3d1a1a 0%, #1a0f0f 100%)", border: "rgba(120,50,50,0.35)",  fontSize: "1rem",   valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
+            { icon: MessageCircle, label: "WhatsApp", value: "Chat with a host",  href: BRAND.whatsapp,           tag: "Mobile",  newTab: true,  external: true,  bg: "linear-gradient(135deg, #2a2a1a 0%, #1a1a0f 100%)", border: "rgba(100,100,40,0.35)", fontSize: "1rem",   valueStyle: { wordBreak: "normal",   overflowWrap: "break-word" } },
+            { icon: Mail,          label: "Email",    value: BRAND.email,         href: `mailto:${BRAND.email}`,  tag: "Anytime", newTab: false, external: false, bg: "linear-gradient(135deg, #1a2a2a 0%, #0f1a1a 100%)", border: "rgba(40,100,100,0.35)", fontSize: "0.85rem", valueStyle: { whiteSpace: "nowrap",   overflow: "hidden",     textOverflow: "ellipsis" } },
+            { icon: MapPin,        label: "Visit",    value: BRAND.address,       href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.address)}`, tag: "Ikeja", newTab: true, external: false, bg: "linear-gradient(135deg, #1a1a2a 0%, #0f0f1a 100%)", border: "rgba(50,50,120,0.35)", fontSize: "0.9rem", valueStyle: { wordBreak: "normal", overflowWrap: "break-word" } },
           ].map((c, i) => (
             <motion.a
               key={c.label}
@@ -73,21 +73,21 @@ export default function Contact() {
               transition={{ duration: 0.6, delay: i * 0.08 }}
               whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
               whileTap={{ scale: 0.98 }}
-              className="block p-5 md:p-8 bg-[var(--charcoal-soft)] transition-all duration-200 group border border-[var(--border-soft)] overflow-hidden"
-              style={{ transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "#c8a96e"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(200,169,110,0.15)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.boxShadow = ""; }}
+              className="block p-5 md:p-8 overflow-hidden"
+              style={{ background: c.bg, border: `1px solid ${c.border}`, transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#c8a96e"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(200,169,110,0.12)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.boxShadow = ""; }}
               data-testid={`contact-${c.label.toLowerCase()}`}
             >
               <div className="flex items-start justify-between mb-8">
-                <c.icon size={22} className="text-[var(--gold)] transition-colors" />
+                <c.icon size={22} className="text-[var(--gold)]" />
                 <div className="flex items-center gap-2">
                   {c.external && <ExternalLink size={12} className="text-[var(--gold)] opacity-60" />}
-                  <span className="text-[10px] uppercase tracking-[0.28em] opacity-50">{c.tag}</span>
+                  <span className="uppercase tracking-[0.28em] opacity-50" style={{ fontSize: "0.7rem" }}>{c.tag}</span>
                 </div>
               </div>
-              <div className="text-xs uppercase tracking-[0.28em] opacity-60 mb-2">{c.label}</div>
-              <div className="font-serif-display leading-snug" style={{ fontSize: "0.9rem", ...c.valueStyle }}>{c.value}</div>
+              <div className="uppercase tracking-[0.28em] opacity-60 mb-2" style={{ fontSize: "0.7rem" }}>{c.label}</div>
+              <div className="font-serif-display leading-snug" style={{ fontSize: c.fontSize, ...c.valueStyle }}>{c.value}</div>
             </motion.a>
           ))}
         </div>
