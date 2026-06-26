@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
+import { useStaff } from "../../context/StaffContext";
 import {
   Check, X, RefreshCw, Loader2, Search, Plus,
   CalendarDays, AlertTriangle, Mail, Send,
@@ -738,6 +739,7 @@ function NewReservationModal({ onSave, onClose }) {
 
 /* ─── Main component ─── */
 export default function Reservations() {
+  const { profile: staffProfile } = useStaff();
   const [rows, setRows]               = useState([]);
   const [loading, setLoading]         = useState(true);
   const [filter, setFilter]           = useState("all");
@@ -815,10 +817,11 @@ export default function Reservations() {
   /* ── Confirm ── */
   const handleConfirm = async (r) => {
     setWorking(r.id);
+    const staffName = staffProfile?.full_name || staffProfile?.email || "A staff member";
     await supabase.from("reservations").update({ status: "confirmed" }).eq("id", r.id);
     setRows((p) => p.map((x) => x.id === r.id ? { ...x, status: "confirmed" } : x));
     await notifyTelegram(
-      `✅ *Reservation Confirmed*\n👤 ${r.name}\n📅 ${fmtDate(r.date)}${r.time ? ` at ${fmtTime(r.time)}` : ""}\n👥 ${r.party === "other" ? r.party_other : r.party} guests${r.occasion ? `\n🎉 ${fmtOccasion(r.occasion)}` : ""}`
+      `✅ *Reservation Confirmed*\n👤 ${r.name}\n📅 ${fmtDate(r.date)}${r.time ? ` at ${fmtTime(r.time)}` : ""}\n👥 ${r.party === "other" ? r.party_other : r.party} guests${r.occasion ? `\n🎉 ${fmtOccasion(r.occasion)}` : ""}\n\n🧑‍💼 Confirmed by: *${staffName}*`
     );
     setWorking(null);
   };
@@ -826,11 +829,12 @@ export default function Reservations() {
   /* ── Reschedule ── */
   const handleReschedule = async (newDate, newTime) => {
     const r = rescheduleTarget;
+    const staffName = staffProfile?.full_name || staffProfile?.email || "A staff member";
     setModalSaving(true);
     await supabase.from("reservations").update({ status: "rescheduled", date: newDate, time: newTime }).eq("id", r.id);
     setRows((p) => p.map((x) => x.id === r.id ? { ...x, status: "rescheduled", date: newDate, time: newTime } : x));
     await notifyTelegram(
-      `📅 *Reservation Rescheduled*\n👤 ${r.name}\n🆕 New date: ${fmtDate(newDate)}${newTime ? ` at ${fmtTime(newTime)}` : ""}`
+      `📅 *Reservation Rescheduled*\n👤 ${r.name}\n🆕 New date: ${fmtDate(newDate)}${newTime ? ` at ${fmtTime(newTime)}` : ""}\n\n🧑‍💼 Rescheduled by: *${staffName}*`
     );
     setModalSaving(false);
     setRescheduleTarget(null);
@@ -839,11 +843,12 @@ export default function Reservations() {
   /* ── Cancel ── */
   const handleCancel = async () => {
     const r = cancelTarget;
+    const staffName = staffProfile?.full_name || staffProfile?.email || "A staff member";
     setModalSaving(true);
     await supabase.from("reservations").update({ status: "cancelled" }).eq("id", r.id);
     setRows((p) => p.map((x) => x.id === r.id ? { ...x, status: "cancelled" } : x));
     await notifyTelegram(
-      `❌ *Reservation Cancelled*\n👤 ${r.name}\n📅 ${fmtDate(r.date)}${r.time ? ` at ${fmtTime(r.time)}` : ""}`
+      `❌ *Reservation Cancelled*\n👤 ${r.name}\n📅 ${fmtDate(r.date)}${r.time ? ` at ${fmtTime(r.time)}` : ""}\n\n🧑‍💼 Cancelled by: *${staffName}*`
     );
     setModalSaving(false);
     setCancelTarget(null);
