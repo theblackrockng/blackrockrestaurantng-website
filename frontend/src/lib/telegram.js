@@ -2,14 +2,18 @@ const TOKEN  = process.env.REACT_APP_TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.REACT_APP_TELEGRAM_CHAT_ID;
 
 export async function notifyTelegram(text) {
-  if (!TOKEN || !CHAT_ID) return;
+  if (!TOKEN || !CHAT_ID) return null;
   try {
-    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    const resp = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "HTML" }),
     });
-  } catch {}
+    const data = await resp.json();
+    return data?.result?.message_id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function reservationMessage(r) {

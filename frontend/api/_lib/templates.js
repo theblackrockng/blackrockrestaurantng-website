@@ -1,7 +1,9 @@
+'use strict';
+
 const BRAND = {
   name: 'BLACKROCK',
   address: '11 Ajao Road, off Adeniyi Jones Road, Ikeja, Lagos',
-  phone: '08055238353 / 09030482774',
+  phone: '+234 903 048 2774',
   email: 'reservations@blackrockrestaurantng.com',
   website: 'blackrockrestaurantng.com',
   instagram: '@blackrockrestaurantng',
@@ -14,70 +16,19 @@ function fmtDate(dateStr) {
   return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function shell({ preheader, content }) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="x-apple-disable-message-reformatting">
-<title>${BRAND.name}</title>
-<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
-</head>
-<body style="margin:0;padding:0;background:#0f0d0a;-webkit-font-smoothing:antialiased;">
-<!-- preheader -->
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
-
-<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#0f0d0a;padding:32px 16px;">
-  <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;">
-
-      <!-- HEADER -->
-      <tr>
-        <td style="padding:40px 40px 32px;text-align:center;background:#0f0d0a;border-bottom:1px solid #2e2820;">
-          <div style="font-family:Georgia,'Times New Roman',serif;font-size:11px;letter-spacing:5px;color:#9C8E7A;text-transform:uppercase;margin-bottom:10px;">Est. 2020 · Lagos</div>
-          <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:700;letter-spacing:7px;color:#C9A84C;text-transform:uppercase;line-height:1;">BLACKROCK</div>
-          <div style="font-family:Georgia,'Times New Roman',serif;font-size:10px;letter-spacing:3px;color:#9C8E7A;text-transform:uppercase;margin-top:6px;">Restaurant &amp; Lounge</div>
-          <div style="width:40px;height:1px;background:#C9A84C;margin:18px auto 0;opacity:0.5;"></div>
-        </td>
-      </tr>
-
-      <!-- CONTENT -->
-      <tr>
-        <td style="background:#1a1612;">
-          ${content}
-        </td>
-      </tr>
-
-      <!-- FOOTER -->
-      <tr>
-        <td style="background:#0f0d0a;padding:28px 40px;border-top:1px solid #2e2820;text-align:center;">
-          <p style="margin:0 0 6px;font-family:Georgia,serif;font-size:12px;color:#9C8E7A;">${BRAND.address}</p>
-          <p style="margin:0 0 6px;font-family:Georgia,serif;font-size:12px;color:#9C8E7A;">${BRAND.phone}</p>
-          <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:12px;color:#9C8E7A;">${BRAND.email}</p>
-          <div style="width:32px;height:1px;background:#C9A84C;margin:0 auto 16px;opacity:0.3;"></div>
-          <p style="margin:0;font-family:Georgia,serif;font-size:10px;color:#9C8E7A;letter-spacing:1px;">© 2025 BLACKROCK. All rights reserved.</p>
-        </td>
-      </tr>
-
-    </table>
-  </td></tr>
-</table>
-</body>
-</html>`;
-}
-
+// ── Internal helper: a two-column detail row for use in bodyHtml tables ──────
 function detailRow(label, value) {
   return `<tr>
-    <td style="padding:14px 0;border-bottom:1px solid #2e2820;">
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        <tr>
-          <td style="font-family:Georgia,serif;font-size:10px;letter-spacing:2.5px;color:#9C8E7A;text-transform:uppercase;width:120px;vertical-align:top;padding-right:16px;">${label}</td>
-          <td style="font-family:Georgia,serif;font-size:15px;color:#F5F0E8;text-align:right;vertical-align:top;">${value}</td>
-        </tr>
-      </table>
-    </td>
+    <td style="padding:12px 0;border-bottom:1px solid #e5e0d8;color:#888;font-size:11px;letter-spacing:2px;text-transform:uppercase;width:120px;vertical-align:top;">${label}</td>
+    <td style="padding:12px 0;border-bottom:1px solid #e5e0d8;color:#1a1a1a;font-size:15px;text-align:right;vertical-align:top;">${value}</td>
   </tr>`;
+}
+
+// ── Internal helper: wrap detail rows in a table ─────────────────────────────
+function detailTable(rows) {
+  return `<table width="100%" style="border-collapse:collapse;margin:20px 0;">
+    ${rows}
+  </table>`;
 }
 
 /* ── EMAIL 1: CONFIRMATION ── */
@@ -85,50 +36,37 @@ exports.confirmationEmail = ({ name, date, time, party, occasion, notes }) => {
   const firstName = (name || 'friend').split(' ')[0];
   const partyLabel = party === 1 ? '1 guest' : `${party} guests`;
 
-  const content = `
-    <!-- Hero -->
-    <div style="padding:48px 40px 32px;text-align:center;border-bottom:1px solid #2e2820;">
-      <div style="width:56px;height:56px;border-radius:50%;background:#C9A84C;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;">
-        <div style="width:56px;height:56px;border-radius:50%;background:#C9A84C;line-height:56px;text-align:center;font-size:22px;">✓</div>
-      </div>
-      <div style="font-family:Georgia,serif;font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:12px;">— Confirmed —</div>
-      <h1 style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#F5F0E8;line-height:1.3;">Your table awaits,<br><em style="color:#C9A84C;">${firstName}.</em></h1>
-      <p style="margin:16px 0 0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.7;">We've received your reservation and we're looking<br>forward to welcoming you.</p>
-    </div>
+  const rows = [
+    detailRow('Occasion', occasion || 'Reservation'),
+    date ? detailRow('Date', fmtDate(date)) : '',
+    time ? detailRow('Time', time) : '',
+    detailRow('Party', partyLabel),
+    detailRow('Address', BRAND.address),
+    notes ? detailRow('Notes', notes) : '',
+  ].join('');
 
-    <!-- Details -->
-    <div style="padding:32px 40px;">
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        ${detailRow('Occasion', occasion || 'Reservation')}
-        ${date ? detailRow('Date', fmtDate(date)) : ''}
-        ${time ? detailRow('Time', time) : ''}
-        ${detailRow('Party', partyLabel)}
-        ${detailRow('Address', BRAND.address)}
-        ${notes ? detailRow('Notes', notes) : ''}
-      </table>
-    </div>
+  const bodyHtml = `
+    <p style="margin:0 0 20px;color:#1a1a1a;">We've received your reservation and we're looking forward to welcoming you.</p>
 
-    <!-- Call to action strip -->
-    <div style="background:#0f0d0a;padding:20px 40px;border-top:1px solid #2e2820;border-bottom:1px solid #2e2820;text-align:center;">
-      <p style="margin:0;font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9C8E7A;">
-        For changes, call
-        <a href="tel:08055238353" style="color:#C9A84C;text-decoration:none;font-weight:600;">08055238353</a>
-        &nbsp;/&nbsp;
-        <a href="tel:09030482774" style="color:#C9A84C;text-decoration:none;font-weight:600;">09030482774</a>
-      </p>
+    <div style="border-left:3px solid #c8a96e;padding-left:16px;margin:20px 0 4px;">
+      <p style="margin:0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c8a96e;font-family:Arial,sans-serif;">Booking Details</p>
     </div>
+    ${detailTable(rows)}
 
-    <!-- Closing note -->
-    <div style="padding:32px 40px;text-align:center;">
-      <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.8;font-style:italic;">"Clean food. Natural ingredients. Exceptional experience."</p>
-      <p style="margin:12px 0 0;font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9C8E7A;">That's the BLACKROCK promise.</p>
-    </div>
+    <p style="margin:20px 0;color:#555;font-size:14px;">
+      For changes, call <a href="tel:+2349030482774" style="color:#c8a96e;text-decoration:none;font-weight:bold;">+234 903 048 2774</a>
+    </p>
+
+    <p style="margin:24px 0 0;font-style:italic;color:#888;font-size:14px;border-top:1px solid rgba(200,169,110,0.2);padding-top:20px;">
+      "Clean food. Natural ingredients. Exceptional experience. — That's the BLACKROCK promise."
+    </p>
   `;
 
-  return shell({
-    preheader: `Your table is confirmed, ${firstName}. ${occasion ? occasion + ' · ' : ''}${date ? fmtDate(date) : ''} at ${time || ''}.`,
-    content,
-  });
+  return {
+    subject: `Your reservation is confirmed — ${occasion || 'BLACKROCK'}`,
+    bodyHtml,
+    guestName: name,
+  };
 };
 
 /* ── EMAIL 2: REMINDER (24–48 hrs before) ── */
@@ -136,38 +74,34 @@ exports.reminderEmail = ({ name, date, time, party, occasion }) => {
   const firstName = (name || 'friend').split(' ')[0];
   const partyLabel = party === 1 ? '1 guest' : `${party} guests`;
 
-  const content = `
-    <div style="padding:48px 40px 32px;text-align:center;border-bottom:1px solid #2e2820;">
-      <div style="font-family:Georgia,serif;font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:12px;">— A Gentle Reminder —</div>
-      <h1 style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#F5F0E8;line-height:1.3;">We'll see you tomorrow,<br><em style="color:#C9A84C;">${firstName}.</em></h1>
-      <p style="margin:16px 0 0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.7;">Your table is ready and we're preparing for your arrival.<br>Here are your booking details.</p>
-    </div>
+  const rows = [
+    detailRow('Occasion', occasion || 'Reservation'),
+    date ? detailRow('Date', fmtDate(date)) : '',
+    time ? detailRow('Time', time) : '',
+    detailRow('Party', partyLabel),
+    detailRow('Address', BRAND.address),
+  ].join('');
 
-    <div style="padding:32px 40px;">
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        ${detailRow('Occasion', occasion || 'Reservation')}
-        ${date ? detailRow('Date', fmtDate(date)) : ''}
-        ${time ? detailRow('Time', time) : ''}
-        ${detailRow('Party', partyLabel)}
-        ${detailRow('Address', BRAND.address)}
-      </table>
-    </div>
+  const bodyHtml = `
+    <p style="margin:0 0 20px;color:#1a1a1a;">Your table is ready and we're preparing for your arrival. Here are your booking details.</p>
 
-    <div style="padding:0 40px 32px;">
-      <div style="background:#8B1A2B;border-radius:4px;padding:20px 24px;text-align:center;">
-        <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:#F5F0E8;line-height:1.7;">Need to reschedule or make changes?<br>Call us at <strong style="color:#C9A84C;">08055238353 / 09030482774</strong> — we're happy to help.</p>
-      </div>
+    <div style="border-left:3px solid #c8a96e;padding-left:16px;margin:20px 0 4px;">
+      <p style="margin:0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c8a96e;font-family:Arial,sans-serif;">Booking Details</p>
     </div>
+    ${detailTable(rows)}
 
-    <div style="padding:0 40px 40px;text-align:center;">
-      <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.8;">We look forward to an evening worth remembering.</p>
-    </div>
+    <p style="margin:20px 0;color:#555;font-size:14px;">
+      Need to reschedule? Call us: <a href="tel:+2349030482774" style="color:#c8a96e;text-decoration:none;font-weight:bold;">+234 903 048 2774</a>
+    </p>
+
+    <p style="margin:24px 0 0;color:#555;font-size:14px;">We look forward to an evening worth remembering.</p>
   `;
 
-  return shell({
-    preheader: `A reminder — your table at BLACKROCK is tomorrow, ${fmtDate(date)} at ${time}.`,
-    content,
-  });
+  return {
+    subject: `Your table at BLACKROCK — a gentle reminder`,
+    bodyHtml,
+    guestName: name,
+  };
 };
 
 /* ── EMAIL 3: DAY-OF WELCOME ── */
@@ -175,112 +109,111 @@ exports.dayOfEmail = ({ name, date, time, party, occasion }) => {
   const firstName = (name || 'friend').split(' ')[0];
   const partyLabel = party === 1 ? '1 guest' : `${party} guests`;
 
-  const content = `
-    <div style="padding:48px 40px 32px;text-align:center;border-bottom:1px solid #2e2820;">
-      <div style="font-family:Georgia,serif;font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:12px;">— Tonight —</div>
-      <h1 style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#F5F0E8;line-height:1.3;">Your table awaits tonight,<br><em style="color:#C9A84C;">${firstName}.</em></h1>
-      <p style="margin:16px 0 0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.7;">Tonight is your night. We've been looking forward<br>to welcoming you all week.</p>
+  const rows = [
+    occasion ? detailRow('Occasion', occasion) : '',
+    time ? detailRow('Time', time) : '',
+    detailRow('Party', partyLabel),
+    detailRow('Address', BRAND.address),
+  ].join('');
+
+  const bodyHtml = `
+    <p style="margin:0 0 20px;color:#1a1a1a;">Tonight is your night. We've been looking forward to welcoming you all week.</p>
+
+    <div style="border-left:3px solid #c8a96e;padding-left:16px;margin:20px 0 4px;">
+      <p style="margin:0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c8a96e;font-family:Arial,sans-serif;">Tonight's Details</p>
+    </div>
+    ${detailTable(rows)}
+
+    <div style="background:#f9f6f1;border:1px solid #e5e0d8;border-radius:4px;padding:20px 24px;margin:20px 0;">
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c8a96e;font-family:Arial,sans-serif;">Getting Here</p>
+      <p style="margin:0;color:#555;font-size:14px;line-height:1.7;">We're on Ajao Road, off Adeniyi Jones Road, Ikeja. There is parking available on-site. If you need directions, call us and we'll guide you in.</p>
     </div>
 
-    <div style="padding:32px 40px;">
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        ${occasion ? detailRow('Occasion', occasion) : ''}
-        ${time ? detailRow('Time', time) : ''}
-        ${detailRow('Party', partyLabel)}
-        ${detailRow('Address', BRAND.address)}
-      </table>
-    </div>
-
-    <div style="padding:0 40px 32px;">
-      <div style="border:1px solid #2e2820;border-radius:4px;padding:20px 24px;">
-        <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;">Getting Here</p>
-        <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:#9C8E7A;line-height:1.7;">We're on Ajao Road, off Adeniyi Jones Road, Ikeja. There is parking available on-site. If you need directions, call us and we'll guide you in.</p>
-      </div>
-    </div>
-
-    <div style="padding:0 40px 40px;text-align:center;">
-      <p style="margin:0;font-family:Georgia,serif;font-size:15px;color:#F5F0E8;font-style:italic;line-height:1.7;">"The best evenings begin with the right table.<br>Yours is waiting."</p>
-    </div>
+    <p style="margin:20px 0 0;font-style:italic;color:#888;font-size:15px;line-height:1.7;">"The best evenings begin with the right table. Yours is waiting."</p>
   `;
 
-  return shell({
-    preheader: `Tonight's the night, ${firstName}. Your table at BLACKROCK is ready for ${time}.`,
-    content,
-  });
+  return {
+    subject: `Tonight at BLACKROCK — your table is ready`,
+    bodyHtml,
+    guestName: name,
+  };
 };
 
 /* ── EMAIL 4: POST-DINING THANK YOU ── */
 exports.thankYouEmail = ({ name, occasion }) => {
   const firstName = (name || 'friend').split(' ')[0];
 
-  const content = `
-    <div style="padding:48px 40px 32px;text-align:center;border-bottom:1px solid #2e2820;">
-      <div style="font-family:Georgia,serif;font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:12px;">— Thank You —</div>
-      <h1 style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#F5F0E8;line-height:1.3;">It was a pleasure,<br><em style="color:#C9A84C;">${firstName}.</em></h1>
-      <p style="margin:16px 0 0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.7;">Thank you for choosing BLACKROCK${occasion ? ` for your ${occasion.toLowerCase()}` : ''}.<br>We hope the evening was everything you imagined.</p>
+  const bodyHtml = `
+    <p style="margin:0 0 20px;color:#1a1a1a;">
+      Thank you for choosing BLACKROCK${occasion ? ` for your ${occasion.toLowerCase()}` : ''}.
+      We hope the evening was everything you imagined.
+    </p>
+
+    <p style="margin:0 0 20px;color:#555;font-size:15px;line-height:1.8;">
+      Your experience matters to us deeply. If you enjoyed your evening — or if anything fell short of what you expected — we'd love to hear from you.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:28px 0;">
+      <tr>
+        <td align="center">
+          <a href="${BRAND.googleReview}" style="background:#c8a96e;color:#1a1a1a;padding:14px 32px;border-radius:4px;font-weight:bold;text-decoration:none;display:inline-block;font-family:Georgia,'Times New Roman',serif;font-size:15px;">Leave a Review</a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 20px;color:#888;font-size:13px;text-align:center;line-height:1.6;">Your review helps other guests find us, and it helps us keep getting better. Thank you.</p>
+
+    <div style="border-top:1px solid rgba(200,169,110,0.2);padding-top:20px;margin-top:24px;">
+      <p style="margin:0 0 12px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c8a96e;font-family:Arial,sans-serif;text-align:center;">Ready for your next visit?</p>
+      <p style="margin:0 0 16px;color:#888;font-size:14px;text-align:center;">Your table is never far away.</p>
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td align="center">
+            <a href="https://blackrockrestaurantng.com/reservations" style="display:inline-block;border:2px solid #c8a96e;color:#c8a96e;padding:12px 28px;border-radius:4px;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:14px;font-weight:bold;">Book Again</a>
+          </td>
+        </tr>
+      </table>
     </div>
 
-    <div style="padding:40px;text-align:center;border-bottom:1px solid #2e2820;">
-      <p style="margin:0 0 24px;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.8;">Your experience matters to us deeply. If you enjoyed your evening — or if anything fell short of what you expected — we'd love to hear from you.</p>
-
-      <a href="${BRAND.googleReview}" style="display:inline-block;background:#C9A84C;color:#0f0d0a;font-family:Georgia,serif;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;text-decoration:none;padding:14px 32px;border-radius:2px;">Leave a Review</a>
-
-      <p style="margin:24px 0 0;font-family:Georgia,serif;font-size:12px;color:#4a4440;line-height:1.6;">Your review helps other guests find us, and it helps us<br>keep getting better. Thank you.</p>
-    </div>
-
-    <div style="padding:32px 40px;">
-      <div style="background:#0f0d0a;border-radius:4px;padding:24px;text-align:center;">
-        <p style="margin:0 0 6px;font-family:Georgia,serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;">Ready for your next visit?</p>
-        <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:13px;color:#9C8E7A;">Your table is never far away.</p>
-        <a href="https://blackrockrestaurantng.com/reservations" style="display:inline-block;border:1px solid #C9A84C;color:#C9A84C;font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;padding:12px 28px;border-radius:2px;">Book Again</a>
-      </div>
-    </div>
-
-    <div style="padding:0 40px 40px;text-align:center;">
-      <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:#9C8E7A;font-style:italic;line-height:1.8;">Until next time,<br><strong style="color:#F5F0E8;font-style:normal;">The BLACKROCK Team</strong></p>
-    </div>
+    <p style="margin:28px 0 0;color:#888;font-size:13px;font-style:italic;line-height:1.8;">
+      Until next time,<br><strong style="color:#1a1a1a;font-style:normal;">The BLACKROCK Team</strong>
+    </p>
   `;
 
-  return shell({
-    preheader: `Thank you for dining with us, ${firstName}. We'd love to hear about your evening.`,
-    content,
-  });
+  return {
+    subject: `Thank you for dining with us — BLACKROCK`,
+    bodyHtml,
+    guestName: name,
+  };
 };
 
 /* ── EMAIL 5: ENQUIRY AUTO-REPLY ── */
 exports.enquiryReplyEmail = ({ name, message }) => {
   const firstName = (name || 'friend').split(' ')[0];
+  const escapedMessage = (message || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-  const content = `
-    <div style="padding:48px 40px 32px;text-align:center;border-bottom:1px solid #2e2820;">
-      <div style="font-family:Georgia,serif;font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:12px;">— We Heard You —</div>
-      <h1 style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#F5F0E8;line-height:1.3;">Thank you,<br><em style="color:#C9A84C;">${firstName}.</em></h1>
-      <p style="margin:16px 0 0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.7;">We've received your enquiry and one of our team<br>will get back to you shortly.</p>
-    </div>
+  const bodyHtml = `
+    <p style="margin:0 0 20px;color:#1a1a1a;">We've received your enquiry and one of our team will get back to you shortly.</p>
 
-    <div style="padding:32px 40px;border-bottom:1px solid #2e2820;">
-      <p style="margin:0 0 10px;font-family:Georgia,serif;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#C9A84C;">Your message</p>
-      <div style="background:#0f0d0a;border-left:2px solid #C9A84C;padding:16px 20px;border-radius:2px;">
-        <p style="margin:0;font-family:Georgia,serif;font-size:13.5px;color:#9C8E7A;line-height:1.8;font-style:italic;">"${(message || '').replace(/"/g, '&quot;')}"</p>
+    <div style="margin:24px 0;">
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c8a96e;font-family:Arial,sans-serif;">Your message</p>
+      <div style="border-left:3px solid #c8a96e;background:#f9f6f1;padding:16px 20px;border-radius:0 4px 4px 0;">
+        <p style="margin:0;color:#555;font-size:14px;line-height:1.8;font-style:italic;">"${escapedMessage}"</p>
       </div>
     </div>
 
-    <div style="padding:32px 40px;text-align:center;border-bottom:1px solid #2e2820;">
-      <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#9C8E7A;line-height:1.8;">If your enquiry is urgent, you can reach us directly:</p>
-      <p style="margin:14px 0 0;font-family:Georgia,serif;font-size:13px;color:#F5F0E8;">
-        <a href="tel:08055238353" style="color:#C9A84C;text-decoration:none;font-weight:600;">08055238353</a>
-        &nbsp;/&nbsp;
-        <a href="tel:09030482774" style="color:#C9A84C;text-decoration:none;font-weight:600;">09030482774</a>
-      </p>
-    </div>
+    <p style="margin:20px 0;color:#555;font-size:14px;line-height:1.7;">
+      If urgent, call: <a href="tel:+2349030482774" style="color:#c8a96e;text-decoration:none;font-weight:bold;">+234 903 048 2774</a>
+    </p>
 
-    <div style="padding:32px 40px;text-align:center;">
-      <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:#9C8E7A;line-height:1.8;font-style:italic;">Warm regards,<br><strong style="color:#F5F0E8;font-style:normal;">The BLACKROCK Team</strong></p>
-    </div>
+    <p style="margin:24px 0 0;color:#888;font-size:13px;font-style:italic;line-height:1.8;">
+      Warm regards,<br><strong style="color:#1a1a1a;font-style:normal;">The BLACKROCK Team</strong>
+    </p>
   `;
 
-  return shell({
-    preheader: `We've received your enquiry, ${firstName}. We'll get back to you shortly.`,
-    content,
-  });
+  return {
+    subject: `We received your enquiry — BLACKROCK`,
+    bodyHtml,
+    guestName: name,
+  };
 };

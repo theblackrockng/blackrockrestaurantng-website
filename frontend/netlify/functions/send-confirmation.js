@@ -1,7 +1,5 @@
-const { Resend } = require('resend');
-const { confirmationEmail } = require('./_lib/templates');
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+const { sendBlackRockEmail } = require('../../api/_lib/email');
+const { confirmationEmail } = require('../../api/_lib/templates');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -22,25 +20,15 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { error } = await resend.emails.send({
-      from: 'BLACKROCK <reservations@blackrockrestaurantng.com>',
-      to: [email],
-      subject: `Your reservation is confirmed — ${occasion || 'BLACKROCK'}`,
-      html: confirmationEmail({ name, date, time, party: Number(party) || 2, occasion, notes }),
-    });
-
-    if (error) {
-      console.error('Resend error:', error);
-      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-    }
-
+    const { subject, bodyHtml, guestName } = confirmationEmail({ name, date, time, party: Number(party) || 2, occasion, notes });
+    await sendBlackRockEmail({ to: email, subject, guestName, bodyHtml, type: 'reservation', ctaText: 'View Reservations', ctaUrl: 'https://blackrockrestaurantng.com/reservations' });
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ok: true }),
     };
   } catch (err) {
-    console.error('Function error:', err);
+    console.error('[send-confirmation]', err);
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };

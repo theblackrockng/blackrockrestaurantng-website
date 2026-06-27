@@ -16,12 +16,12 @@ export default function Contact() {
     e.preventDefault();
     setSendError("");
     setSending(true);
-    const { error } = await supabase.from("enquiries").insert({
+    const { data: enquiryRow, error } = await supabase.from("enquiries").insert({
       name: form.name,
       email: form.email,
       message: form.message,
       status: "new",
-    });
+    }).select("id").single();
     setSending(false);
     if (error) { setSendError("Something went wrong. Please try again or email us directly."); return; }
 
@@ -32,7 +32,16 @@ export default function Contact() {
       body: JSON.stringify({ name: form.name, email: form.email, message: form.message }),
     }).catch(() => {});
 
-    notifyTelegram(enquiryMessage(form));
+    const telegramMsgId = await notifyTelegram(enquiryMessage(form));
+    if (telegramMsgId && enquiryRow?.id) {
+      supabase.from("enquiry_telegram_messages").insert({
+        telegram_message_id: telegramMsgId,
+        enquiry_id: enquiryRow.id,
+        guest_email: form.email,
+        guest_name: form.name,
+      }).catch(() => {});
+    }
+
     setSent(true);
     setForm({ name: "", email: "", message: "" });
     setTimeout(() => setSent(false), 8000);
