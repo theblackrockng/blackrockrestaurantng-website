@@ -10,26 +10,25 @@ const values = [
   { num: "03", title: "A room that was thought about", body: "The light falls softly — so everyone looks like they do on their best day. The music breathes with the room; it knows when to step forward and when to fade into the background. The table is set so you can lean in, laugh without strain, and stay longer than you planned. Nothing here is accidental. Every detail was chosen carefully to make you feel welcomed." },
 ];
 
+const reveal = (y = 24, delay = 0, duration = 0.7) => ({
+  initial: { opacity: 0, y },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-60px" },
+  transition: { duration, delay, ease: "easeOut" },
+});
+
 export default function About() {
   return (
     <div className="page-enter">
       {/* Hero */}
-      <section className="relative h-[70vh] min-h-[480px] overflow-hidden" data-testid="about-hero">
+      <section className="relative h-[50vh] md:h-[65vh] min-h-[320px] overflow-hidden" data-testid="about-hero">
         <img src="/heroimage.png" alt="" className="w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-black/55" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-          <motion.span
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="gold-line mb-6"
-          >
-            Our Story
-          </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.7 }}
+            transition={{ duration: 1, delay: 0.5 }}
             className="font-serif-display text-[var(--warm-white)] text-3xl md:text-6xl lg:text-8xl leading-[0.95]"
           >
             Cut from <span className="font-serif-italic text-[var(--gold)]">black rock.</span>
@@ -39,39 +38,36 @@ export default function About() {
 
       {/* Brand story */}
       <section className="bg-[var(--charcoal)] py-24 md:py-36" data-testid="opening-statement">
-        <div className="max-w-3xl mx-auto px-6 md:px-12">
+        <div className="max-w-[680px] mx-auto px-6 md:px-12">
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-            className="font-serif-display text-3xl md:text-4xl lg:text-5xl leading-[1.2] text-[var(--warm-white)] text-center mb-16"
+            {...reveal(32, 0, 0.9)}
+            className="font-serif-display text-[1.5rem] md:text-[2rem] leading-snug text-[var(--warm-white)] text-center"
+            style={{ marginBottom: 32 }}
           >
             BlackRock was born from a simple realization:
             <span className="font-serif-italic text-[var(--gold)]"> great food deserves a great experience.</span>
           </motion.p>
-          <div className="space-y-8 text-[var(--muted)] text-base md:text-lg leading-relaxed font-light">
-            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.1 }}>
+
+          <div className="space-y-8" style={{ fontSize: "1.05rem", lineHeight: 1.85, color: "rgba(255,255,255,0.75)", fontWeight: 300 }}>
+            <motion.p {...reveal(24, 0)}>
               Our founder, Mr. Shegun Ogunsanya, traveled across different countries and dined in numerous restaurants. During those experiences, he discovered something remarkable. Many of the so-called international dishes were not necessarily better than the rich, flavorful meals we enjoy here at home. What often made the difference was the environment, the professionalism of the service, the ambience, and the attention to detail that made every guest feel valued.
             </motion.p>
-            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }}>
+            <motion.p {...reveal(24, 0.15)}>
               Inspired by this insight, BLACKROCK was created to offer the very best of both worlds: delicious local and continental cuisine served in a welcoming, elegant environment with exceptional customer service.
             </motion.p>
-            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.3 }}>
+            <motion.p {...reveal(24, 0.3)}>
               At BLACKROCK, we believe that quality food begins with quality ingredients. Every meal is prepared using carefully selected natural ingredients, free from artificial additives, colors, and preservatives. Our ingredients are professionally sourced, tested, and transformed into memorable meals by trained culinary professionals in a well-organized kitchen.
             </motion.p>
-            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.4 }}>
+            <motion.p {...reveal(24, 0.45)}>
               We are passionate about serving food that not only tastes exceptional but also supports the health and well-being of our guests. Generous portions, affordable pricing, and uncompromising quality are at the heart of everything we do.
             </motion.p>
-            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.5 }}>
+            <motion.p {...reveal(24, 0.6)}>
               Whether you're dining with family, friends, colleagues, or simply treating yourself, BLACKROCK is a place where great food, excellent service, and a remarkable dining experience come together.
             </motion.p>
           </div>
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.9, delay: 0.6 }}
+            {...reveal(20, 0.3, 0.9)}
             className="mt-16 pt-12 border-t border-[var(--gold)]/20 text-center"
           >
             <p className="font-serif-display text-2xl md:text-3xl lg:text-4xl text-[var(--warm-white)] leading-snug">
@@ -93,20 +89,17 @@ export default function About() {
           />
           <div className="mt-16 space-y-24 md:space-y-32">
             {[
-            { img: IMAGES.interior1, name: "The Restaurant", floor: "Ground Floor", desc: "White linen, warm light, an open kitchen. Continental, traditional, and everything in between. From grilled T-bone to ofada and ayamase. The night begins here.", reverse: false },
-            { img: IMAGES.rooftopNight, name: "The Rooftop Lounge", floor: "Rooftop", desc: "Open to the sky. The Ikeja skyline curling around you. Smaller plates, longer pours, conversations that stretch into morning.", reverse: true },
+            { img: "/restaurant-interior.jpg", name: "The Restaurant", floor: "Ground Floor", desc: "White linen, warm light, an open kitchen. Continental, traditional, and everything in between. From grilled T-bone to ofada and ayamase. The night begins here.", reverse: false },
+            { img: "/rooftop.jpg", name: "The Rooftop Lounge", floor: "Rooftop", desc: "Open to the sky. The Ikeja skyline curling around you. Smaller plates, longer pours, conversations that stretch into morning.", reverse: true },
             ].map((s, i) => (
               <div key={s.name} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                 <motion.div
-                  initial={{ opacity: 0, x: s.reverse ? 30 : -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.9 }}
-                  className={`img-hover aspect-[4/5] ${s.reverse ? "lg:order-2" : ""}`}
+                  {...reveal(30, 0, 0.9)}
+                  className={`img-hover aspect-[4/5] overflow-hidden ${s.reverse ? "lg:order-2" : ""}`}
                 >
-                  <img src={s.img} alt={s.name} loading="lazy" />
+                  <img src={s.img} alt={s.name} loading="lazy" className="w-full h-full object-cover" />
                 </motion.div>
-                <div className={s.reverse ? "lg:order-1" : ""}>
+                <motion.div {...reveal(24, 0.15)} className={s.reverse ? "lg:order-1" : ""}>
                   <span className="gold-line left">{s.floor}</span>
                   <h3 className="font-serif-display text-4xl md:text-5xl lg:text-6xl mt-6 text-[var(--warm-white)]">
                     {s.name}
@@ -121,7 +114,7 @@ export default function About() {
                       Open Daily from 10:00 AM
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             ))}
           </div>
@@ -136,10 +129,7 @@ export default function About() {
             {values.map((v, i) => (
               <motion.div
                 key={v.num}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: i * 0.12 }}
+                {...reveal(30, i * 0.12)}
                 className="border-l border-[var(--gold)]/30 pl-8"
               >
                 <div className="font-serif-display text-6xl text-[var(--gold)] leading-none">{v.num}</div>
@@ -162,10 +152,7 @@ export default function About() {
           ].map((s, i) => (
             <motion.div
               key={s.l}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.1 }}
+              {...reveal(20, i * 0.1, 0.6)}
             >
               <div className="font-serif-display text-5xl md:text-6xl text-[var(--burgundy)]">{s.n}</div>
               <div className="text-xs uppercase tracking-[0.28em] text-[var(--muted)] mt-3">{s.l}</div>
@@ -177,10 +164,7 @@ export default function About() {
       {/* Closing CTA */}
       <section className="bg-[var(--burgundy)] text-[var(--warm-white)] py-24 md:py-32 grain relative" data-testid="about-cta">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.9 }}
+          {...reveal(24, 0, 0.9)}
           className="max-w-3xl mx-auto px-6 md:px-12 text-center relative z-10"
         >
           <span className="gold-line mb-8">Reserve</span>

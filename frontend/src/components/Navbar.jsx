@@ -39,7 +39,7 @@ export default function Navbar({ onReserveClick }) {
             <img
               src="/logo.png"
               alt="BLACKROCK Restaurant & Lounge"
-              className="h-12 md:h-20 w-auto object-contain transition-transform duration-200 hover:scale-105"
+              className="h-12 md:h-16 w-auto object-contain transition-transform duration-200 hover:scale-105"
             />
           </Link>
 
