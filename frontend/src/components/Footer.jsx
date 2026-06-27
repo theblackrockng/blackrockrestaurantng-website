@@ -17,7 +17,12 @@ export default function Footer() {
             transition={{ duration: 0.8 }}
             className="md:col-span-5"
           >
-            <BrandMark variant="dark" size="lg" className="mb-8" />
+            <img
+              src="/logo.png"
+              alt="BLACKROCK Restaurant & Lounge"
+              className="h-20 w-auto object-contain mb-8"
+              style={{ mixBlendMode: "lighten", filter: "drop-shadow(0 0 8px rgba(255,255,255,0.12))" }}
+            />
             <p className="font-serif-italic text-xl text-[var(--gold)] leading-snug max-w-md">
               "Flavor on a plate. Wine in your glass. Connection in the air."
             </p>

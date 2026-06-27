@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NAV_LINKS } from "../lib/data";
-import BrandMark from "./BrandMark";
 
 export default function Navbar({ onReserveClick }) {
   const location = useLocation();
@@ -37,7 +36,12 @@ export default function Navbar({ onReserveClick }) {
         <div className="max-w-[1440px] mx-auto px-4 md:px-12 flex items-center justify-between h-20 md:h-28 lg:h-36">
           {/* Logo */}
           <Link to="/" className="flex items-center" data-testid="logo-link">
-            <span className="navbar-wordmark">BLACKROCK</span>
+            <img
+              src="/logo.png"
+              alt="BLACKROCK Restaurant & Lounge"
+              className="h-12 md:h-16 w-auto object-contain transition-transform duration-200 hover:scale-105"
+              style={{ mixBlendMode: "lighten" }}
+            />
           </Link>
 
           {/* Desktop nav */}
@@ -91,7 +95,7 @@ export default function Navbar({ onReserveClick }) {
             data-testid="mobile-menu"
           >
             <div className="flex items-center justify-between px-6 h-20">
-              <BrandMark variant="dark" size="sm" />
+              <img src="/logo.png" alt="BLACKROCK" className="h-10 w-auto object-contain" style={{ mixBlendMode: "lighten" }} />
               <button onClick={() => setOpen(false)} data-testid="mobile-menu-close" aria-label="Close menu">
                 <X size={26} className="text-[var(--warm-white)]" />
               </button>
