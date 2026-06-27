@@ -80,44 +80,70 @@ export default function About() {
       </section>
 
       {/* Two spaces detailed */}
-      <section className="bg-[var(--charcoal-soft)] py-24 md:py-36" data-testid="three-spaces-about">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12">
+      <section className="bg-[var(--charcoal-soft)] pt-24 pb-24 md:pt-28 md:pb-28" data-testid="three-spaces-about">
+        {/* Heading */}
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12" style={{ marginBottom: 40 }}>
           <SectionHeader
             kicker="Two Spaces"
             title="One destination, two moods."
             align="left"
           />
-          <div className="mt-16 space-y-24 md:space-y-32">
-            {[
-            { img: "/restaurant-interior.jpg", name: "The Restaurant", floor: "Ground Floor", desc: "White linen, warm light, an open kitchen. Continental, traditional, and everything in between. From grilled T-bone to ofada and ayamase. The night begins here.", reverse: false },
-            { img: "/rooftop.jpg", name: "The Rooftop Lounge", floor: "Rooftop", desc: "Open to the sky. The Ikeja skyline curling around you. Smaller plates, longer pours, conversations that stretch into morning.", reverse: true },
-            ].map((s, i) => (
-              <div key={s.name} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-                <motion.div
-                  {...reveal(30, 0, 0.9)}
-                  className={`img-hover aspect-[4/5] overflow-hidden ${s.reverse ? "lg:order-2" : ""}`}
-                >
-                  <img src={s.img} alt={s.name} loading="lazy" className="w-full h-full object-cover" />
-                </motion.div>
-                <motion.div {...reveal(24, 0.15)} className={s.reverse ? "lg:order-1" : ""}>
-                  <span className="gold-line left">{s.floor}</span>
-                  <h3 className="font-serif-display text-4xl md:text-5xl lg:text-6xl mt-6 text-[var(--warm-white)]">
-                    {s.name}
-                  </h3>
-                  <p className="text-[var(--muted)] text-base md:text-lg leading-relaxed mt-6 font-light max-w-lg">
-                    {s.desc}
-                  </p>
-                  <div className="mt-10 flex items-center gap-3">
-                    <div className="font-serif-display text-6xl text-[var(--burgundy)] leading-none">0{i + 1}</div>
-                    <div className="w-12 h-px bg-[var(--gold)]" />
-                    <div className="text-xs uppercase tracking-[0.3em] text-[var(--muted)]">
-                      Open Daily from 10:00 AM
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            ))}
-          </div>
+        </div>
+
+        {/* Panels */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {[
+            { img: "/restaurant-interior.jpg", name: "The Restaurant",    floor: "Ground Floor", desc: "White linen, warm light, an open kitchen. Continental, traditional, and everything in between. From grilled T-bone to ofada and ayamase. The night begins here.", imgLeft: true,  num: "01" },
+            { img: "/rooftop.jpg",             name: "The Rooftop Lounge", floor: "Rooftop",      desc: "Open to the sky. The Ikeja skyline curling around you. Smaller plates, longer pours, conversations that stretch into morning.",                              imgLeft: false, num: "02" },
+          ].map((s, i) => (
+            <div
+              key={s.name}
+              className="flex flex-col lg:flex-row"
+              style={{ minHeight: 480 }}
+            >
+              {/* Image */}
+              <motion.div
+                {...reveal(30, 0, 0.9)}
+                style={{ order: s.imgLeft ? 0 : 1, overflow: "hidden", flexShrink: 0 }}
+                className="w-full h-[280px] lg:h-auto lg:w-[55%]"
+              >
+                <img
+                  src={s.img}
+                  alt={s.name}
+                  loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", borderRadius: 0 }}
+                />
+              </motion.div>
+
+              {/* Text */}
+              <motion.div
+                {...reveal(24, 0.15)}
+                style={{
+                  order: s.imgLeft ? 1 : 0,
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  padding: "48px 48px",
+                  background: "var(--charcoal)",
+                }}
+                className="px-8 py-10 md:px-12 md:py-16"
+              >
+                <span className="gold-line left">{s.floor}</span>
+                <h3 className="font-serif-display text-4xl md:text-5xl lg:text-6xl mt-6 text-[var(--warm-white)]">
+                  {s.name}
+                </h3>
+                <p className="text-[var(--muted)] text-base md:text-lg leading-relaxed mt-6 font-light" style={{ maxWidth: 420 }}>
+                  {s.desc}
+                </p>
+                <div className="mt-10 flex items-center gap-3">
+                  <div className="font-serif-display text-5xl text-[var(--burgundy)] leading-none">{s.num}</div>
+                  <div className="w-10 h-px bg-[var(--gold)]" />
+                  <div className="text-xs uppercase tracking-[0.3em] text-[var(--muted)]">Open Daily from 10:00 AM</div>
+                </div>
+              </motion.div>
+            </div>
+          ))}
         </div>
       </section>
 
