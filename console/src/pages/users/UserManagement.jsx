@@ -743,6 +743,11 @@ export default function UserManagement() {
   return (
     <div style={{ padding: "32px 32px", maxWidth: 1100, margin: "0 auto" }}>
 
+      {/* Logo */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+        <img src="/logo.png" alt="BLACKROCK" style={{ height: 90, width: "auto", objectFit: "contain" }} />
+      </div>
+
       {/* Page header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
         <div>
