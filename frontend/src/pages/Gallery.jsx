@@ -193,13 +193,22 @@ export default function Gallery() {
       </section>
 
       {/* Two concepts */}
-      <section className="bg-[var(--charcoal-soft)] text-[var(--warm-white)] py-24 md:py-32" data-testid="concepts-section">
+      <section className="bg-[var(--charcoal-soft)] text-[var(--warm-white)] pt-24 md:pt-32 pb-0" data-testid="concepts-section">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12">
           <SectionHeader kicker="Two Faces" title="Daylight & After Dark." />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
             {[
-              { img: IMAGES.rooftopDay,   title: "Daylight & Fresh", desc: "Sunday brunches, soft afternoon light, slow lunches that turn into dinner." },
-              { img: IMAGES.rooftopNight, title: "After Dark",        desc: "The city below, the night above. The rooftop at its best. Candlelit, open sky, you in the middle of it." },
+              {
+                /* TODO: Replace with real BlackRock daytime interior photo after shoot */
+                img: IMAGES.rooftopDay,
+                title: "Daylight & Fresh",
+                desc: "Sunday brunches, soft afternoon light, slow lunches that turn into dinner.",
+              },
+              {
+                img: IMAGES.rooftopNight,
+                title: "After Dark",
+                desc: "The city below, the night above. The rooftop at its best. Candlelit, open sky, you in the middle of it.",
+              },
             ].map((c, i) => (
               <motion.div
                 key={c.title}
@@ -208,9 +217,14 @@ export default function Gallery() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: i * 0.15 }}
                 whileHover={{ y: -6, transition: { duration: 0.3 } }}
-                className="img-hover aspect-[4/3] relative"
+                style={{ height: 480, overflow: "hidden", position: "relative" }}
               >
-                <img src={c.img} alt={c.title} loading="lazy" />
+                <img
+                  src={c.img}
+                  alt={c.title}
+                  loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
                   <h3 className="font-serif-display text-3xl md:text-5xl">{c.title}</h3>
@@ -223,13 +237,37 @@ export default function Gallery() {
       </section>
 
       {/* CTA */}
-      <section className="bg-[var(--charcoal)] py-24 text-center" data-testid="gallery-cta">
+      <section className="bg-[var(--charcoal-soft)] pb-24 text-center" style={{ paddingTop: 60 }} data-testid="gallery-cta">
         <div className="max-w-2xl mx-auto px-6">
-          <SectionHeader
-            kicker="See it for yourself"
-            title="Pictures can't pour you a drink."
-            subtitle="Book a table. The rest is in person."
-          />
+          <motion.span
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6 }}
+            className="gold-line"
+          >
+            See it for yourself
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="font-serif-display text-[var(--warm-white)] leading-[1.05] mt-5"
+            style={{ fontSize: "clamp(1.8rem, 5vw, 2.8rem)" }}
+          >
+            Pictures can't pour you a drink.
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="font-light leading-relaxed mt-5"
+            style={{ fontSize: "1rem", color: "rgba(255,255,255,0.7)" }}
+          >
+            Book a table. The rest is in person.
+          </motion.p>
           <Link to="/reservations" className="btn-burgundy mt-12 inline-flex" data-testid="gallery-reserve">
             Reserve a Table <ArrowRight size={14} />
           </Link>
