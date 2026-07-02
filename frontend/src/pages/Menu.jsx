@@ -201,38 +201,43 @@ export default function MenuPage() {
           >
             From our kitchen to our bar. Freshly made, carefully chosen, served with care.
           </motion.p>
-        </div>
-      </section>
-
-      {/* Food / Drinks switcher */}
-      <section className="bg-[var(--charcoal)] pt-10 pb-4" data-testid="menu-type-switcher">
-        <div className="flex items-center justify-center gap-3">
-          {[
-            { key: "food",  label: "🍽  FOOD" },
-            { key: "drink", label: "🍷  DRINKS" },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => switchMenuType(key)}
-              style={{
-                minWidth: 120,
-                padding: "10px 32px",
-                borderRadius: 50,
-                border: "1px solid #c8a96e",
-                background: menuType === key ? "#c8a96e" : "transparent",
-                color: menuType === key ? "#1a1a1a" : "#c8a96e",
-                fontWeight: menuType === key ? 700 : 600,
-                fontSize: "0.75rem",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                transition: "background 0.2s ease, color 0.2s ease",
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.9 }}
+            className="flex gap-4 mt-8 justify-center"
+            data-testid="menu-type-switcher"
+          >
+            {[
+              { key: "food",  label: "FOOD" },
+              { key: "drink", label: "DRINKS" },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => switchMenuType(key)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "14px 40px",
+                  background: menuType === key ? "#c8a96e" : "transparent",
+                  color: menuType === key ? "#1a1a1a" : "rgba(245,240,232,0.9)",
+                  border: menuType === key ? "1px solid #c8a96e" : "1px solid rgba(245,240,232,0.5)",
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: "13px",
+                  fontWeight: menuType === key ? 700 : 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </motion.div>
         </div>
       </section>
 
