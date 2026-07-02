@@ -115,6 +115,11 @@ const CATEGORIES = [
   "Charcoal Grills", "National Dishes", "Traditional Specials",
 ];
 
+const DRINK_CATEGORIES = [
+  "Wines", "Spirits", "Beer & Cider", "Cocktails",
+  "Mocktails", "Soft Drinks & Water", "Hot Drinks", "Fresh Juice",
+];
+
 const INPUT_STYLE = {
   width: "100%",
   background: "var(--ds-input-bg)",
@@ -333,12 +338,14 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, dragProps }) {
 }
 
 /* ─── EditPanel ─── */
-function EditPanel({ dish, onClose, onSaved }) {
+function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
   const isNew = !dish?.id;
   const fileInputRef = useRef(null);
+  const resolvedMenuType = dish?.menu_type ?? defaultMenuType;
   const [form, setForm] = useState({
     name: dish?.name ?? "",
-    category: dish?.category ?? CATEGORIES[0],
+    menu_type: resolvedMenuType,
+    category: dish?.category ?? (resolvedMenuType === "drink" ? DRINK_CATEGORIES[0] : CATEGORIES[0]),
     price: dish?.price ?? "",
     description: dish?.description ?? "",
     available: dish?.available ?? true,
@@ -367,6 +374,7 @@ function EditPanel({ dish, onClose, onSaved }) {
       }
       const payload = {
         name: form.name.trim(),
+        menu_type: form.menu_type,
         category: form.category,
         price: parseFloat(String(form.price).replace(/,/g, "")),
         description: form.description.trim(),
@@ -405,7 +413,7 @@ function EditPanel({ dish, onClose, onSaved }) {
         {/* Header */}
         <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--ds-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600, color: "var(--ds-text)" }}>
-            {isNew ? "Add Dish" : "Edit Dish"}
+            {isNew ? (form.menu_type === "drink" ? "Add Drink" : "Add Dish") : (form.menu_type === "drink" ? "Edit Drink" : "Edit Dish")}
           </span>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ds-muted)", display: "flex" }}><X size={18} /></button>
         </div>
@@ -413,16 +421,41 @@ function EditPanel({ dish, onClose, onSaved }) {
         {/* Form */}
         <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Menu Type toggle */}
+            <div>
+              <label style={LABEL_STYLE}>Menu Type</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {["food", "drink"].map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      const cats = t === "drink" ? DRINK_CATEGORIES : CATEGORIES;
+                      set("menu_type", t);
+                      set("category", cats[0]);
+                    }}
+                    style={{
+                      flex: 1, padding: "8px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
+                      background: form.menu_type === t ? "var(--ds-gold)" : "var(--ds-input-bg)",
+                      color: form.menu_type === t ? "#1a1a1a" : "var(--ds-muted)",
+                      fontFamily: "'DM Sans', sans-serif", transition: "background 0.15s, color 0.15s",
+                    }}
+                  >
+                    {t === "food" ? "Food" : "Drinks"}
+                  </button>
+                ))}
+              </div>
+            </div>
             {/* Name */}
             <div>
-              <label style={LABEL_STYLE}>Dish Name</label>
-              <input style={INPUT_STYLE} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Grilled Snapper" />
+              <label style={LABEL_STYLE}>{form.menu_type === "drink" ? "Drink Name" : "Dish Name"}</label>
+              <input style={INPUT_STYLE} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder={form.menu_type === "drink" ? "e.g. Hennessy VSOP" : "e.g. Grilled Snapper"} />
             </div>
             {/* Category */}
             <div>
               <label style={LABEL_STYLE}>Category</label>
               <select style={INPUT_STYLE} value={form.category} onChange={(e) => set("category", e.target.value)}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {(form.menu_type === "drink" ? DRINK_CATEGORIES : CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             {/* Price */}
@@ -542,6 +575,7 @@ function FilterTab({ label, active, onClick }) {
 export default function MenuManagement() {
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [menuType, setMenuType] = useState("food");
   const [activeCategory, setActiveCategory] = useState("All");
   const [editingDish, setEditingDish] = useState(null);
   const [showPanel, setShowPanel] = useState(false);
@@ -577,7 +611,8 @@ export default function MenuManagement() {
 
   useEffect(() => { fetchDishes(); }, [fetchDishes]);
 
-  const filtered = activeCategory === "All" ? dishes : dishes.filter((d) => d.category === activeCategory);
+  const byType = dishes.filter((d) => (d.menu_type ?? "food") === menuType);
+  const filtered = activeCategory === "All" ? byType : byType.filter((d) => d.category === activeCategory);
 
   /* ─── Drag handlers ─── */
   const handleDragStart = (id) => setDragId(id);
@@ -641,7 +676,7 @@ export default function MenuManagement() {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 600, color: "var(--ds-text)", margin: "0 0 4px" }}>Menu Management</h1>
-          <p style={{ fontSize: 13, color: "var(--ds-muted)", margin: 0 }}>Add, edit, and manage dishes on the public website</p>
+          <p style={{ fontSize: 13, color: "var(--ds-muted)", margin: 0 }}>Add, edit, and manage food and drinks on the public website</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {!seedDone && dishes.length === 0 && (
@@ -653,14 +688,34 @@ export default function MenuManagement() {
               <Download size={15} /> {seeding ? "Importing…" : "Import from Website"}
             </button>
           )}
-          <button style={GOLD_BTN} onClick={openAdd}><Plus size={15} /> Add New Dish</button>
+          <button style={GOLD_BTN} onClick={openAdd}>
+            <Plus size={15} /> {menuType === "drink" ? "Add New Drink" : "Add New Dish"}
+          </button>
         </div>
+      </div>
+
+      {/* Food / Drinks Switcher */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--ds-input-bg)", borderRadius: 10, padding: 4, width: "fit-content", border: "1px solid var(--ds-border)" }}>
+        {[{ key: "food", label: "Food" }, { key: "drink", label: "Drinks" }].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => { setMenuType(key); setActiveCategory("All"); }}
+            style={{
+              padding: "7px 22px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
+              background: menuType === key ? "var(--ds-gold)" : "transparent",
+              color: menuType === key ? "#1a1a1a" : "var(--ds-muted)",
+              fontFamily: "'DM Sans', sans-serif", transition: "background 0.15s, color 0.15s",
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Category Filter */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 24 }}>
         <FilterTab label="All" active={activeCategory === "All"} onClick={() => setActiveCategory("All")} />
-        {CATEGORIES.map((c) => (
+        {(menuType === "drink" ? DRINK_CATEGORIES : CATEGORIES).map((c) => (
           <FilterTab key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(c)} />
         ))}
       </div>
@@ -672,9 +727,11 @@ export default function MenuManagement() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: 14 }}>
           <UtensilsCrossed size={40} strokeWidth={1.2} style={{ color: "var(--ds-muted)", opacity: 0.4 }} />
           <p style={{ color: "var(--ds-muted)", fontSize: 14, margin: 0, textAlign: "center" }}>
-            {activeCategory === "All" ? "No dishes yet." : `No dishes in "${activeCategory}" yet.`}
+            {activeCategory === "All"
+              ? (menuType === "drink" ? "No drinks yet." : "No dishes yet.")
+              : `No ${menuType === "drink" ? "drinks" : "dishes"} in "${activeCategory}" yet.`}
           </p>
-          {activeCategory === "All" && (
+          {activeCategory === "All" && menuType === "food" && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
               <button
                 style={{ ...GOLD_BTN, opacity: seeding ? 0.7 : 1 }}
@@ -685,6 +742,9 @@ export default function MenuManagement() {
               </button>
               <button style={{ ...GHOST_BTN }} onClick={openAdd}><Plus size={14} /> Add Single Dish</button>
             </div>
+          )}
+          {activeCategory === "All" && menuType === "drink" && (
+            <button style={GHOST_BTN} onClick={openAdd}><Plus size={14} /> Add Drink</button>
           )}
         </div>
       ) : (
@@ -734,6 +794,7 @@ export default function MenuManagement() {
         {showPanel && (
           <EditPanel
             dish={editingDish}
+            defaultMenuType={menuType}
             onClose={() => { setShowPanel(false); setEditingDish(null); }}
             onSaved={() => { setShowPanel(false); setEditingDish(null); fetchDishes(); }}
           />
