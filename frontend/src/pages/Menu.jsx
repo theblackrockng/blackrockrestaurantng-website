@@ -18,15 +18,38 @@ const categoryImages = {
   "Traditional Specials":    "/images/menu/traditional.jpg",
 };
 
+const DRINK_CATEGORY_IMAGES = {
+  "Wines":               "/images/menu/bar.jpg",
+  "Spirits":             "/images/menu/bar.jpg",
+  "Beer & Cider":        "/images/menu/bar.jpg",
+  "Cocktails":           "/images/menu/bar.jpg",
+  "Mocktails":           "/images/menu/bar.jpg",
+  "Soft Drinks & Water": "/images/menu/bar.jpg",
+  "Hot Drinks":          "/images/menu/bar.jpg",
+  "Fresh Juice":         "/images/menu/bar.jpg",
+};
+
+const FOOD_CATEGORY_ORDER = [
+  "Starters", "Salads", "Rice", "Noodles",
+  "Pepper Soup & Specials", "Continental", "Sauces",
+  "Charcoal Grills", "National Dishes", "Traditional Specials",
+];
+
+const DRINK_CATEGORY_ORDER = [
+  "Wines", "Spirits", "Beer & Cider", "Cocktails",
+  "Mocktails", "Soft Drinks & Water", "Hot Drinks", "Fresh Juice",
+];
+
 function formatPrice(price) {
   const num = parseFloat(String(price).replace(/[^0-9.]/g, ""));
   if (isNaN(num)) return String(price);
   return `₦${num.toLocaleString("en-NG")}`;
 }
 
-function CategoryImage({ category }) {
+function CategoryImage({ category, menuType }) {
   const [errorCats, setErrorCats] = useState(new Set());
-  const src = categoryImages[category];
+  const imgMap = menuType === "drink" ? DRINK_CATEGORY_IMAGES : categoryImages;
+  const src = imgMap[category];
   const hasError = errorCats.has(category);
   const showImage = src && !hasError;
 
@@ -35,7 +58,7 @@ function CategoryImage({ category }) {
       <AnimatePresence mode="wait">
         {showImage ? (
           <motion.img
-            key={category}
+            key={`${menuType}-${category}`}
             src={src}
             alt={category}
             onError={() => setErrorCats(prev => new Set([...prev, category]))}
@@ -47,7 +70,7 @@ function CategoryImage({ category }) {
           />
         ) : (
           <motion.div
-            key={`placeholder-${category}`}
+            key={`placeholder-${menuType}-${category}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -66,7 +89,6 @@ function CategoryImage({ category }) {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Bottom gradient to blend into dark background */}
       <div
         className="absolute inset-x-0 bottom-0 pointer-events-none"
         style={{ height: "30%", background: "linear-gradient(to top, rgba(0,0,0,0.5), transparent)" }}
@@ -76,8 +98,11 @@ function CategoryImage({ category }) {
 }
 
 export default function MenuPage() {
-  const [menuByCategory, setMenuByCategory] = useState({});
-  const [categories, setCategories] = useState([]);
+  const [foodByCategory, setFoodByCategory] = useState({});
+  const [drinksByCategory, setDrinksByCategory] = useState({});
+  const [foodCategories, setFoodCategories] = useState([]);
+  const [drinkCategories, setDrinkCategories] = useState([]);
+  const [menuType, setMenuType] = useState("food");
   const [active, setActive] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -89,18 +114,53 @@ export default function MenuPage() {
       .order("sort_order", { ascending: true, nullsFirst: false })
       .then(({ data }) => {
         if (!data || data.length === 0) { setLoading(false); return; }
-        const grouped = {};
+
+        const food = {};
+        const drinks = {};
+
         data.forEach((item) => {
-          if (!grouped[item.category]) grouped[item.category] = [];
-          grouped[item.category].push(item);
+          const type = item.menu_type ?? "food";
+          if (type === "drink") {
+            if (!drinks[item.category]) drinks[item.category] = [];
+            drinks[item.category].push(item);
+          } else {
+            if (!food[item.category]) food[item.category] = [];
+            food[item.category].push(item);
+          }
         });
-        const cats = Object.keys(grouped);
-        setMenuByCategory(grouped);
-        setCategories(cats);
-        setActive(cats[0]);
+
+        const sortCats = (grouped, order) => {
+          const orderLower = order.map((c) => c.toLowerCase());
+          return Object.keys(grouped).sort((a, b) => {
+            const ai = orderLower.indexOf(a.toLowerCase());
+            const bi = orderLower.indexOf(b.toLowerCase());
+            return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+          });
+        };
+
+        const fCats = sortCats(food, FOOD_CATEGORY_ORDER);
+        const dCats = sortCats(drinks, DRINK_CATEGORY_ORDER);
+
+        setFoodByCategory(food);
+        setDrinksByCategory(drinks);
+        setFoodCategories(fCats);
+        setDrinkCategories(dCats);
+        setActive(fCats[0] || "");
         setLoading(false);
       });
   }, []);
+
+  const switchMenuType = (type) => {
+    setMenuType(type);
+    if (type === "food") {
+      setActive(foodCategories[0] || "");
+    } else {
+      setActive(drinkCategories[0] || "");
+    }
+  };
+
+  const activeCategories = menuType === "drink" ? drinkCategories : foodCategories;
+  const activeMenuByCategory = menuType === "drink" ? drinksByCategory : foodByCategory;
 
   return (
     <div className="page-enter">
@@ -130,7 +190,8 @@ export default function MenuPage() {
             transition={{ duration: 0.9, delay: 0.5 }}
             className="font-serif-display text-3xl md:text-5xl lg:text-8xl leading-[0.95] mt-6 md:mt-8 text-[var(--warm-white)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)]"
           >
-            What we'll <span className="font-serif-italic text-[var(--burgundy)]">cook for you.</span>
+            A menu built for{" "}
+            <span className="font-serif-italic text-[var(--burgundy)]">every moment.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -138,9 +199,40 @@ export default function MenuPage() {
             transition={{ duration: 0.8, delay: 0.7 }}
             className="text-white/75 mt-8 max-w-2xl mx-auto font-light text-base md:text-lg leading-relaxed"
           >
-            Our menu shifts with the seasons and the markets. What follows is a
-            recent expression. Your night may bring something new.
+            From our kitchen to our bar. Freshly made, carefully chosen, served with care.
           </motion.p>
+        </div>
+      </section>
+
+      {/* Food / Drinks switcher */}
+      <section className="bg-[var(--charcoal)] pt-10 pb-4" data-testid="menu-type-switcher">
+        <div className="flex items-center justify-center gap-3">
+          {[
+            { key: "food",  label: "🍽  FOOD" },
+            { key: "drink", label: "🍷  DRINKS" },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => switchMenuType(key)}
+              style={{
+                minWidth: 120,
+                padding: "10px 32px",
+                borderRadius: 50,
+                border: "1px solid #c8a96e",
+                background: menuType === key ? "#c8a96e" : "transparent",
+                color: menuType === key ? "#1a1a1a" : "#c8a96e",
+                fontWeight: menuType === key ? 700 : 600,
+                fontSize: "0.75rem",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                transition: "background 0.2s ease, color 0.2s ease",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </section>
 
@@ -156,23 +248,28 @@ export default function MenuPage() {
               className="flex gap-2 py-4"
               style={{ overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
             >
-              {categories.map((cat) => (
-                <motion.button
-                  key={cat}
-                  onClick={() => setActive(cat)}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  className={`flex-shrink-0 px-4 py-2 md:px-6 md:py-3 text-xs uppercase tracking-[0.22em] font-medium transition-all duration-300 border whitespace-nowrap ${
-                    active === cat
-                      ? "bg-[var(--gold)] text-[var(--charcoal)] border-[var(--gold)]"
-                      : "bg-transparent text-[var(--muted)] border-[var(--border-soft)] hover:border-[var(--gold)] hover:text-[var(--warm-white)]"
-                  }`}
-                  data-testid={`menu-tab-${cat.toLowerCase()}`}
-                >
-                  {cat}
-                </motion.button>
-              ))}
+              <AnimatePresence mode="wait">
+                {activeCategories.map((cat) => (
+                  <motion.button
+                    key={`${menuType}-${cat}`}
+                    onClick={() => setActive(cat)}
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                    className={`flex-shrink-0 px-4 py-2 md:px-6 md:py-3 text-xs uppercase tracking-[0.22em] font-medium transition-all duration-300 border whitespace-nowrap ${
+                      active === cat
+                        ? "bg-[var(--gold)] text-[var(--charcoal)] border-[var(--gold)]"
+                        : "bg-transparent text-[var(--muted)] border-[var(--border-soft)] hover:border-[var(--gold)] hover:text-[var(--warm-white)]"
+                    }`}
+                    data-testid={`menu-tab-${cat.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    {cat}
+                  </motion.button>
+                ))}
+              </AnimatePresence>
             </div>
             <div
               className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none"
@@ -189,31 +286,31 @@ export default function MenuPage() {
             <div className="text-center py-24 text-[var(--muted)] text-sm tracking-widest uppercase">
               Loading menu…
             </div>
-          ) : categories.length === 0 ? (
+          ) : activeCategories.length === 0 ? (
             <div className="text-center py-24 text-[var(--muted)] text-sm">
-              Menu coming soon.
+              {menuType === "drink" ? "Drinks menu coming soon." : "Menu coming soon."}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
-              {/* Category image — transitions on tab change, never on dish hover */}
+              {/* Category image */}
               <div className="lg:col-span-5 lg:sticky lg:top-44 self-start">
-                <CategoryImage category={active} />
+                <CategoryImage category={active} menuType={menuType} />
                 <div className="mt-6">
                   <span className="gold-line">{active}</span>
                 </div>
               </div>
 
-              {/* Dish list */}
+              {/* Item list */}
               <div className="lg:col-span-7">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={active}
+                    key={`${menuType}-${active}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.5 }}
                   >
-                    {(menuByCategory[active] || []).map((item, i) => (
+                    {(activeMenuByCategory[active] || []).map((item, i) => (
                       <motion.div
                         key={item.id}
                         initial={{ opacity: 0, y: 16 }}
