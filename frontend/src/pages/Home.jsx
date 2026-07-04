@@ -392,7 +392,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.15 }}
             className="mt-5 text-sm text-[var(--muted)] leading-relaxed"
           >
-            Order ahead and have it ready when you arrive. Or book a table and let us take care of the rest.
+            Order ahead and have it ready when you arrive. Or have it delivered to your doorstep.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
