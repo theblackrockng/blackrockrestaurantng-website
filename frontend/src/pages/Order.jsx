@@ -1,21 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { Plus, Minus, ShoppingBag } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { MENU } from "../lib/data";
 import { useCart } from "../context/CartContext";
 
-const CATEGORY_ORDER = [
-  "Starters",
-  "Salads",
-  "Rice",
-  "Noodles",
-  "Pepper Soup & Specials",
-  "Continental",
-  "Sauces",
-  "Charcoal Grills",
-  "National Dishes",
-  "Traditional Specials",
+const FOOD_CATEGORY_ORDER = [
+  "Starters", "Salads", "Rice", "Noodles",
+  "Pepper Soup & Specials", "Continental", "Sauces",
+  "Charcoal Grills", "National Dishes", "Traditional Specials",
+];
+
+const DRINK_CATEGORY_ORDER = [
+  "Beer & Cider", "Cocktails", "Mocktails",
+  "Soft Drinks & Water", "Hot Drinks", "Fresh Juice",
+  "Spirits", "Wines",
 ];
 
 function fmtPrice(n) {
@@ -27,11 +25,16 @@ function slugify(str) {
 }
 
 export default function Order() {
-  const navigate = useNavigate();
   const { items: cartItems, addItem, setQty, totalItems, subtotal, setDrawerOpen } = useCart();
-  const [menuData, setMenuData] = useState(null);
-  const [activeCategory, setActiveCategory] = useState(CATEGORY_ORDER[0]);
-  const sectionRefs = useRef({});
+
+  const [foodData, setFoodData] = useState(null);
+  const [drinkData, setDrinkData] = useState(null);
+  const [menuType, setMenuType] = useState("food");
+  const [activeFoodCat, setActiveFoodCat] = useState(FOOD_CATEGORY_ORDER[0]);
+  const [activeDrinkCat, setActiveDrinkCat] = useState(DRINK_CATEGORY_ORDER[0]);
+
+  const foodSectionRefs = useRef({});
+  const drinkSectionRefs = useRef({});
   const scrollingProgrammatically = useRef(false);
   const tabsRef = useRef(null);
 
@@ -41,55 +44,79 @@ export default function Order() {
         const { data, error } = await supabase
           .from("menu_items")
           .select("*")
-          .eq("is_available", true)
-          .order("category")
+          .eq("available", true)
           .order("sort_order", { ascending: true, nullsFirst: false });
 
-        if (error || !data || data.length === 0) {
-          // Fallback to static MENU data
-          const converted = {};
+        const food = {};
+        const drinks = {};
+
+        if (!error && data && data.length > 0) {
+          for (const item of data) {
+            const type = item.menu_type ?? "food";
+            const cat = item.category || "Other";
+            if (type === "drink") {
+              if (!drinks[cat]) drinks[cat] = [];
+              drinks[cat].push(item);
+            } else {
+              if (!food[cat]) food[cat] = [];
+              food[cat].push(item);
+            }
+          }
+        }
+
+        // Food fallback to static data if Supabase returned nothing
+        if (Object.keys(food).length === 0) {
           for (const [cat, dishes] of Object.entries(MENU)) {
-            converted[cat] = dishes.map((d, idx) => ({
+            food[cat] = dishes.map((d, idx) => ({
               id: `static-${slugify(cat)}-${idx}`,
               name: d.name,
               description: d.desc,
               price: parseInt((d.price || "0").replace(/[₦,]/g, ""), 10) || 0,
               category: cat,
-              is_available: true,
+              available: true,
             }));
           }
-          setMenuData(converted);
-        } else {
-          // Group by category
-          const grouped = {};
-          for (const item of data) {
-            const cat = item.category || "Other";
-            if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(item);
-          }
-          setMenuData(grouped);
         }
+
+        setFoodData(food);
+        setDrinkData(drinks);
+
+        const fCats = FOOD_CATEGORY_ORDER.filter((c) => food[c]?.length > 0);
+        const dCats = DRINK_CATEGORY_ORDER.filter((c) => drinks[c]?.length > 0);
+        if (fCats[0]) setActiveFoodCat(fCats[0]);
+        if (dCats[0]) setActiveDrinkCat(dCats[0]);
       } catch {
-        // Fallback
-        const converted = {};
+        const food = {};
         for (const [cat, dishes] of Object.entries(MENU)) {
-          converted[cat] = dishes.map((d, idx) => ({
+          food[cat] = dishes.map((d, idx) => ({
             id: `static-${slugify(cat)}-${idx}`,
             name: d.name,
             description: d.desc,
             price: parseInt((d.price || "0").replace(/[₦,]/g, ""), 10) || 0,
             category: cat,
-            is_available: true,
+            available: true,
           }));
         }
-        setMenuData(converted);
+        setFoodData(food);
+        setDrinkData({});
       }
     }
     fetchMenu();
   }, []);
 
-  // Observe sections for active tab
+  // Derived values for active menu type
+  const activeCategory = menuType === "food" ? activeFoodCat : activeDrinkCat;
+  const currentData = menuType === "food" ? foodData : drinkData;
+  const categoryOrder = menuType === "food" ? FOOD_CATEGORY_ORDER : DRINK_CATEGORY_ORDER;
+  const categories = currentData
+    ? categoryOrder.filter((c) => currentData[c] && currentData[c].length > 0)
+    : [];
+
+  // Re-run observer whenever menu type or data changes
   useEffect(() => {
+    const refs = menuType === "food" ? foodSectionRefs.current : drinkSectionRefs.current;
+    const setActive = menuType === "food" ? setActiveFoodCat : setActiveDrinkCat;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (scrollingProgrammatically.current) return;
@@ -101,35 +128,30 @@ export default function Order() {
             }
           }
         }
-        if (topEntry) {
-          setActiveCategory(topEntry.target.dataset.category);
-        }
+        if (topEntry) setActive(topEntry.target.dataset.category);
       },
       { rootMargin: "-120px 0px -60% 0px", threshold: 0 }
     );
 
-    const refs = sectionRefs.current;
     Object.values(refs).forEach((el) => { if (el) observer.observe(el); });
     return () => observer.disconnect();
-  }, [menuData]);
+  }, [foodData, drinkData, menuType]);
 
   const scrollToCategory = useCallback((cat) => {
-    const el = sectionRefs.current[cat];
+    const refs = menuType === "food" ? foodSectionRefs.current : drinkSectionRefs.current;
+    const el = refs[cat];
     if (!el) return;
     scrollingProgrammatically.current = true;
-    setActiveCategory(cat);
+    if (menuType === "food") setActiveFoodCat(cat);
+    else setActiveDrinkCat(cat);
     const navHeight = 140;
     const tabHeight = 56;
     const top = el.getBoundingClientRect().top + window.scrollY - navHeight - tabHeight - 8;
     window.scrollTo({ top, behavior: "smooth" });
     setTimeout(() => { scrollingProgrammatically.current = false; }, 800);
-  }, []);
+  }, [menuType]);
 
   const getCartItem = useCallback((id) => cartItems.find((i) => i.id === id), [cartItems]);
-
-  const categories = menuData
-    ? CATEGORY_ORDER.filter((c) => menuData[c] && menuData[c].length > 0)
-    : [];
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--charcoal, #0f0d0a)" }}>
@@ -138,34 +160,16 @@ export default function Order() {
         style={{
           position: "relative",
           paddingTop: 160,
-          paddingBottom: 80,
+          paddingBottom: 60,
           textAlign: "center",
           background: "linear-gradient(180deg, #1a1612 0%, var(--charcoal, #0f0d0a) 100%)",
         }}
       >
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 24px" }}>
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: "0.25em",
-              textTransform: "uppercase",
-              color: "var(--gold, #C9A84C)",
-              marginBottom: 16,
-            }}
-          >
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.25em", textTransform: "uppercase", color: "var(--gold, #C9A84C)", marginBottom: 16 }}>
             Online Ordering
           </p>
-          <h1
-            style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: "clamp(40px, 6vw, 68px)",
-              fontWeight: 700,
-              color: "var(--warm-white, #F5F0E8)",
-              lineHeight: 1.1,
-              margin: "0 0 20px",
-            }}
-          >
+          <h1 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "clamp(40px, 6vw, 68px)", fontWeight: 700, color: "var(--warm-white, #F5F0E8)", lineHeight: 1.1, margin: "0 0 20px" }}>
             Order Now
           </h1>
           <p style={{ fontSize: 16, color: "var(--muted, #9C8E7A)", lineHeight: 1.7, margin: 0 }}>
@@ -173,6 +177,36 @@ export default function Order() {
           </p>
         </div>
       </section>
+
+      {/* Food / Drinks switcher */}
+      <div style={{ padding: "24px 24px 0", display: "flex", justifyContent: "center", gap: 12, background: "var(--charcoal, #0f0d0a)" }}>
+        {[
+          { key: "food",  label: "FOOD" },
+          { key: "drink", label: "DRINKS" },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setMenuType(key)}
+            style={{
+              minWidth: 120,
+              padding: "10px 32px",
+              borderRadius: 50,
+              border: menuType === key ? "1px solid #c8a96e" : "1px solid rgba(245,240,232,0.35)",
+              background: menuType === key ? "#c8a96e" : "transparent",
+              color: menuType === key ? "#1a1a1a" : "rgba(245,240,232,0.75)",
+              fontWeight: menuType === key ? 700 : 500,
+              fontSize: "13px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease",
+              fontFamily: "'Montserrat', sans-serif",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* Sticky category tabs */}
       <div
@@ -186,20 +220,13 @@ export default function Order() {
           borderBottom: "1px solid var(--border-soft, #2e2820)",
           overflowX: "auto",
           scrollbarWidth: "none",
+          marginTop: 16,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 4,
-            padding: "12px 24px",
-            maxWidth: 1200,
-            margin: "0 auto",
-          }}
-        >
+        <div style={{ display: "flex", gap: 4, padding: "12px 24px", maxWidth: 1200, margin: "0 auto" }}>
           {categories.map((cat) => (
             <button
-              key={cat}
+              key={`${menuType}-${cat}`}
               onClick={() => scrollToCategory(cat)}
               style={{
                 flexShrink: 0,
@@ -223,71 +250,66 @@ export default function Order() {
 
       {/* Menu sections */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px 140px" }}>
-        {menuData === null && (
+        {foodData === null && (
           <div style={{ textAlign: "center", color: "var(--muted, #9C8E7A)", padding: "80px 0" }}>
             Loading menu…
           </div>
         )}
 
-        {menuData &&
+        {/* Food sections */}
+        {menuType === "food" && foodData &&
           categories.map((cat) => (
             <section
-              key={cat}
-              ref={(el) => { sectionRefs.current[cat] = el; }}
+              key={`food-${cat}`}
+              ref={(el) => { foodSectionRefs.current[cat] = el; }}
               data-category={cat}
               style={{ marginBottom: 56 }}
             >
-              {/* Category header */}
-              <div style={{ marginBottom: 24 }}>
-                <h2
-                  style={{
-                    fontFamily: "'Cormorant Garamond', Georgia, serif",
-                    fontSize: "clamp(24px, 3vw, 32px)",
-                    fontWeight: 700,
-                    color: "var(--warm-white, #F5F0E8)",
-                    margin: "0 0 8px",
-                  }}
-                >
-                  {cat}
-                </h2>
-                <div
-                  style={{
-                    height: 2,
-                    width: 48,
-                    background: "var(--gold, #C9A84C)",
-                    borderRadius: 2,
-                  }}
-                />
-              </div>
-
-              {/* Dish grid */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                {menuData[cat].map((dish) => (
+              <CategoryHeader cat={cat} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                {foodData[cat].map((dish) => (
                   <DishCard
                     key={dish.id}
                     dish={dish}
                     cartItem={getCartItem(dish.id)}
-                    onAdd={() =>
-                      addItem({
-                        id: dish.id,
-                        name: dish.name,
-                        price: dish.price,
-                        category: dish.category,
-                        description: dish.description,
-                      })
-                    }
+                    onAdd={() => addItem({ id: dish.id, name: dish.name, price: dish.price, category: dish.category, description: dish.description })}
                     onSetQty={(q) => setQty(dish.id, q)}
                   />
                 ))}
               </div>
             </section>
-          ))}
+          ))
+        }
+
+        {/* Drink sections */}
+        {menuType === "drink" && drinkData && categories.length === 0 && (
+          <div style={{ textAlign: "center", color: "var(--muted, #9C8E7A)", padding: "80px 0" }}>
+            Drinks menu loading…
+          </div>
+        )}
+        {menuType === "drink" && drinkData &&
+          categories.map((cat) => (
+            <section
+              key={`drink-${cat}`}
+              ref={(el) => { drinkSectionRefs.current[cat] = el; }}
+              data-category={cat}
+              style={{ marginBottom: 56 }}
+            >
+              <CategoryHeader cat={cat} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                {drinkData[cat].map((drink) => (
+                  <DishCard
+                    key={drink.id}
+                    dish={drink}
+                    cartItem={getCartItem(drink.id)}
+                    onAdd={() => addItem({ id: drink.id, name: drink.name, price: drink.price, category: drink.category, description: drink.description })}
+                    onSetQty={(q) => setQty(drink.id, q)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))
+        }
       </div>
 
       {/* Floating cart bar */}
@@ -313,16 +335,7 @@ export default function Order() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <ShoppingBag size={18} style={{ color: "#0f0d0a" }} />
-            <span
-              style={{
-                background: "#0f0d0a",
-                color: "var(--gold, #C9A84C)",
-                borderRadius: 99,
-                fontSize: 11,
-                fontWeight: 700,
-                padding: "2px 7px",
-              }}
-            >
+            <span style={{ background: "#0f0d0a", color: "var(--gold, #C9A84C)", borderRadius: 99, fontSize: 11, fontWeight: 700, padding: "2px 7px" }}>
               {totalItems}
             </span>
           </div>
@@ -331,6 +344,17 @@ export default function Order() {
           </span>
         </div>
       )}
+    </div>
+  );
+}
+
+function CategoryHeader({ cat }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, color: "var(--warm-white, #F5F0E8)", margin: "0 0 8px" }}>
+        {cat}
+      </h2>
+      <div style={{ height: 2, width: 48, background: "var(--gold, #C9A84C)", borderRadius: 2 }} />
     </div>
   );
 }
@@ -352,41 +376,19 @@ function DishCard({ dish, cartItem, onAdd, onSetQty }) {
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-soft, #2e2820)"; }}
     >
       <div style={{ flex: 1 }}>
-        <h3
-          style={{
-            fontSize: 15,
-            fontWeight: 600,
-            color: "var(--warm-white, #F5F0E8)",
-            margin: "0 0 6px",
-            lineHeight: 1.3,
-          }}
-        >
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--warm-white, #F5F0E8)", margin: "0 0 6px", lineHeight: 1.3 }}>
           {dish.name}
         </h3>
         {dish.description && (
-          <p
-            style={{
-              fontSize: 12.5,
-              color: "var(--muted, #9C8E7A)",
-              margin: "0 0 12px",
-              lineHeight: 1.6,
-            }}
-          >
+          <p style={{ fontSize: 12.5, color: "var(--muted, #9C8E7A)", margin: "0 0 12px", lineHeight: 1.6 }}>
             {dish.description}
           </p>
         )}
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: "var(--gold, #C9A84C)",
-          }}
-        >
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#c8a96e" }}>
           {fmtPrice(dish.price)}
         </div>
       </div>
 
-      {/* Add / Stepper */}
       {cartItem ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontSize: 12, color: "var(--muted, #9C8E7A)", fontWeight: 500 }}>In cart</span>
@@ -394,51 +396,17 @@ function DishCard({ dish, cartItem, onAdd, onSetQty }) {
             <button
               onClick={() => onSetQty(cartItem.qty - 1)}
               aria-label="Decrease"
-              style={{
-                width: 32,
-                height: 32,
-                background: "#2e2820",
-                border: "none",
-                borderRadius: "6px 0 0 6px",
-                color: "var(--warm-white, #F5F0E8)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              style={{ width: 32, height: 32, background: "#2e2820", border: "none", borderRadius: "6px 0 0 6px", color: "var(--warm-white, #F5F0E8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               <Minus size={14} />
             </button>
-            <span
-              style={{
-                width: 36,
-                height: 32,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#251f19",
-                color: "var(--warm-white, #F5F0E8)",
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
+            <span style={{ width: 36, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "#251f19", color: "var(--warm-white, #F5F0E8)", fontSize: 14, fontWeight: 600 }}>
               {cartItem.qty}
             </span>
             <button
               onClick={() => onSetQty(cartItem.qty + 1)}
               aria-label="Increase"
-              style={{
-                width: 32,
-                height: 32,
-                background: "#2e2820",
-                border: "none",
-                borderRadius: "0 6px 6px 0",
-                color: "var(--warm-white, #F5F0E8)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              style={{ width: 32, height: 32, background: "#2e2820", border: "none", borderRadius: "0 6px 6px 0", color: "var(--warm-white, #F5F0E8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               <Plus size={14} />
             </button>
@@ -465,14 +433,8 @@ function DishCard({ dish, cartItem, onAdd, onSetQty }) {
             gap: 6,
             transition: "all 0.15s",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--gold, #C9A84C)";
-            e.currentTarget.style.color = "#0f0d0a";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "var(--gold, #C9A84C)";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gold, #C9A84C)"; e.currentTarget.style.color = "#0f0d0a"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--gold, #C9A84C)"; }}
         >
           <Plus size={14} />
           Add to Cart
