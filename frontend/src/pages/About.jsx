@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { IMAGES } from "../lib/data";
 import SectionHeader from "../components/SectionHeader";
+import OrderNowLink from "../components/OrderNowLink";
 
 const values = [
   { num: "01", title: "Roots on the plate", body: "Every dish traces back to a Nigerian market, a family kitchen, a recipe passed down without being written. We cook with memory and intention, not just ingredients." },
@@ -197,8 +198,7 @@ export default function About() {
             Open daily from 10:00 AM. The good tables go quickly.
           </p>
           <motion.div {...reveal(16, 0.2)} className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
-            <Link
-              to="/order"
+            <OrderNowLink
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
                 background: "transparent", color: "rgba(245,240,232,0.9)",
@@ -211,7 +211,7 @@ export default function About() {
               }}
             >
               Order Now <ArrowRight size={14} />
-            </Link>
+            </OrderNowLink>
             <Link
               to="/reservations"
               style={{

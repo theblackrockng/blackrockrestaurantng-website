@@ -284,6 +284,21 @@ export default function Layout({ children }) {
     return () => clearInterval(id);
   }, []);
 
+  // Secret shortcut: Cmd+B navigates super_admin to the feature control page.
+  // Silent — no feedback, no action for any other role.
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (!e.metaKey || e.key !== "b") return;
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (["input", "textarea", "select"].includes(tag)) return;
+      if (document.activeElement?.isContentEditable) return;
+      if (staffProfile?.role !== "super_admin") return;
+      navigate("/console-internal-br2026");
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [staffProfile, navigate]);
+
   const dateStr    = new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
   const totalBadge = Math.min(99, pendingCount + newEnqCount);
 

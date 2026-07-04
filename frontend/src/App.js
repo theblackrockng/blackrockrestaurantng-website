@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import "@/App.css";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { FeatureFlagProvider, useFeatureFlags } from "./context/FeatureFlagContext";
 import { useTheme } from "./hooks/useTheme";
 
 import Navbar from "./components/Navbar";
@@ -28,6 +29,13 @@ import ContentHubLogin from "./pages/ContentHubLogin";
 import Order from "./pages/Order";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
+
+function OrderRoute({ children }) {
+  const { orderingEnabled, loading } = useFeatureFlags();
+  if (loading) return null;
+  if (!orderingEnabled) return <Navigate to="/" replace />;
+  return children;
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -81,9 +89,9 @@ function MainLayout() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/order" element={<Order />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+          <Route path="/order" element={<OrderRoute><Order /></OrderRoute>} />
+          <Route path="/checkout" element={<OrderRoute><Checkout /></OrderRoute>} />
+          <Route path="/order-confirmation/:orderId" element={<OrderRoute><OrderConfirmation /></OrderRoute>} />
         </Routes>
       </main>
       {!noFooter && <Footer />}
@@ -97,12 +105,14 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
+          <FeatureFlagProvider>
           <ThemeLoader />
           <ScrollToTop />
           <Routes>
             <Route path="/content-hub/*" element={<ContentHubLayout />} />
             <Route path="*" element={<MainLayout />} />
           </Routes>
+          </FeatureFlagProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

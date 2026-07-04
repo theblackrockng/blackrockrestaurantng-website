@@ -4,6 +4,7 @@ import { Menu, X, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NAV_LINKS } from "../lib/data";
 import { useCart } from "../context/CartContext";
+import { useFeatureFlags } from "../context/FeatureFlagContext";
 
 export default function Navbar({ onReserveClick }) {
   const location = useLocation();
@@ -11,6 +12,7 @@ export default function Navbar({ onReserveClick }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { totalItems, setDrawerOpen } = useCart();
+  const { orderingEnabled } = useFeatureFlags();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 24);
@@ -64,13 +66,13 @@ export default function Navbar({ onReserveClick }) {
 
           <div className="hidden lg:flex items-center gap-6">
             <button
-              onClick={() => setDrawerOpen(true)}
+              onClick={orderingEnabled ? () => setDrawerOpen(true) : undefined}
               aria-label="View cart"
               data-testid="cart-btn-desktop"
-              style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--warm-white)", display: "flex", alignItems: "center" }}
+              style={{ position: "relative", background: "none", border: "none", cursor: orderingEnabled ? "pointer" : "default", padding: 6, color: "var(--warm-white)", display: "flex", alignItems: "center" }}
             >
               <ShoppingBag size={20} />
-              {totalItems > 0 && (
+              {orderingEnabled && totalItems > 0 && (
                 <span
                   style={{
                     position: "absolute",
@@ -152,12 +154,13 @@ export default function Navbar({ onReserveClick }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.38, duration: 0.4 }}
-                onClick={() => { setOpen(false); setDrawerOpen(true); }}
+                onClick={orderingEnabled ? () => { setOpen(false); setDrawerOpen(true); } : undefined}
                 className="btn-outline-gold mt-12"
                 data-testid="mobile-cart-cta"
+                style={!orderingEnabled ? { opacity: 0.45, cursor: "default", pointerEvents: "none" } : undefined}
               >
                 <ShoppingBag size={16} style={{ display: "inline", marginRight: 6 }} />
-                View Cart{totalItems > 0 ? ` (${totalItems})` : ""}
+                View Cart{orderingEnabled && totalItems > 0 ? ` (${totalItems})` : ""}
               </motion.button>
               <motion.button
                 initial={{ opacity: 0, y: 20 }}

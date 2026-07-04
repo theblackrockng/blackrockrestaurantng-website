@@ -6,6 +6,7 @@ import { IMAGES, BRAND, OCCASIONS } from "../lib/data";
 import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
 import BrandMark from "../components/BrandMark";
+import OrderNowLink from "../components/OrderNowLink";
 
 const occasionPreview = OCCASIONS;
 
@@ -129,10 +130,10 @@ export default function Home() {
             transition={{ duration: 0.9, delay: 1.25 }}
             className="flex flex-col sm:flex-row gap-4 mt-10"
           >
-            <Link to="/order" className="btn-burgundy" data-testid="hero-order">
+            <OrderNowLink className="btn-burgundy" data-testid="hero-order">
               <span>Order Now</span>
               <ArrowRight size={14} />
-            </Link>
+            </OrderNowLink>
             <Link to="/reservations" className="btn-outline-gold" data-testid="hero-reserve">
               <span>Reserve a Table</span>
             </Link>
@@ -401,10 +402,10 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.28 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mt-10"
           >
-            <Link to="/order" className="btn-burgundy">
+            <OrderNowLink className="btn-burgundy">
               <span>Order Now</span>
               <ArrowRight size={14} />
-            </Link>
+            </OrderNowLink>
             <Link to="/reservations" className="btn-outline-gold">
               <span>Reserve a Table</span>
               <ArrowRight size={14} />

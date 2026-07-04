@@ -5,6 +5,7 @@ import { X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { IMAGES } from "../lib/data";
 import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
+import OrderNowLink from "../components/OrderNowLink";
 
 const FALLBACK_GALLERY = [
   { src: IMAGES.heroRooftop,  tag: "Ambience",          label: "Lagos by night" },
@@ -269,10 +270,10 @@ export default function Gallery() {
             But we can. Order online or come in and experience it yourself.
           </motion.p>
           <div className="flex flex-col sm:flex-row gap-4 mt-12">
-            <Link to="/order" className="btn-burgundy" data-testid="gallery-order">
+            <OrderNowLink className="btn-burgundy" data-testid="gallery-order">
               <span>Order Now</span>
               <ArrowRight size={14} />
-            </Link>
+            </OrderNowLink>
             <Link to="/reservations" className="btn-outline-gold" data-testid="gallery-reserve">
               <span>Reserve a Table</span>
               <ArrowRight size={14} />

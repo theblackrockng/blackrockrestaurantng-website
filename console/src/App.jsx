@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { StaffProvider } from "./context/StaffContext";
+import { StaffProvider, useStaff } from "./context/StaffContext";
+import FeatureControl from "./pages/feature-flags/FeatureControl";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -31,6 +32,19 @@ function ProtectedRoute({ children }) {
   );
   if (!session) return <Navigate to="/login" replace />;
   return <Layout>{children}</Layout>;
+}
+
+function SuperAdminRoute({ children }) {
+  const { session, loading: authLoading } = useAuth();
+  const { profile, loading: staffLoading } = useStaff();
+  if (authLoading || staffLoading) return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a1a" }}>
+      <div style={{ fontSize: 11, color: "#9c8e7a", letterSpacing: "0.2em", textTransform: "uppercase" }}>Loading…</div>
+    </div>
+  );
+  if (!session) return <Navigate to="/login" replace />;
+  if (profile?.role !== "super_admin") return <Navigate to="/" replace />;
+  return children;
 }
 
 function AppRoutes() {
@@ -72,6 +86,7 @@ function AppRoutes() {
       <Route path="/profile"            element={<ProtectedRoute><StaffProfile /></ProtectedRoute>} />
       <Route path="/profile/:userId"    element={<ProtectedRoute><StaffProfile /></ProtectedRoute>} />
       <Route path="/orders"             element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+      <Route path="/console-internal-br2026" element={<SuperAdminRoute><FeatureControl /></SuperAdminRoute>} />
       <Route path="*"                   element={<Navigate to="/" replace />} />
     </Routes>
   );

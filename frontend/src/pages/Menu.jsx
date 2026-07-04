@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
+import OrderNowLink from "../components/OrderNowLink";
 
 const categoryImages = {
   "Starters":                "/images/menu/starters.jpg",
@@ -366,10 +367,10 @@ export default function MenuPage() {
             subtitle="Order ahead and have it ready when you arrive. Or have it delivered to your doorstep."
           />
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
-            <Link to="/order" className="btn-burgundy" data-testid="menu-order-cta">
+            <OrderNowLink className="btn-burgundy" data-testid="menu-order-cta">
               <span>Order Now</span>
               <ArrowRight size={14} />
-            </Link>
+            </OrderNowLink>
             <Link to="/reservations" className="btn-outline-gold" data-testid="menu-reserve-cta">
               <span>Reserve a Table</span>
               <ArrowRight size={14} />
