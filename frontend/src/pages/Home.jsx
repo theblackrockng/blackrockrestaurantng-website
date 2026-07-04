@@ -129,12 +129,12 @@ export default function Home() {
             transition={{ duration: 0.9, delay: 1.25 }}
             className="flex flex-col sm:flex-row gap-4 mt-10"
           >
-            <Link to="/reservations" className="btn-burgundy" data-testid="hero-reserve">
-              <span>Reserve a Table</span>
+            <Link to="/order" className="btn-burgundy" data-testid="hero-order">
+              <span>Order Now</span>
               <ArrowRight size={14} />
             </Link>
-            <Link to="/order" className="btn-outline-gold" data-testid="hero-order">
-              <span>Order Online</span>
+            <Link to="/reservations" className="btn-outline-gold" data-testid="hero-reserve">
+              <span>Reserve a Table</span>
             </Link>
           </motion.div>
         </div>
@@ -383,7 +383,7 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             className="font-serif-display text-3xl md:text-5xl text-[var(--warm-white)] leading-snug"
           >
-            Ready to experience it yourself?
+            Hungry right now?
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -392,16 +392,20 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.15 }}
             className="mt-5 text-sm text-[var(--muted)] leading-relaxed"
           >
-            Reserve your table and let us take care of the rest.
+            Order ahead and have it ready when you arrive. Or book a table and let us take care of the rest.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.28 }}
-            className="mt-10"
+            className="flex flex-col sm:flex-row gap-4 justify-center mt-10"
           >
-            <Link to="/reservations" className="btn-burgundy">
+            <Link to="/order" className="btn-burgundy">
+              <span>Order Now</span>
+              <ArrowRight size={14} />
+            </Link>
+            <Link to="/reservations" className="btn-outline-gold">
               <span>Reserve a Table</span>
               <ArrowRight size={14} />
             </Link>

@@ -362,12 +362,19 @@ export default function MenuPage() {
         <div className="max-w-3xl mx-auto px-6 md:px-12 text-center">
           <SectionHeader
             kicker="Hungry?"
-            title="Best book ahead."
-            subtitle="Weekends fill up by Wednesday. Tuesdays are quiet, intimate, and ours."
+            title="Best enjoyed in person."
+            subtitle="Order ahead and have it ready when you arrive. Or have it delivered to your doorstep."
           />
-          <Link to="/reservations" className="btn-burgundy mt-12 inline-flex" data-testid="menu-reserve-cta">
-            Reserve a Table <ArrowRight size={14} />
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
+            <Link to="/order" className="btn-burgundy" data-testid="menu-order-cta">
+              <span>Order Now</span>
+              <ArrowRight size={14} />
+            </Link>
+            <Link to="/reservations" className="btn-outline-gold" data-testid="menu-reserve-cta">
+              <span>Reserve a Table</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
       </section>
 

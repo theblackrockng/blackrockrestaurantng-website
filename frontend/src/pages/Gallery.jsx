@@ -266,11 +266,18 @@ export default function Gallery() {
             className="font-light leading-relaxed mt-5"
             style={{ fontSize: "1rem", color: "rgba(255,255,255,0.7)" }}
           >
-            Book a table. The rest is in person.
+            But we can. Order online or come in and experience it yourself.
           </motion.p>
-          <Link to="/reservations" className="btn-burgundy mt-12 inline-flex" data-testid="gallery-reserve">
-            Reserve a Table <ArrowRight size={14} />
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <Link to="/order" className="btn-burgundy" data-testid="gallery-order">
+              <span>Order Now</span>
+              <ArrowRight size={14} />
+            </Link>
+            <Link to="/reservations" className="btn-outline-gold" data-testid="gallery-reserve">
+              <span>Reserve a Table</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
       </section>
 

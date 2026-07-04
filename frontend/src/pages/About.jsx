@@ -196,7 +196,22 @@ export default function About() {
           <p className="text-white/80 mt-8 max-w-xl mx-auto font-light text-lg">
             Open daily from 10:00 AM. The good tables go quickly.
           </p>
-          <motion.div {...reveal(16, 0.2)} className="mt-12">
+          <motion.div {...reveal(16, 0.2)} className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
+            <Link
+              to="/order"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 10,
+                background: "transparent", color: "rgba(245,240,232,0.9)",
+                border: "1px solid rgba(245,240,232,0.5)",
+                padding: "16px 40px",
+                fontSize: "0.85rem", fontWeight: 500,
+                letterSpacing: "0.1em", textTransform: "uppercase",
+                fontFamily: "'Montserrat', sans-serif",
+                textDecoration: "none",
+              }}
+            >
+              Order Now <ArrowRight size={14} />
+            </Link>
             <Link
               to="/reservations"
               style={{

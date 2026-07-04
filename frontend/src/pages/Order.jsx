@@ -166,7 +166,7 @@ export default function Order() {
               margin: "0 0 20px",
             }}
           >
-            Order Online
+            Order Now
           </h1>
           <p style={{ fontSize: 16, color: "var(--muted, #9C8E7A)", lineHeight: 1.7, margin: 0 }}>
             Pickup or delivery — fresh from our kitchen to you.
