@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
+import PinModal from "./PinModal";
 import { Link, useLocation, useNavigate, useMatch } from "react-router-dom";
 import {
   LayoutGrid, CalendarDays, MessageSquare, UtensilsCrossed,
@@ -237,6 +238,7 @@ export default function Layout({ children }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [clock, setClock] = useState("");
   const [staffProfile, setStaffProfile] = useState(null);
+  const [showPinModal, setShowPinModal] = useState(false);
   const pageName = useCurrentPage();
   const notifRef = useRef(null);
 
@@ -293,7 +295,7 @@ export default function Layout({ children }) {
       if (["input", "textarea", "select"].includes(tag)) return;
       if (document.activeElement?.isContentEditable) return;
       if (staffProfile?.role !== "super_admin") return;
-      navigate("/console-internal-br2026");
+      setShowPinModal(true);
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -531,6 +533,13 @@ export default function Layout({ children }) {
           {children}
         </main>
       </div>
+
+      {showPinModal && (
+        <PinModal
+          onSuccess={() => { setShowPinModal(false); navigate("/console-internal-br2026"); }}
+          onClose={() => setShowPinModal(false)}
+        />
+      )}
 
       <style>{`
         @media (min-width: 768px) {
