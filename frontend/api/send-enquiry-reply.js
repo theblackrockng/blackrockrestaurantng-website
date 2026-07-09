@@ -22,6 +22,10 @@ function getSupabase() {
   return _supabase;
 }
 
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 async function sendTelegram(text) {
   if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) return;
   try {
@@ -33,17 +37,17 @@ async function sendTelegram(text) {
   } catch {}
 }
 
-async function notifyTelegramAndStore({ name, email, message }) {
+async function notifyTelegramAndStore({ name, email, message, enquiryId }) {
   if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) return;
 
   const preview = message && message.length > 200 ? message.slice(0, 200) + '…' : (message || '—');
   const text = [
     '💬 <b>New Enquiry — BLACKROCK</b>',
     '',
-    `👤 <b>${name}</b>`,
-    `✉️ ${email}`,
+    `👤 <b>${escapeHtml(name)}</b>`,
+    `✉️ ${escapeHtml(email)}`,
     '',
-    `📩 ${preview}`,
+    `📩 ${escapeHtml(preview)}`,
     '',
     '<i>Reply to this message to send a branded email reply to the guest.</i>',
   ].join('\n');
@@ -62,26 +66,12 @@ async function notifyTelegramAndStore({ name, email, message }) {
     return;
   }
 
-  if (!messageId) return;
+  if (!messageId || !enquiryId) return;
 
   const db = getSupabase();
   if (!db) {
     console.error('[send-enquiry-reply] Supabase not configured — message_id not stored');
     return;
-  }
-
-  let enquiryId = null;
-  try {
-    const { data: enquiryRow } = await db
-      .from('enquiries')
-      .select('id')
-      .eq('email', email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    enquiryId = enquiryRow?.id ?? null;
-  } catch (err) {
-    console.error('[send-enquiry-reply] Enquiry lookup error:', err.message);
   }
 
   try {
@@ -131,7 +121,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true }); // silent
   }
 
-  // Sanitize inputs
+  // Sanitize inputs — all fields go through injection/XSS/allowlist checks
   const { sanitized, threat } = sanitizeBody(req.body || {}, {
     name:    100,
     email:   254,
@@ -159,10 +149,36 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true }); // silent — already processed earlier submission
   }
 
+  // Insert enquiry into Supabase server-side (after sanitization)
+  const db = getSupabase();
+  if (!db) {
+    console.error('[send-enquiry-reply] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured');
+    return res.status(500).json({ error: 'Service configuration error.' });
+  }
+
+  let enquiryId = null;
+  try {
+    const { data: enquiryRow, error: insertErr } = await db.from('enquiries').insert({
+      name,
+      email,
+      message,
+      status: 'new',
+    }).select('id').single();
+
+    if (insertErr) {
+      console.error('[send-enquiry-reply] enquiries insert error:', insertErr.message);
+      return res.status(500).json({ error: 'Failed to save your message. Please try again.' });
+    }
+    enquiryId = enquiryRow?.id ?? null;
+  } catch (err) {
+    console.error('[send-enquiry-reply] enquiries insert exception:', err.message);
+    return res.status(500).json({ error: 'Failed to save your message. Please try again.' });
+  }
+
   // Run Telegram notification and auto-reply email in parallel.
   // Both are awaited so Vercel does not terminate before the DB insert completes.
   const [, emailResult] = await Promise.allSettled([
-    notifyTelegramAndStore({ name, email, message }),
+    notifyTelegramAndStore({ name, email, message, enquiryId }),
     (async () => {
       const { subject, bodyHtml, guestName } = enquiryReplyEmail({ name, message });
       await sendBlackRockEmail({ to: email, subject, guestName, bodyHtml, type: 'general' });
@@ -172,7 +188,7 @@ module.exports = async function handler(req, res) {
   if (emailResult.status === 'rejected') {
     const msg = emailResult.reason?.message || String(emailResult.reason);
     console.error('[send-enquiry-reply] Auto-reply email failed:', msg);
-    await sendTelegram(`⚠️ Auto-reply email failed for <b>${name}</b> (${email})\n<code>${msg}</code>`);
+    await sendTelegram(`⚠️ Auto-reply email failed for <b>${escapeHtml(name)}</b> (${escapeHtml(email)})\n<code>${escapeHtml(msg)}</code>`);
   }
 
   return res.status(200).json({ ok: true });

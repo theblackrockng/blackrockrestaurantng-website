@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Phone, MessageCircle, X, ArrowRight, ArrowLeft, Minus, Plus, UtensilsCrossed, Loader2 } from "lucide-react";
 import { OCCASIONS, BRAND, IMAGES, MENU } from "../lib/data";
 import { supabase } from "../lib/supabase";
-import { notifyTelegram, reservationMessage } from "../lib/telegram";
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -175,61 +174,36 @@ export default function Reservations() {
     const preSelectedMeals = skipMeals ? null : buildMealsPayload();
     const hasMeals = preSelectedMeals && preSelectedMeals.length > 0;
 
-    const { data: inserted, error } = await supabase.from("reservations").insert({
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      date: form.date,
-      time: form.time,
-      party: String(partyValue),
-      occasion: selectedOcc?.label || occasion,
-      notes: notes || null,
-      status: "pending",
-      pre_selected_meals: hasMeals ? preSelectedMeals : null,
-    }).select("id").single();
-
-    setSubmitting(false);
-    if (error) { setSubmitError("Something went wrong. Please try again or call us directly."); return; }
-
-    if (form.email) {
-      fetch("/api/send-confirmation", {
+    try {
+      const res = await fetch("/api/send-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name,
           email: form.email,
+          phone: form.phone,
           date: form.date,
           time: form.time,
-          party: form.party === "other" ? form.partyOther : form.party,
+          party: partyValue,
           occasion: selectedOcc?.label || occasion,
           notes: notes || null,
           preSelectedMeals: hasMeals ? preSelectedMeals : null,
           _hp: form._hp,
         }),
-      }).catch(() => {});
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setSubmitError(data.error || "Something went wrong. Please try again or call us directly.");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setSubmitError("Something went wrong. Please try again or call us directly.");
+      setSubmitting(false);
+      return;
     }
 
-    const reservationId = inserted?.id;
-    const actionKeyboard = reservationId ? {
-      inline_keyboard: [[
-        { text: "✓ Confirm",    callback_data: `confirm:${reservationId}` },
-        { text: "📅 Reschedule", callback_data: `reschedule:${reservationId}` },
-        { text: "✗ Cancel",     callback_data: `cancel:${reservationId}` },
-        { text: "✉️ Email",      callback_data: `email:${reservationId}` },
-      ]],
-    } : null;
-
-    notifyTelegram(reservationMessage({
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      date: form.date,
-      time: form.time,
-      party: form.party === "other" ? form.partyOther : form.party,
-      occasion: selectedOcc?.label || occasion,
-      notes: notes || null,
-      preSelectedMeals: hasMeals ? preSelectedMeals : null,
-    }), actionKeyboard);
+    setSubmitting(false);
     setSubmitted(true);
   };
 

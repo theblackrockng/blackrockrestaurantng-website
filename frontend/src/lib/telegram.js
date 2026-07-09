@@ -1,6 +1,10 @@
 const TOKEN  = process.env.REACT_APP_TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.REACT_APP_TELEGRAM_CHAT_ID;
 
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 export async function notifyTelegram(text, replyMarkup = null) {
   if (!TOKEN || !CHAT_ID) return null;
   try {
@@ -23,19 +27,19 @@ export function reservationMessage(r) {
     ? new Date(r.date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : "—";
   const mealsLines = r.preSelectedMeals?.length > 0
-    ? ["\n🍽️ Pre-selected meals:", ...r.preSelectedMeals.map((m) => `  ${m.qty}  ${m.name}`)]
+    ? ["\n🍽️ Pre-selected meals:", ...r.preSelectedMeals.map((m) => `  ${m.qty}  ${escapeHtml(m.name)}`)]
     : [];
   return [
     "🍽 <b>New Reservation — BLACKROCK</b>",
     "",
-    `👤 <b>${r.name}</b>`,
-    `📅 ${dateStr} at ${r.time || "—"}`,
-    `👥 Party of ${r.party || "—"}`,
-    r.occasion ? `🎉 ${r.occasion}` : null,
+    `👤 <b>${escapeHtml(r.name)}</b>`,
+    `📅 ${escapeHtml(dateStr)} at ${escapeHtml(r.time || "—")}`,
+    `👥 Party of ${escapeHtml(String(r.party || "—"))}`,
+    r.occasion ? `🎉 ${escapeHtml(r.occasion)}` : null,
     "",
-    r.phone ? `📞 ${r.phone}` : null,
-    r.email ? `✉️ ${r.email}` : null,
-    r.notes ? `\n📝 ${r.notes}` : null,
+    r.phone ? `📞 ${escapeHtml(r.phone)}` : null,
+    r.email ? `✉️ ${escapeHtml(r.email)}` : null,
+    r.notes ? `\n📝 ${escapeHtml(r.notes)}` : null,
     ...mealsLines,
   ].filter((l) => l !== null).join("\n");
 }
@@ -47,10 +51,10 @@ export function enquiryMessage(e) {
   return [
     "💬 <b>New Enquiry — BLACKROCK</b>",
     "",
-    `👤 <b>${e.name}</b>`,
-    e.email ? `✉️ ${e.email}` : null,
-    e.phone ? `📞 ${e.phone}` : null,
+    `👤 <b>${escapeHtml(e.name)}</b>`,
+    e.email ? `✉️ ${escapeHtml(e.email)}` : null,
+    e.phone ? `📞 ${escapeHtml(e.phone)}` : null,
     "",
-    `📩 ${preview}`,
+    `📩 ${escapeHtml(preview)}`,
   ].filter((l) => l !== null).join("\n");
 }

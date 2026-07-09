@@ -107,6 +107,8 @@ function isDuplicateSubmission(ip, content) {
 }
 
 // ─── Input sanitization ──────────────────────────────────────────────────────
+const FORBIDDEN_CHARS_RE = /[<>{}\[\]]/;
+
 const SQL_PATTERNS = [
   /\bUNION\b.{0,20}\bSELECT\b/i,
   /\bDROP\b\s+\bTABLE\b/i,
@@ -133,7 +135,7 @@ const XSS_PATTERNS = [
 
 function detectSQLInjection(v) { return SQL_PATTERNS.some(p => p.test(v)); }
 function detectXSS(v) { return XSS_PATTERNS.some(p => p.test(v)); }
-function stripHtml(v) { return String(v).replace(/<[^>]*>/g, '').trim(); }
+function hasForbiddenChars(v) { return FORBIDDEN_CHARS_RE.test(v); }
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
 // Nigerian numbers: +234XXXXXXXXXX or 0XXXXXXXXXX
@@ -145,13 +147,14 @@ function validatePhone(phone) {
   return PHONE_RE.test(String(phone).replace(/[\s\-().]/g, ''));
 }
 
-// Returns { clean, threat } — threat is null or { type: 'xss'|'sql', value }
+// Returns { clean, threat } — threat is null or { type: 'xss'|'sql'|'invalid_chars', value }
 function sanitizeField(value, maxLen) {
   if (value === undefined || value === null) return { clean: '', threat: null };
   const str = String(value);
   if (detectXSS(str)) return { clean: null, threat: { type: 'xss', value: str.slice(0, 500) } };
   if (detectSQLInjection(str)) return { clean: null, threat: { type: 'sql', value: str.slice(0, 500) } };
-  return { clean: stripHtml(str).slice(0, maxLen), threat: null };
+  if (hasForbiddenChars(str)) return { clean: null, threat: { type: 'invalid_chars', value: str.slice(0, 500) } };
+  return { clean: str.trim().slice(0, maxLen), threat: null };
 }
 
 // fieldDefs: { fieldName: maxLen }

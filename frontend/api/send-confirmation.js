@@ -1,11 +1,42 @@
 'use strict';
 
+const { createClient } = require('@supabase/supabase-js');
 const { sendBlackRockEmail } = require('./_lib/email');
 const { confirmationEmail } = require('./_lib/templates');
 const {
   getIP, checkInMemoryRateLimit, sanitizeBody, validateEmail, validatePhone,
   checkUserAgent, checkCors, getCorsHeaders, applySecurityHeaders, logAndAlert,
 } = require('./_lib/security');
+
+const TELEGRAM_TOKEN   = process.env.TELEGRAM_BOT_TOKEN || process.env.REACT_APP_TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID   || process.env.REACT_APP_TELEGRAM_CHAT_ID;
+
+let _db = null;
+function getDb() {
+  if (_db) return _db;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  _db = createClient(url, key);
+  return _db;
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function sendTelegram(text, replyMarkup) {
+  if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) return;
+  try {
+    const payload = { chat_id: TELEGRAM_CHAT_ID, text, parse_mode: 'HTML' };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch {}
+}
 
 module.exports = async function handler(req, res) {
   const ip = getIP(req);
@@ -41,10 +72,11 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true }); // silent
   }
 
-  // Sanitize inputs
+  // Sanitize inputs — all fields go through injection/XSS/allowlist checks
   const { sanitized, threat } = sanitizeBody(req.body || {}, {
     name:     100,
     email:    254,
+    phone:    20,
     occasion: 100,
     notes:    2000,
     date:     20,
@@ -64,16 +96,87 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid input detected.' });
   }
 
-  const { name, email, date, time, party, occasion, notes } = sanitized;
+  const { name, email, phone, date, time, party, occasion, notes } = sanitized;
   const preSelectedMeals = Array.isArray(req.body?.preSelectedMeals) ? req.body.preSelectedMeals : [];
 
   if (!email || !name) return res.status(400).json({ error: 'Missing required fields' });
   if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email address.' });
+  if (phone && !validatePhone(phone)) return res.status(400).json({ error: 'Invalid phone number.' });
 
+  // Insert reservation into Supabase server-side (after sanitization)
+  const db = getDb();
+  if (!db) {
+    console.error('[send-confirmation] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured');
+    return res.status(500).json({ error: 'Service configuration error.' });
+  }
+
+  let reservationId = null;
+  try {
+    const hasMeals = preSelectedMeals.length > 0;
+    const { data: inserted, error: insertErr } = await db.from('reservations').insert({
+      name,
+      email,
+      phone: phone || null,
+      date,
+      time,
+      party: String(party),
+      occasion,
+      notes: notes || null,
+      status: 'pending',
+      pre_selected_meals: hasMeals ? preSelectedMeals : null,
+    }).select('id').single();
+
+    if (insertErr) {
+      console.error('[send-confirmation] Supabase insert error:', insertErr.message);
+      return res.status(500).json({ error: 'Failed to save reservation. Please try again.' });
+    }
+    reservationId = inserted?.id ?? null;
+  } catch (err) {
+    console.error('[send-confirmation] Supabase insert exception:', err.message);
+    return res.status(500).json({ error: 'Failed to save reservation. Please try again.' });
+  }
+
+  // Send Telegram notification with action keyboard (server-side)
+  try {
+    const dateStr = date
+      ? new Date(date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : '—';
+    const hasMeals = preSelectedMeals.length > 0;
+    const mealsLines = hasMeals
+      ? ['\n🍽️ Pre-selected meals:', ...preSelectedMeals.map((m) => `  ${m.qty}× ${escapeHtml(String(m.name || ''))}`)]
+      : [];
+
+    const tgText = [
+      '🍽 <b>New Reservation — BLACKROCK</b>',
+      '',
+      `👤 <b>${escapeHtml(name)}</b>`,
+      `📅 ${escapeHtml(dateStr)} at ${escapeHtml(time || '—')}`,
+      `👥 Party of ${escapeHtml(String(party || '—'))}`,
+      occasion ? `🎉 ${escapeHtml(occasion)}` : null,
+      '',
+      phone ? `📞 ${escapeHtml(phone)}` : null,
+      email ? `✉️ ${escapeHtml(email)}` : null,
+      notes ? `\n📝 ${escapeHtml(notes)}` : null,
+      ...mealsLines,
+    ].filter((l) => l !== null).join('\n');
+
+    const actionKeyboard = reservationId ? {
+      inline_keyboard: [[
+        { text: '✓ Confirm',     callback_data: `confirm:${reservationId}` },
+        { text: '📅 Reschedule', callback_data: `reschedule:${reservationId}` },
+        { text: '✗ Cancel',      callback_data: `cancel:${reservationId}` },
+        { text: '✉️ Email',      callback_data: `email:${reservationId}` },
+      ]],
+    } : null;
+
+    sendTelegram(tgText, actionKeyboard).catch(() => {});
+  } catch {}
+
+  // Send confirmation email to guest
   try {
     const { subject, bodyHtml, guestName } = confirmationEmail({ name, date, time, party: Number(party) || 2, occasion, notes, preSelectedMeals });
     await sendBlackRockEmail({ to: email, subject, guestName, bodyHtml, type: 'reservation', ctaText: 'View Reservations', ctaUrl: 'https://blackrockrestaurantng.com/reservations' });
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true, id: reservationId });
   } catch (err) {
     console.error('[send-confirmation]', err);
     return res.status(500).json({ error: err.message });

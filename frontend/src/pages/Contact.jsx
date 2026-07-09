@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Phone, Mail, MapPin, MessageCircle, Clock, Send, Check, ExternalLink } from "lucide-react";
 import { BRAND } from "../lib/data";
 import SectionHeader from "../components/SectionHeader";
-import { supabase } from "../lib/supabase";
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "", _hp: "" });
@@ -15,22 +14,26 @@ export default function Contact() {
     e.preventDefault();
     setSendError("");
     setSending(true);
-    const { error } = await supabase.from("enquiries").insert({
-      name: form.name,
-      email: form.email,
-      message: form.message,
-      status: "new",
-    });
+
+    try {
+      const res = await fetch("/api/send-enquiry-reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name, email: form.email, message: form.message, _hp: form._hp }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setSendError(data.error || "Something went wrong. Please try again or email us directly.");
+        setSending(false);
+        return;
+      }
+    } catch {
+      setSendError("Something went wrong. Please try again or email us directly.");
+      setSending(false);
+      return;
+    }
+
     setSending(false);
-    if (error) { setSendError("Something went wrong. Please try again or email us directly."); return; }
-
-    // Auto-reply email + Telegram notification + message_id storage (all server-side)
-    fetch("/api/send-enquiry-reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, email: form.email, message: form.message, _hp: form._hp }),
-    }).catch(() => {});
-
     setSent(true);
     setForm({ name: "", email: "", message: "" });
     setTimeout(() => setSent(false), 8000);
