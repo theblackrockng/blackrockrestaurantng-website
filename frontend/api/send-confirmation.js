@@ -66,6 +66,12 @@ module.exports = async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests. Please try again later.' });
   }
 
+  // Phone raw-length pre-check — reject before sanitization so we don't silently truncate
+  const rawPhone = String(req.body?.phone || '');
+  if (rawPhone && rawPhone.length > 20) {
+    return res.status(400).json({ error: 'Phone number exceeds 20 characters.' });
+  }
+
   // Honeypot check — bots fill this, humans don't
   if (req.body?._hp) {
     logAndAlert({ eventType: 'bot_detected', severity: 'medium', ip, endpoint: '/api/send-confirmation', payload: `Honeypot filled: ${String(req.body._hp).slice(0, 100)}`, userAgent: req.headers['user-agent'] || '' }).catch(() => {});

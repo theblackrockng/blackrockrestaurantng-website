@@ -9,10 +9,18 @@ export default function Contact() {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const submit = async (e) => {
     e.preventDefault();
     setSendError("");
+    setEmailError("");
+
+    if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(form.email)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+
     setSending(true);
 
     try {
@@ -209,9 +217,12 @@ export default function Contact() {
                         className="tbr-input-box"
                         placeholder="you@example.com"
                         value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        onChange={(e) => { setForm({ ...form, email: e.target.value }); if (emailError) setEmailError(""); }}
                         data-testid="contact-input-email"
                       />
+                      {emailError && (
+                        <p className="text-xs text-red-400 mt-1.5" data-testid="contact-error-email">{emailError}</p>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -227,7 +238,7 @@ export default function Contact() {
                   </div>
                   {sendError && (
                     <p className="text-sm text-red-400/80 border border-red-400/20 bg-red-400/5 px-4 py-3" data-testid="contact-error">
-                      Something went wrong. Please try again or call us directly.
+                      {sendError}
                     </p>
                   )}
                   <button

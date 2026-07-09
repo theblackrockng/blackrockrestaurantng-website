@@ -137,9 +137,10 @@ function detectSQLInjection(v) { return SQL_PATTERNS.some(p => p.test(v)); }
 function detectXSS(v) { return XSS_PATTERNS.some(p => p.test(v)); }
 function hasForbiddenChars(v) { return FORBIDDEN_CHARS_RE.test(v); }
 
-const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
-// Nigerian numbers: +234XXXXXXXXXX or 0XXXXXXXXXX
-const PHONE_RE = /^(\+?234|0)[789]\d{9}$/;
+// TLD must be 2–63 alphabetic characters (rejects bare domains like "user@gmail")
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[a-zA-Z]{2,63}$/;
+// Digits only after stripping formatting; optional leading +; 6–20 digits
+const PHONE_RE = /^\+?[0-9]{6,20}$/;
 
 function validateEmail(email) { return EMAIL_RE.test(String(email)); }
 function validatePhone(phone) {

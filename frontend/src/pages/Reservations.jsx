@@ -90,6 +90,7 @@ export default function Reservations() {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // Meal pre-selection state
   const [menuItems, setMenuItems] = useState([]);
@@ -132,9 +133,22 @@ export default function Reservations() {
   const goBack = () => { setDir(-1); setStep(1); };
   const goBackToDetails = () => { setDir(-1); setStep(step === 2.5 ? 2.5 : 2); };
 
-  // Step 2 form → advance to meal selection
+  // Step 2 form → validate then advance to meal selection
   const handleGoToMeals = (e) => {
     e.preventDefault();
+    const errors = {};
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(form.email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+    if (form.phone) {
+      if (/[a-zA-Z]/.test(form.phone)) {
+        errors.phone = "Phone number cannot contain letters.";
+      } else if (form.phone.replace(/[\s\-().]/g, '').length > 20) {
+        errors.phone = "Phone number exceeds 20 characters.";
+      }
+    }
+    if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
+    setFieldErrors({});
     setDir(1);
     setStep(3);
   };
@@ -464,11 +478,41 @@ export default function Reservations() {
                   </div>
                   <div>
                     <label className="tbr-label">Email</label>
-                    <input required type="email" className="tbr-input" placeholder="you@example.com" value={form.email} onChange={(e) => handleChange("email", e.target.value)} data-testid="input-email" />
+                    <input
+                      required
+                      type="email"
+                      className="tbr-input"
+                      placeholder="you@example.com"
+                      value={form.email}
+                      onChange={(e) => {
+                        handleChange("email", e.target.value);
+                        if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: undefined }));
+                      }}
+                      data-testid="input-email"
+                    />
+                    {fieldErrors.email && (
+                      <p className="text-xs text-red-400 mt-1.5" data-testid="error-email">{fieldErrors.email}</p>
+                    )}
                   </div>
                   <div>
                     <label className="tbr-label">Phone</label>
-                    <input required type="tel" className="tbr-input" placeholder="+234 803 ..." value={form.phone} onChange={(e) => handleChange("phone", e.target.value)} data-testid="input-phone" />
+                    <input
+                      required
+                      type="tel"
+                      className="tbr-input"
+                      placeholder="+234 803 ..."
+                      maxLength={20}
+                      value={form.phone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^\d\s+\-]/g, '').slice(0, 20);
+                        handleChange("phone", val);
+                        if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+                      }}
+                      data-testid="input-phone"
+                    />
+                    {fieldErrors.phone && (
+                      <p className="text-xs text-red-400 mt-1.5" data-testid="error-phone">{fieldErrors.phone}</p>
+                    )}
                   </div>
                   {!isConcierge && (
                     <div>
