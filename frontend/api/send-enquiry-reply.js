@@ -140,7 +140,8 @@ module.exports = async function handler(req, res) {
   }
 
   const { name, email, message } = sanitized;
-  if (!email || !name) return res.status(400).json({ error: 'Missing required fields' });
+  if (!name || !email || !message) return res.status(400).json({ error: 'Missing required fields' });
+  if (name.trim().length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters.' });
   if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email address.' });
 
   // Duplicate submission check

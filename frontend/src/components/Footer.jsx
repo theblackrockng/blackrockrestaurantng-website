@@ -1,10 +1,24 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Instagram, MapPin, Phone, Mail } from "lucide-react";
+import { Instagram, MapPin, Phone, Mail, Check } from "lucide-react";
 import { BRAND, NAV_LINKS } from "../lib/data";
 import BrandMark from "./BrandMark";
 
 export default function Footer() {
+  const [emailCopied, setEmailCopied] = useState(false);
+
+  const handleEmailClick = async (e) => {
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(BRAND.email);
+      setEmailCopied(true);
+      setTimeout(() => setEmailCopied(false), 3000);
+    } catch {
+      window.location.href = `mailto:${BRAND.email}`;
+    }
+  };
+
   return (
     <footer className="bg-[var(--charcoal)] text-[var(--warm-white)] relative grain" style={{ borderTop: "1px solid rgba(200,169,110,0.3)" }} data-testid="footer">
       <div className="max-w-[1440px] mx-auto px-6 md:px-12 pt-20 pb-10">
@@ -46,10 +60,18 @@ export default function Footer() {
                 <Phone size={16} className="text-[var(--gold)] mt-1 flex-shrink-0" />
                 <span className="text-white/80">{BRAND.phone}</span>
               </a>
-              <a href={`mailto:${BRAND.email}`} className="flex items-start gap-3 hover:text-[var(--gold)] transition-colors" data-testid="footer-email">
-                <Mail size={16} className="text-[var(--gold)] mt-1 flex-shrink-0" />
-                <span className="text-white/80">{BRAND.email}</span>
-              </a>
+              <button
+                onClick={handleEmailClick}
+                className="flex items-start gap-3 hover:text-[var(--gold)] transition-colors text-left"
+                data-testid="footer-email"
+                aria-label={emailCopied ? "Email address copied" : `Email ${BRAND.email}`}
+              >
+                {emailCopied
+                  ? <Check size={16} className="text-[var(--gold)] mt-1 flex-shrink-0" />
+                  : <Mail size={16} className="text-[var(--gold)] mt-1 flex-shrink-0" />
+                }
+                <span className="text-white/80">{emailCopied ? "Email address copied successfully." : BRAND.email}</span>
+              </button>
             </div>
           </motion.div>
 

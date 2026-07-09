@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Phone, MessageCircle, X, ArrowRight, ArrowLeft, Minus, Plus, UtensilsCrossed, Loader2 } from "lucide-react";
+import { Check, Phone, MessageCircle, X, ArrowRight, ArrowLeft, Minus, Plus, UtensilsCrossed, Loader2, Calendar } from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import { OCCASIONS, BRAND, IMAGES, MENU } from "../lib/data";
 import { supabase } from "../lib/supabase";
 
@@ -62,6 +64,100 @@ function menuFallback() {
       price: parseInt(String(item.price).replace(/[₦,\s]/g, ""), 10),
       category,
     }))
+  );
+}
+
+function DatePickerField({ value, onChange, min, error, onBlur }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const minDate = min ? new Date(min + "T00:00:00") : undefined;
+  const selected = value ? new Date(value + "T00:00:00") : undefined;
+
+  const displayValue = selected
+    ? selected.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : "Select a date";
+
+  useEffect(() => {
+    if (!open) return;
+    function handleDown(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    function handleKey(e) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  function handleSelect(date) {
+    if (!date) return;
+    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    onChange(iso);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={wrapRef} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        onBlur={onBlur}
+        data-testid="input-date"
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "transparent",
+          border: "none",
+          borderBottom: `1px solid ${error ? "rgba(248,113,113,0.7)" : open ? "var(--gold)" : "var(--border-soft)"}`,
+          padding: "14px 0",
+          fontFamily: "'Montserrat', sans-serif",
+          fontSize: "14px",
+          color: selected ? "var(--warm-white)" : "#6b6358",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <span>{displayValue}</span>
+        <Calendar size={14} style={{ color: "var(--gold)", flexShrink: 0 }} />
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            zIndex: 100,
+            background: "#1a1814",
+            border: "1px solid rgba(200,169,110,0.4)",
+            padding: "8px",
+            "--rdp-accent-color": "#c8a96e",
+            "--rdp-background-color": "rgba(200,169,110,0.12)",
+            "--rdp-accent-color-dark": "rgba(200,169,110,0.5)",
+            "--rdp-cell-size": "36px",
+            "--rdp-selected-color": "#0f0d0a",
+          }}
+        >
+          <DayPicker
+            mode="single"
+            selected={selected}
+            onSelect={handleSelect}
+            disabled={minDate ? { before: minDate } : undefined}
+            defaultMonth={selected || minDate || new Date()}
+            styles={{
+              caption_label: { color: "#F5F0E8", fontFamily: "Montserrat, sans-serif", fontSize: "12px", letterSpacing: "0.1em", textTransform: "uppercase" },
+              head_cell: { color: "#9C8E7A", fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase" },
+              day: { color: "#F5F0E8", fontSize: "13px", borderRadius: 0 },
+            }}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -137,6 +233,9 @@ export default function Reservations() {
   const handleGoToMeals = (e) => {
     e.preventDefault();
     const errors = {};
+    if (!form.name || form.name.trim().length < 2) {
+      errors.name = form.name.trim() ? "Name must be at least 2 characters." : "Full name is required.";
+    }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(form.email)) {
       errors.email = "Please enter a valid email address.";
     }
@@ -146,6 +245,9 @@ export default function Reservations() {
       } else if (form.phone.replace(/[\s\-().]/g, '').length > 20) {
         errors.phone = "Phone number exceeds 20 characters.";
       }
+    }
+    if (!isConcierge && !form.date) {
+      errors.date = "Please select a date.";
     }
     if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
     setFieldErrors({});
@@ -474,7 +576,27 @@ export default function Reservations() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                   <div>
                     <label className="tbr-label">Full Name</label>
-                    <input required type="text" className="tbr-input" placeholder="Tomi Adekola" value={form.name} onChange={(e) => handleChange("name", e.target.value)} data-testid="input-name" />
+                    <input
+                      required
+                      type="text"
+                      className="tbr-input"
+                      placeholder="Tomi Adekola"
+                      maxLength={100}
+                      value={form.name}
+                      onChange={(e) => {
+                        handleChange("name", e.target.value);
+                        if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
+                      }}
+                      onBlur={() => {
+                        if (!form.name || form.name.trim().length < 2) {
+                          setFieldErrors((p) => ({ ...p, name: form.name.trim() ? "Name must be at least 2 characters." : "Full name is required." }));
+                        }
+                      }}
+                      data-testid="input-name"
+                    />
+                    <div style={{ minHeight: "20px" }}>
+                      {fieldErrors.name && <p className="text-xs text-red-400 mt-1.5" data-testid="error-name">{fieldErrors.name}</p>}
+                    </div>
                   </div>
                   <div>
                     <label className="tbr-label">Email</label>
@@ -490,9 +612,9 @@ export default function Reservations() {
                       }}
                       data-testid="input-email"
                     />
-                    {fieldErrors.email && (
-                      <p className="text-xs text-red-400 mt-1.5" data-testid="error-email">{fieldErrors.email}</p>
-                    )}
+                    <div style={{ minHeight: "20px" }}>
+                      {fieldErrors.email && <p className="text-xs text-red-400 mt-1.5" data-testid="error-email">{fieldErrors.email}</p>}
+                    </div>
                   </div>
                   <div>
                     <label className="tbr-label">Phone</label>
@@ -510,9 +632,9 @@ export default function Reservations() {
                       }}
                       data-testid="input-phone"
                     />
-                    {fieldErrors.phone && (
-                      <p className="text-xs text-red-400 mt-1.5" data-testid="error-phone">{fieldErrors.phone}</p>
-                    )}
+                    <div style={{ minHeight: "20px" }}>
+                      {fieldErrors.phone && <p className="text-xs text-red-400 mt-1.5" data-testid="error-phone">{fieldErrors.phone}</p>}
+                    </div>
                   </div>
                   {!isConcierge && (
                     <div>
@@ -532,7 +654,21 @@ export default function Reservations() {
                     <>
                       <div>
                         <label className="tbr-label">Date</label>
-                        <input required type="date" min={today} className="tbr-input" value={form.date} onChange={(e) => handleChange("date", e.target.value)} data-testid="input-date" />
+                        <DatePickerField
+                          value={form.date}
+                          onChange={(v) => {
+                            handleChange("date", v);
+                            if (fieldErrors.date) setFieldErrors((p) => ({ ...p, date: undefined }));
+                          }}
+                          min={today}
+                          error={fieldErrors.date}
+                          onBlur={() => {
+                            if (!form.date) setFieldErrors((p) => ({ ...p, date: "Please select a date." }));
+                          }}
+                        />
+                        <div style={{ minHeight: "20px" }}>
+                          {fieldErrors.date && <p className="text-xs text-red-400 mt-1.5" data-testid="error-date">{fieldErrors.date}</p>}
+                        </div>
                       </div>
                       <div>
                         <label className="tbr-label">Time</label>
@@ -578,10 +714,16 @@ export default function Reservations() {
                 )}
 
                 <div className="mb-12">
-                  <label className="tbr-label">Anything special?</label>
+                  <div className="flex items-baseline justify-between">
+                    <label className="tbr-label">Anything special?</label>
+                    <span className="text-[10px] text-[var(--muted)]" style={{ letterSpacing: "0.1em" }}>
+                      {form.special.length}/2000
+                    </span>
+                  </div>
                   <textarea
                     className="tbr-input resize-none"
                     rows={3}
+                    maxLength={2000}
                     placeholder={occasion === "date-night" ? "Candles, window table, a specific drink..." : "Dietary requirements, seating preferences..."}
                     value={form.special}
                     onChange={(e) => handleChange("special", e.target.value)}

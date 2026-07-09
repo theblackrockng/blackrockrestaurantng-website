@@ -10,16 +10,30 @@ export default function Contact() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [messageError, setMessageError] = useState("");
 
   const submit = async (e) => {
     e.preventDefault();
     setSendError("");
     setEmailError("");
+    setNameError("");
+    setMessageError("");
 
+    let hasError = false;
+    if (!form.name || form.name.trim().length < 2) {
+      setNameError(form.name.trim() ? "Name must be at least 2 characters." : "Name is required.");
+      hasError = true;
+    }
     if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(form.email)) {
       setEmailError("Please enter a valid email address.");
-      return;
+      hasError = true;
     }
+    if (!form.message.trim()) {
+      setMessageError("Message is required.");
+      hasError = true;
+    }
+    if (hasError) return;
 
     setSending(true);
 
@@ -204,10 +218,19 @@ export default function Contact() {
                         required
                         className="tbr-input-box"
                         placeholder="Your name"
+                        maxLength={100}
                         value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        onChange={(e) => { setForm({ ...form, name: e.target.value }); if (nameError) setNameError(""); }}
+                        onBlur={() => {
+                          if (!form.name || form.name.trim().length < 2) {
+                            setNameError(form.name.trim() ? "Name must be at least 2 characters." : "Name is required.");
+                          }
+                        }}
                         data-testid="contact-input-name"
                       />
+                      <div style={{ minHeight: "20px" }}>
+                        {nameError && <p className="text-xs text-red-400 mt-1.5" data-testid="contact-error-name">{nameError}</p>}
+                      </div>
                     </div>
                     <div>
                       <label className="tbr-label">Email</label>
@@ -218,11 +241,16 @@ export default function Contact() {
                         placeholder="you@example.com"
                         value={form.email}
                         onChange={(e) => { setForm({ ...form, email: e.target.value }); if (emailError) setEmailError(""); }}
+                        onBlur={() => {
+                          if (form.email && !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(form.email)) {
+                            setEmailError("Please enter a valid email address.");
+                          }
+                        }}
                         data-testid="contact-input-email"
                       />
-                      {emailError && (
-                        <p className="text-xs text-red-400 mt-1.5" data-testid="contact-error-email">{emailError}</p>
-                      )}
+                      <div style={{ minHeight: "20px" }}>
+                        {emailError && <p className="text-xs text-red-400 mt-1.5" data-testid="contact-error-email">{emailError}</p>}
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -232,9 +260,15 @@ export default function Contact() {
                       className="tbr-input-box"
                       placeholder="Tell us what you're thinking..."
                       value={form.message}
-                      onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      onChange={(e) => { setForm({ ...form, message: e.target.value }); if (messageError) setMessageError(""); }}
+                      onBlur={() => {
+                        if (!form.message.trim()) setMessageError("Message is required.");
+                      }}
                       data-testid="contact-input-message"
                     />
+                    <div style={{ minHeight: "20px" }}>
+                      {messageError && <p className="text-xs text-red-400 mt-1.5" data-testid="contact-error-message">{messageError}</p>}
+                    </div>
                   </div>
                   {sendError && (
                     <p className="text-sm text-red-400/80 border border-red-400/20 bg-red-400/5 px-4 py-3" data-testid="contact-error">

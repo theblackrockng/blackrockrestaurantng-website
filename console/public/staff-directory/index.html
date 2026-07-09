@@ -398,6 +398,28 @@ const { createClient } = supabase;
 const sb = createClient(DIRECTORY_CONFIG.supabaseUrl, DIRECTORY_CONFIG.supabaseKey);
 
 const BASE_URL = window.location.origin + '/staff-directory/';
+
+/* ── REQUEST TIMEOUT HELPER ── */
+function withTimeout(promise, ms) {
+  let tid;
+  const timeout = new Promise((_, reject) => {
+    tid = setTimeout(() => reject(new Error('Request timed out. Check your connection and try again.')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(tid));
+}
+
+function showLoadError(msg) {
+  const el = document.getElementById('app-loading');
+  el.innerHTML = `
+    <div style="text-align:center;max-width:320px;padding:24px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--burgundy-light);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--burgundy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <p style="color:var(--text-dark);font-weight:700;font-size:15px;margin-bottom:8px;font-family:var(--font-heading)">Failed to load staff directory</p>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px">${esc(msg || 'Please try again.')}</p>
+      <button onclick="location.reload()" style="background:var(--burgundy);color:white;border:none;padding:10px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(122,28,28,0.28)">Try Again</button>
+    </div>`;
+}
 const COLORS = ['#7a1c1c','#0277bd','#6a1b9a','#ad1457','#e65100','#00695c','#283593','#4e342e'];
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -423,11 +445,14 @@ function setStatusFilter(val) {
 /* ── INIT ── */
 async function init() {
   // Use the existing console Supabase Auth session — no separate login
-  const { data: { session } } = await sb.auth.getSession();
+  const { data: { session } } = await withTimeout(sb.auth.getSession(), 10000);
   if (!session) { window.location.replace('/login'); return; }
 
   // Role check via staff_profiles (consistent with the admin console)
-  const { data: profile } = await sb.from('staff_profiles').select('role').eq('id', session.user.id).maybeSingle();
+  const { data: profile } = await withTimeout(
+    sb.from('staff_profiles').select('role').eq('id', session.user.id).maybeSingle(),
+    8000
+  );
   const role = profile?.role || session.user.user_metadata?.role || '';
   const allowed = ['super_admin', 'hr_admin'].includes(role);
   if (!allowed) {
@@ -444,7 +469,7 @@ async function init() {
 
 /* ── LOAD STAFF ── */
 async function loadStaff() {
-  const { data, error } = await sb.from('staff').select('*').order('id');
+  const { data, error } = await withTimeout(sb.from('staff').select('*').order('id'), 10000);
   if (error) { showToast('Could not load staff: ' + error.message, 5000, true); return; }
   staff = data || [];
   updateStats();
@@ -900,7 +925,12 @@ function showView(name) {
   document.getElementById(id).addEventListener('click', function(e) { if (e.target === this) closeModal(id); });
 });
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  init().catch(err => {
+    console.error('[staff-directory] init error:', err);
+    showLoadError(err?.message || 'An unexpected error occurred.');
+  });
+});
 </script>
 </body>
 </html>
