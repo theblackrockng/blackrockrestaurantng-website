@@ -338,14 +338,14 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, dragProps }) {
 }
 
 /* ─── EditPanel ─── */
-function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
+function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food", foodCategories = CATEGORIES, drinkCategories = DRINK_CATEGORIES }) {
   const isNew = !dish?.id;
   const fileInputRef = useRef(null);
   const resolvedMenuType = dish?.menu_type ?? defaultMenuType;
   const [form, setForm] = useState({
     name: dish?.name ?? "",
     menu_type: resolvedMenuType,
-    category: dish?.category ?? (resolvedMenuType === "drink" ? DRINK_CATEGORIES[0] : CATEGORIES[0]),
+    category: dish?.category ?? (resolvedMenuType === "drink" ? drinkCategories[0] : foodCategories[0]),
     price: dish?.price ?? "",
     description: dish?.description ?? "",
     available: dish?.available ?? true,
@@ -433,7 +433,7 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
                     key={t}
                     type="button"
                     onClick={() => {
-                      const cats = t === "drink" ? DRINK_CATEGORIES : CATEGORIES;
+                      const cats = t === "drink" ? drinkCategories : foodCategories;
                       set("menu_type", t);
                       set("category", cats[0]);
                       setCustomCategory("");
@@ -466,7 +466,7 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
                   if (e.target.value !== "__new__") setCustomCategory("");
                 }}
               >
-                {(form.menu_type === "drink" ? DRINK_CATEGORIES : CATEGORIES).map((c) => (
+                {(form.menu_type === "drink" ? drinkCategories : foodCategories).map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
                 <option disabled style={{ color: "var(--ds-border)" }}>──────────</option>
@@ -638,10 +638,12 @@ export default function MenuManagement() {
   const byType = dishes.filter((d) => (d.menu_type ?? "food") === menuType);
   const filtered = activeCategory === "All" ? byType : byType.filter((d) => d.category === activeCategory);
 
-  // Build category list from hardcoded defaults + any new ones present in DB
-  const baseCats = menuType === "drink" ? DRINK_CATEGORIES : CATEGORIES;
-  const dbCats = [...new Set(byType.map((d) => d.category).filter(Boolean))];
-  const allCats = [...baseCats, ...dbCats.filter((c) => !baseCats.includes(c))];
+  // Build category lists: hardcoded defaults + any custom ones saved in DB
+  const dbFoodCats = [...new Set(dishes.filter((d) => (d.menu_type ?? "food") === "food").map((d) => d.category).filter(Boolean))];
+  const dbDrinkCats = [...new Set(dishes.filter((d) => d.menu_type === "drink").map((d) => d.category).filter(Boolean))];
+  const allFoodCats = [...CATEGORIES, ...dbFoodCats.filter((c) => !CATEGORIES.includes(c))];
+  const allDrinkCats = [...DRINK_CATEGORIES, ...dbDrinkCats.filter((c) => !DRINK_CATEGORIES.includes(c))];
+  const allCats = menuType === "drink" ? allDrinkCats : allFoodCats;
 
   /* ─── Drag handlers ─── */
   const handleDragStart = (id) => setDragId(id);
@@ -824,6 +826,8 @@ export default function MenuManagement() {
           <EditPanel
             dish={editingDish}
             defaultMenuType={menuType}
+            foodCategories={allFoodCats}
+            drinkCategories={allDrinkCats}
             onClose={() => { setShowPanel(false); setEditingDish(null); }}
             onSaved={() => { setShowPanel(false); setEditingDish(null); fetchDishes(); }}
           />
