@@ -243,7 +243,11 @@ export default function Orders() {
     setSelectedOrder(order);
     setOrderItems(null);
     try {
-      const res = await fetch(`/api/order-items?order_id=${order.id}`);
+      const res = await fetch("/api/order-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: order.id }),
+      });
       const json = await res.json();
       setOrderItems(json.data || []);
     } catch (err) {
