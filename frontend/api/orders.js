@@ -208,7 +208,7 @@ module.exports = async function handler(req, res) {
 
     if (orderErr || !orderRow) {
       console.error('[orders] Insert error:', orderErr);
-      return res.status(500).json({ error: 'Failed to create order.' });
+      return res.status(500).json({ error: 'Failed to create order.', detail: orderErr?.message || orderErr?.code || 'unknown' });
     }
 
     const orderId = orderRow.id;

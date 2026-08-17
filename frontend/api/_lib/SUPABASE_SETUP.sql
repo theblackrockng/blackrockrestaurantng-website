@@ -44,3 +44,43 @@ CREATE TABLE IF NOT EXISTS restaurant_settings (
 );
 
 INSERT INTO restaurant_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- 4. Orders table (online ordering)
+CREATE TABLE IF NOT EXISTS orders (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_number         TEXT,
+  guest_name           TEXT NOT NULL,
+  guest_phone          TEXT NOT NULL,
+  guest_email          TEXT,
+  order_type           TEXT NOT NULL CHECK (order_type IN ('pickup', 'delivery')),
+  delivery_address     TEXT,
+  special_instructions TEXT,
+  scheduled_time       TIMESTAMPTZ,
+  payment_method       TEXT DEFAULT 'pay_on_arrival',
+  payment_status       TEXT DEFAULT 'pay_on_arrival',
+  order_status         TEXT DEFAULT 'new',
+  subtotal             NUMERIC NOT NULL DEFAULT 0,
+  delivery_fee         NUMERIC NOT NULL DEFAULT 0,
+  total                NUMERIC NOT NULL DEFAULT 0,
+  ip_address           TEXT,
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. Order items table
+CREATE TABLE IF NOT EXISTS order_items (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id    UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  item_id     TEXT NOT NULL,
+  item_name   TEXT NOT NULL,
+  unit_price  NUMERIC NOT NULL DEFAULT 0,
+  qty         INTEGER NOT NULL DEFAULT 1,
+  line_total  NUMERIC NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Allow the API (service role) to insert/read orders
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+
+-- Service role bypasses RLS automatically, so no extra policy needed.
+-- If using anon key on client side, add policies here.
