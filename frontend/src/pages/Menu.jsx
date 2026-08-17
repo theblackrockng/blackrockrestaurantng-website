@@ -47,10 +47,10 @@ function formatPrice(price) {
   return `₦${num.toLocaleString("en-NG")}`;
 }
 
-function CategoryImage({ category, menuType }) {
+function CategoryImage({ category, menuType, dbCategoryImages }) {
   const [errorCats, setErrorCats] = useState(new Set());
-  const imgMap = menuType === "drink" ? DRINK_CATEGORY_IMAGES : categoryImages;
-  const src = imgMap[category];
+  const fallbackMap = menuType === "drink" ? DRINK_CATEGORY_IMAGES : categoryImages;
+  const src = dbCategoryImages?.[category] || fallbackMap[category];
   const hasError = errorCats.has(category);
   const showImage = src && !hasError;
 
@@ -106,6 +106,18 @@ export default function MenuPage() {
   const [menuType, setMenuType] = useState("food");
   const [active, setActive] = useState("");
   const [loading, setLoading] = useState(true);
+  const [dbCategoryImages, setDbCategoryImages] = useState({});
+
+  useEffect(() => {
+    supabase
+      .from("site_content")
+      .select("data")
+      .eq("section", "menu-category-images")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.data) setDbCategoryImages(data.data);
+      });
+  }, []);
 
   useEffect(() => {
     supabase
@@ -300,7 +312,7 @@ export default function MenuPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
               {/* Category image */}
               <div className="lg:col-span-5 lg:sticky lg:top-44 self-start">
-                <CategoryImage category={active} menuType={menuType} />
+                <CategoryImage category={active} menuType={menuType} dbCategoryImages={dbCategoryImages} />
                 <div className="mt-6">
                   <span className="gold-line">{active}</span>
                 </div>

@@ -200,52 +200,75 @@ function ImageCard({ asset, onDelete, onSelect, selected }) {
   );
 }
 
+const ALL_FOOD_CATEGORIES = [
+  "Starters", "Salads", "Rice", "Noodles",
+  "Pepper Soup & Specials", "Continental", "Sauces",
+  "Charcoal Grills", "National Dishes", "Traditional Specials",
+];
+const ALL_DRINK_CATEGORIES = [
+  "Wines", "Spirits", "Beer & Cider", "Cocktails",
+  "Mocktails", "Soft Drinks & Water", "Hot Drinks", "Fresh Juice",
+];
+
 /* ─── DetailPanel ─── */
 function DetailPanel({ asset, onClose, onDeleted, onUpdated }) {
+  const [name, setName] = useState(asset.filename ?? "");
   const [section, setSection] = useState(asset.used_in ?? "");
+  const [dishes, setDishes] = useState([]);
+  const [dishSearch, setDishSearch] = useState("");
+  const [selectedDishId, setSelectedDishId] = useState("");
+  const [dbCategories, setDbCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(ALL_FOOD_CATEGORIES[0]);
   const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null); // "saved" | error string
+  const [assigningDish, setAssigningDish] = useState(false);
+  const [assigningCat, setAssigningCat] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
+  const [dishStatus, setDishStatus] = useState(null);
+  const [catStatus, setCatStatus] = useState(null);
+
+  useEffect(() => {
+    supabase.from("menu_items").select("id, name, category, menu_type, image_url").order("category").then(({ data }) => {
+      if (data) {
+        setDishes(data);
+        const extraCats = [...new Set(data.map(d => d.category).filter(Boolean))]
+          .filter(c => !ALL_FOOD_CATEGORIES.includes(c) && !ALL_DRINK_CATEGORIES.includes(c));
+        setDbCategories(extraCats);
+      }
+    });
+  }, []);
+
+  const allCategories = [...ALL_FOOD_CATEGORIES, ...ALL_DRINK_CATEGORIES, ...dbCategories];
+
+  const filteredDishes = dishSearch.trim()
+    ? dishes.filter(d =>
+        d.name.toLowerCase().includes(dishSearch.toLowerCase()) ||
+        d.category.toLowerCase().includes(dishSearch.toLowerCase())
+      )
+    : dishes;
 
   const handleSave = async () => {
     setSaving(true);
     setSaveStatus(null);
     try {
-      const { error } = await supabase
-        .from("media_assets")
-        .update({ used_in: section || null })
-        .eq("id", asset.id);
+      const updates = { used_in: section || null, filename: name.trim() || asset.filename };
+      const { error } = await supabase.from("media_assets").update(updates).eq("id", asset.id);
       if (error) throw error;
 
-      // If assigning to hero → update site_content
       if (section === "hero") {
-        const { data: existing } = await supabase
-          .from("site_content")
-          .select("data")
-          .eq("section", "hero")
-          .maybeSingle();
+        const { data: existing } = await supabase.from("site_content").select("data").eq("section", "hero").maybeSingle();
         const current = existing?.data ?? {};
-        await supabase
-          .from("site_content")
-          .upsert({ section: "hero", data: { ...current, image: asset.url } }, { onConflict: "section" });
+        await supabase.from("site_content").upsert({ section: "hero", data: { ...current, image: asset.url } }, { onConflict: "section" });
       }
-
-      // If assigning to gallery → add to gallery images array
       if (section === "gallery") {
-        const { data: existing } = await supabase
-          .from("site_content")
-          .select("data")
-          .eq("section", "gallery")
-          .maybeSingle();
+        const { data: existing } = await supabase.from("site_content").select("data").eq("section", "gallery").maybeSingle();
         const imgs = Array.isArray(existing?.data?.images) ? existing.data.images : [];
         if (!imgs.includes(asset.url)) {
-          await supabase
-            .from("site_content")
-            .upsert({ section: "gallery", data: { images: [...imgs, asset.url] } }, { onConflict: "section" });
+          await supabase.from("site_content").upsert({ section: "gallery", data: { images: [...imgs, asset.url] } }, { onConflict: "section" });
         }
       }
 
       setSaveStatus("saved");
-      onUpdated({ ...asset, used_in: section || null });
+      onUpdated({ ...asset, ...updates });
       setTimeout(() => setSaveStatus(null), 2500);
     } catch (e) {
       setSaveStatus(e.message ?? "Error saving");
@@ -253,6 +276,45 @@ function DetailPanel({ asset, onClose, onDeleted, onUpdated }) {
       setSaving(false);
     }
   };
+
+  const handleAssignToDish = async () => {
+    if (!selectedDishId) return;
+    setAssigningDish(true);
+    setDishStatus(null);
+    try {
+      const { error } = await supabase.from("menu_items").update({ image_url: asset.url }).eq("id", selectedDishId);
+      if (error) throw error;
+      setDishStatus("saved");
+      setTimeout(() => setDishStatus(null), 2500);
+    } catch (e) {
+      setDishStatus(e.message ?? "Error");
+    } finally {
+      setAssigningDish(false);
+    }
+  };
+
+  const handleAssignToCategory = async () => {
+    if (!selectedCategory) return;
+    setAssigningCat(true);
+    setCatStatus(null);
+    try {
+      const { data: existing } = await supabase.from("site_content").select("data").eq("section", "menu-category-images").maybeSingle();
+      const current = existing?.data ?? {};
+      const { error } = await supabase.from("site_content").upsert(
+        { section: "menu-category-images", data: { ...current, [selectedCategory]: asset.url } },
+        { onConflict: "section" }
+      );
+      if (error) throw error;
+      setCatStatus("saved");
+      setTimeout(() => setCatStatus(null), 2500);
+    } catch (e) {
+      setCatStatus(e.message ?? "Error");
+    } finally {
+      setAssigningCat(false);
+    }
+  };
+
+  const selectedDish = dishes.find(d => String(d.id) === String(selectedDishId));
 
   return (
     <>
@@ -263,10 +325,9 @@ function DetailPanel({ asset, onClose, onDeleted, onUpdated }) {
         exit={{ x: 420, opacity: 0 }}
         transition={{ type: "spring", damping: 28, stiffness: 260 }}
         style={{
-          position: "fixed", right: 0, top: 0, bottom: 0, width: 400, zIndex: 100,
+          position: "fixed", right: 0, top: 0, bottom: 0, width: 420, zIndex: 100,
           background: "var(--ds-surface)", borderLeft: "1px solid var(--ds-border)",
           display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif",
-          overflowY: "auto",
         }}
       >
         {/* Header */}
@@ -275,60 +336,132 @@ function DetailPanel({ asset, onClose, onDeleted, onUpdated }) {
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ds-muted)", display: "flex" }}><X size={18} /></button>
         </div>
 
-        <div style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
           {/* Preview */}
-          <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--ds-border)", background: "var(--ds-input-bg)", aspectRatio: "16/10" }}>
+          <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--ds-border)", background: "var(--ds-input-bg)", aspectRatio: "16/10", flexShrink: 0 }}>
             <img src={asset.url} alt={asset.filename} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
 
-          {/* Meta */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", gap: 10 }}>
-              <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "10px 12px" }}>
-                <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 3px" }}>Filename</p>
-                <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0, wordBreak: "break-all" }}>{asset.filename}</p>
+          {/* Meta row */}
+          <div style={{ display: "flex", gap: 8 }}>
+            {asset.file_size && (
+              <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "8px 12px" }}>
+                <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 2px" }}>Size</p>
+                <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0 }}>{fmt(asset.file_size)}</p>
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              {asset.file_size && (
-                <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 3px" }}>Size</p>
-                  <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0 }}>{fmt(asset.file_size)}</p>
-                </div>
-              )}
-              {asset.uploaded_at && (
-                <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 3px" }}>Uploaded</p>
-                  <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0 }}>{fmtDate(asset.uploaded_at)}</p>
-                </div>
-              )}
-            </div>
+            )}
+            {asset.uploaded_at && (
+              <div style={{ flex: 1, background: "var(--ds-input-bg)", borderRadius: 8, padding: "8px 12px" }}>
+                <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ds-muted)", margin: "0 0 2px" }}>Uploaded</p>
+                <p style={{ fontSize: 12, color: "var(--ds-text)", margin: 0 }}>{fmtDate(asset.uploaded_at)}</p>
+              </div>
+            )}
           </div>
 
-          {/* Assign to section */}
+          {/* ── Editable Name ── */}
+          <div>
+            <label style={LABEL_STYLE}>Image Name</label>
+            <input
+              style={INPUT_STYLE}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Grilled Fish"
+            />
+          </div>
+
+          {/* ── Website Section ── */}
           <div>
             <label style={LABEL_STYLE}>Display on Website</label>
-            <select
-              style={{ ...INPUT_STYLE, cursor: "pointer" }}
-              value={section}
-              onChange={(e) => setSection(e.target.value)}
-            >
+            <select style={{ ...INPUT_STYLE, cursor: "pointer" }} value={section} onChange={(e) => setSection(e.target.value)}>
               {SECTION_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
-            <p style={{ fontSize: 11, color: "var(--ds-muted)", marginTop: 6, lineHeight: 1.5 }}>
-              {section === "hero" && "This image will be the main hero background on the homepage."}
-              {section === "home-food-reel" && "This image will appear in the scrolling food strip on the homepage."}
-              {section === "home-instagram" && "This image will appear in the Instagram strip section."}
-              {section === "gallery" && "This image will appear on the Gallery page."}
-              {section === "about" && "This image will be used on the About page."}
-              {!section && "Image won't be displayed anywhere on the website."}
+            <p style={{ fontSize: 11, color: "var(--ds-muted)", marginTop: 5, lineHeight: 1.5 }}>
+              {section === "hero" && "Main hero background on the homepage."}
+              {section === "home-food-reel" && "Scrolling food strip on the homepage."}
+              {section === "home-instagram" && "Instagram strip section."}
+              {section === "gallery" && "Gallery page."}
+              {section === "about" && "About page."}
+              {!section && "Not displayed anywhere on the website."}
             </p>
           </div>
 
-          {/* URL */}
-          <div>
+          {/* ── Assign to Dish ── */}
+          <div style={{ borderTop: "1px solid var(--ds-border)", paddingTop: 16 }}>
+            <label style={LABEL_STYLE}>Assign to Dish</label>
+            <input
+              style={{ ...INPUT_STYLE, marginBottom: 8 }}
+              value={dishSearch}
+              onChange={(e) => setDishSearch(e.target.value)}
+              placeholder="Search dishes…"
+            />
+            <select
+              style={{ ...INPUT_STYLE, cursor: "pointer", maxHeight: 160 }}
+              size={5}
+              value={selectedDishId}
+              onChange={(e) => setSelectedDishId(e.target.value)}
+            >
+              {filteredDishes.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} — {d.category}
+                </option>
+              ))}
+            </select>
+            {selectedDish && (
+              <p style={{ fontSize: 11, color: "var(--ds-muted)", marginTop: 5 }}>
+                Selected: <strong style={{ color: "var(--ds-text)" }}>{selectedDish.name}</strong>
+              </p>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+              <button
+                style={{ ...GOLD_BTN, opacity: (!selectedDishId || assigningDish) ? 0.5 : 1 }}
+                onClick={handleAssignToDish}
+                disabled={!selectedDishId || assigningDish}
+              >
+                <Check size={13} /> {assigningDish ? "Assigning…" : "Assign to Dish"}
+              </button>
+              {dishStatus && (
+                <span style={{ fontSize: 11.5, color: dishStatus === "saved" ? "#16a34a" : "#ef4444" }}>
+                  {dishStatus === "saved" ? "Assigned ✓" : dishStatus}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* ── Assign to Category ── */}
+          <div style={{ borderTop: "1px solid var(--ds-border)", paddingTop: 16 }}>
+            <label style={LABEL_STYLE}>Assign as Category Image</label>
+            <select
+              style={{ ...INPUT_STYLE, cursor: "pointer", marginBottom: 8 }}
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              {allCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <p style={{ fontSize: 11, color: "var(--ds-muted)", marginBottom: 8, lineHeight: 1.5 }}>
+              This image will appear as the cover photo for the <strong style={{ color: "var(--ds-text)" }}>{selectedCategory}</strong> category on the menu page.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                style={{ ...GOLD_BTN, opacity: assigningCat ? 0.5 : 1 }}
+                onClick={handleAssignToCategory}
+                disabled={assigningCat}
+              >
+                <Check size={13} /> {assigningCat ? "Assigning…" : "Assign to Category"}
+              </button>
+              {catStatus && (
+                <span style={{ fontSize: 11.5, color: catStatus === "saved" ? "#16a34a" : "#ef4444" }}>
+                  {catStatus === "saved" ? "Assigned ✓" : catStatus}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* ── Image URL ── */}
+          <div style={{ borderTop: "1px solid var(--ds-border)", paddingTop: 16 }}>
             <label style={LABEL_STYLE}>Image URL</label>
             <div style={{ display: "flex", gap: 6 }}>
               <input style={{ ...INPUT_STYLE, fontSize: 11, color: "var(--ds-muted)" }} readOnly value={asset.url} />
@@ -340,9 +473,7 @@ function DetailPanel({ asset, onClose, onDeleted, onUpdated }) {
                 <Copy size={13} />
               </button>
               <a
-                href={asset.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={asset.url} target="_blank" rel="noopener noreferrer"
                 style={{ ...GHOST_BTN, flexShrink: 0, padding: "10px 12px", textDecoration: "none" }}
                 title="Open in new tab"
               >

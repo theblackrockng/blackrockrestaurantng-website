@@ -374,6 +374,13 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food", foodCateg
         if (upErr) throw upErr;
         const { data: { publicUrl } } = supabase.storage.from("menu-images").getPublicUrl(path);
         imageUrl = publicUrl;
+        // Register in media_assets so it appears in the Media Library
+        await supabase.from("media_assets").insert({
+          url: publicUrl,
+          filename: selectedFile.name,
+          file_size: selectedFile.size,
+          used_in: "home-food-reel",
+        }).select().maybeSingle();
       }
       const payload = {
         name: form.name.trim(),
