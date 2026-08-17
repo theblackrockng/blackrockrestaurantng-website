@@ -351,6 +351,7 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
     available: dish?.available ?? true,
     image_url: dish?.image_url ?? "",
   });
+  const [customCategory, setCustomCategory] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -361,6 +362,8 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
   const handleSave = async () => {
     if (!form.name.trim()) { setError("Dish name is required."); return; }
     if (!form.price) { setError("Price is required."); return; }
+    const resolvedCategory = form.category === "__new__" ? customCategory.trim() : form.category;
+    if (!resolvedCategory) { setError("Please enter a category name."); return; }
     setSaving(true);
     setError("");
     try {
@@ -375,7 +378,7 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
       const payload = {
         name: form.name.trim(),
         menu_type: form.menu_type,
-        category: form.category,
+        category: resolvedCategory,
         price: parseFloat(String(form.price).replace(/,/g, "")),
         description: form.description.trim(),
         available: form.available,
@@ -433,6 +436,7 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
                       const cats = t === "drink" ? DRINK_CATEGORIES : CATEGORIES;
                       set("menu_type", t);
                       set("category", cats[0]);
+                      setCustomCategory("");
                     }}
                     style={{
                       flex: 1, padding: "8px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
@@ -454,9 +458,29 @@ function EditPanel({ dish, onClose, onSaved, defaultMenuType = "food" }) {
             {/* Category */}
             <div>
               <label style={LABEL_STYLE}>Category</label>
-              <select style={INPUT_STYLE} value={form.category} onChange={(e) => set("category", e.target.value)}>
-                {(form.menu_type === "drink" ? DRINK_CATEGORIES : CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
+              <select
+                style={INPUT_STYLE}
+                value={form.category}
+                onChange={(e) => {
+                  set("category", e.target.value);
+                  if (e.target.value !== "__new__") setCustomCategory("");
+                }}
+              >
+                {(form.menu_type === "drink" ? DRINK_CATEGORIES : CATEGORIES).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                <option disabled style={{ color: "var(--ds-border)" }}>──────────</option>
+                <option value="__new__">+ Add new category…</option>
               </select>
+              {form.category === "__new__" && (
+                <input
+                  style={{ ...INPUT_STYLE, marginTop: 8 }}
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="New category name…"
+                  autoFocus
+                />
+              )}
             </div>
             {/* Price */}
             <div>
@@ -614,6 +638,11 @@ export default function MenuManagement() {
   const byType = dishes.filter((d) => (d.menu_type ?? "food") === menuType);
   const filtered = activeCategory === "All" ? byType : byType.filter((d) => d.category === activeCategory);
 
+  // Build category list from hardcoded defaults + any new ones present in DB
+  const baseCats = menuType === "drink" ? DRINK_CATEGORIES : CATEGORIES;
+  const dbCats = [...new Set(byType.map((d) => d.category).filter(Boolean))];
+  const allCats = [...baseCats, ...dbCats.filter((c) => !baseCats.includes(c))];
+
   /* ─── Drag handlers ─── */
   const handleDragStart = (id) => setDragId(id);
   const handleDragEnd   = () => { setDragId(null); setDragOverId(null); };
@@ -715,7 +744,7 @@ export default function MenuManagement() {
       {/* Category Filter */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 24 }}>
         <FilterTab label="All" active={activeCategory === "All"} onClick={() => setActiveCategory("All")} />
-        {(menuType === "drink" ? DRINK_CATEGORIES : CATEGORIES).map((c) => (
+        {allCats.map((c) => (
           <FilterTab key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(c)} />
         ))}
       </div>
