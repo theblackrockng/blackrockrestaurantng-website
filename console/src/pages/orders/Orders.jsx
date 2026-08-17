@@ -35,10 +35,13 @@ const STATUS_CFG = {
 };
 
 const PAYMENT_CFG = {
-  pay_on_arrival: { label: "Pay on Arrival", bg: "rgba(245,158,11,0.10)", color: "#d97706", border: "rgba(245,158,11,0.2)" },
-  paid:           { label: "Paid",            bg: "rgba(34,197,94,0.10)",  color: "#22c55e", border: "rgba(34,197,94,0.2)" },
-  pending:        { label: "Pending",         bg: "rgba(107,114,128,0.10)", color: "#6b7280", border: "rgba(107,114,128,0.2)" },
-  failed:         { label: "Failed",          bg: "rgba(239,68,68,0.10)",  color: "#ef4444", border: "rgba(239,68,68,0.2)" },
+  awaiting_proof: { label: "Awaiting Proof",    bg: "rgba(245,158,11,0.10)", color: "#d97706", border: "rgba(245,158,11,0.2)" },
+  proof_received: { label: "Proof Received",    bg: "rgba(59,130,246,0.10)", color: "#3b82f6", border: "rgba(59,130,246,0.2)" },
+  paid:           { label: "Payment Confirmed", bg: "rgba(34,197,94,0.10)",  color: "#22c55e", border: "rgba(34,197,94,0.2)" },
+  pay_on_arrival: { label: "Pay on Arrival",    bg: "rgba(245,158,11,0.10)", color: "#d97706", border: "rgba(245,158,11,0.2)" },
+  bank_transfer:  { label: "Bank Transfer",     bg: "rgba(245,158,11,0.10)", color: "#d97706", border: "rgba(245,158,11,0.2)" },
+  pending:        { label: "Pending",           bg: "rgba(107,114,128,0.10)", color: "#6b7280", border: "rgba(107,114,128,0.2)" },
+  failed:         { label: "Failed",            bg: "rgba(239,68,68,0.10)",  color: "#ef4444", border: "rgba(239,68,68,0.2)" },
 };
 
 /* ─── Helpers ─── */
@@ -291,6 +294,25 @@ export default function Orders() {
     await updateStatus(orderId, "cancelled");
   }
 
+  async function updatePaymentStatus(orderId, newPaymentStatus) {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ payment_status: newPaymentStatus, updated_at: new Date().toISOString() })
+        .eq("id", orderId);
+      if (error) throw error;
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, payment_status: newPaymentStatus } : o));
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder((prev) => ({ ...prev, payment_status: newPaymentStatus }));
+      }
+    } catch (err) {
+      console.error("[Orders] payment status update error:", err);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   // Filter + search
   const filtered = orders.filter((o) => {
     if (activeFilter !== "all" && o.order_status !== activeFilter) return false;
@@ -465,6 +487,7 @@ export default function Orders() {
           items={orderItems}
           onClose={() => { setSelectedOrder(null); setOrderItems([]); }}
           onStatusUpdate={updateStatus}
+          onPaymentUpdate={updatePaymentStatus}
           onCancel={cancelOrder}
           actionLoading={actionLoading}
         />
@@ -478,9 +501,12 @@ export default function Orders() {
 }
 
 /* ─── Order detail panel ─── */
-function OrderDetailPanel({ order, items, onClose, onStatusUpdate, onCancel, actionLoading }) {
+function OrderDetailPanel({ order, items, onClose, onStatusUpdate, onPaymentUpdate, onCancel, actionLoading }) {
   const flow = STATUS_FLOW[order.order_status] || {};
   const canCancel = order.order_status !== "completed" && order.order_status !== "cancelled";
+  const payStatus = order.payment_status;
+  const isProofReceived = payStatus === "proof_received" || payStatus === "paid";
+  const isPaymentConfirmed = payStatus === "paid";
 
   return (
     <div
@@ -560,9 +586,82 @@ function OrderDetailPanel({ order, items, onClose, onStatusUpdate, onCancel, act
 
           {/* Payment */}
           <Section title="Payment">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
               <PaymentBadge status={order.payment_status} />
               <span style={{ fontSize: 13, color: "var(--ds-text)", fontWeight: 600 }}>{fmtPrice(order.total)}</span>
+            </div>
+
+            {/* Step 1 — WhatsApp proof */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              padding: "10px 12px", borderRadius: 8, marginBottom: 8,
+              background: isProofReceived ? "rgba(34,197,94,0.06)" : "var(--ds-input-bg)",
+              border: `1px solid ${isProofReceived ? "rgba(34,197,94,0.2)" : "var(--ds-border)"}`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                  background: isProofReceived ? "#22c55e" : "var(--ds-border)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {isProofReceived && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
+                </div>
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ds-text)" }}>WhatsApp Proof</div>
+                  <div style={{ fontSize: 11, color: "var(--ds-muted)" }}>Customer sent payment screenshot</div>
+                </div>
+              </div>
+              {!isProofReceived && (
+                <button
+                  onClick={() => onPaymentUpdate(order.id, "proof_received")}
+                  disabled={actionLoading}
+                  style={{
+                    padding: "5px 10px", borderRadius: 6, fontSize: 11.5, fontWeight: 600,
+                    background: "var(--ds-gold)", border: "none", color: "#1a1a1a",
+                    cursor: actionLoading ? "not-allowed" : "pointer", whiteSpace: "nowrap",
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  Mark Received
+                </button>
+              )}
+            </div>
+
+            {/* Step 2 — Bank confirmation */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              padding: "10px 12px", borderRadius: 8,
+              background: isPaymentConfirmed ? "rgba(34,197,94,0.06)" : isProofReceived ? "var(--ds-input-bg)" : "rgba(0,0,0,0.1)",
+              border: `1px solid ${isPaymentConfirmed ? "rgba(34,197,94,0.2)" : "var(--ds-border)"}`,
+              opacity: isProofReceived ? 1 : 0.5,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                  background: isPaymentConfirmed ? "#22c55e" : "var(--ds-border)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {isPaymentConfirmed && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
+                </div>
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ds-text)" }}>Bank Confirmation</div>
+                  <div style={{ fontSize: 11, color: "var(--ds-muted)" }}>Payment verified in bank account</div>
+                </div>
+              </div>
+              {isProofReceived && !isPaymentConfirmed && (
+                <button
+                  onClick={() => onPaymentUpdate(order.id, "paid")}
+                  disabled={actionLoading}
+                  style={{
+                    padding: "5px 10px", borderRadius: 6, fontSize: 11.5, fontWeight: 600,
+                    background: "#22c55e", border: "none", color: "#fff",
+                    cursor: actionLoading ? "not-allowed" : "pointer", whiteSpace: "nowrap",
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  Confirm Payment
+                </button>
+              )}
             </div>
           </Section>
 
