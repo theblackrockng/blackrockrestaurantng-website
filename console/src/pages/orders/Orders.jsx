@@ -200,7 +200,7 @@ export default function Orders() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [orderItems, setOrderItems] = useState([]);
+  const [orderItems, setOrderItems] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [counts, setCounts] = useState({ new: 0, confirmed: 0, preparing: 0, ready: 0, completed_today: 0 });
   const [fetchError, setFetchError] = useState(null);
@@ -241,13 +241,14 @@ export default function Orders() {
 
   async function openOrder(order) {
     setSelectedOrder(order);
-    setOrderItems([]);
+    setOrderItems(null);
     try {
       const res = await fetch(`/api/order-items?order_id=${order.id}`);
       const json = await res.json();
       setOrderItems(json.data || []);
     } catch (err) {
       console.error("[Orders] fetch items error:", err);
+      setOrderItems([]);
     }
   }
 
@@ -481,6 +482,7 @@ export default function Orders() {
         <OrderDetailPanel
           order={selectedOrder}
           items={orderItems}
+          itemsLoading={orderItems === null}
           onClose={() => { setSelectedOrder(null); setOrderItems([]); }}
           onStatusUpdate={updateStatus}
           onPaymentUpdate={updatePaymentStatus}
@@ -497,7 +499,7 @@ export default function Orders() {
 }
 
 /* ─── Order detail panel ─── */
-function OrderDetailPanel({ order, items, onClose, onStatusUpdate, onPaymentUpdate, onCancel, actionLoading }) {
+function OrderDetailPanel({ order, items, itemsLoading, onClose, onStatusUpdate, onPaymentUpdate, onCancel, actionLoading }) {
   const flow = STATUS_FLOW[order.order_status] || {};
   const canCancel = order.order_status !== "completed" && order.order_status !== "cancelled";
   const payStatus = order.payment_status;
@@ -662,9 +664,11 @@ function OrderDetailPanel({ order, items, onClose, onStatusUpdate, onPaymentUpda
           </Section>
 
           {/* Items */}
-          <Section title={`Items (${items.length})`}>
-            {items.length === 0 ? (
+          <Section title={`Items (${items?.length ?? "…"})`}>
+            {itemsLoading ? (
               <p style={{ fontSize: 12.5, color: "var(--ds-muted)", margin: 0 }}>Loading…</p>
+            ) : items.length === 0 ? (
+              <p style={{ fontSize: 12.5, color: "var(--ds-muted)", margin: 0 }}>No items found.</p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {items.map((item, idx) => (
