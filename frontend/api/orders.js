@@ -195,7 +195,7 @@ module.exports = async function handler(req, res) {
         delivery_address: orderType === 'delivery' ? deliveryAddress.trim() : null,
         special_instructions: specialInstructions ? specialInstructions.trim() : null,
         scheduled_time: scheduledTimeISO,
-        payment_method: 'bank_transfer',
+        payment_method: 'pay_on_arrival',
         payment_status: 'awaiting_proof',
         order_status: 'new',
         subtotal,
