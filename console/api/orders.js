@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     const { id, order_status, payment_status } = req.body || {};
     if (!id) return res.status(400).json({ error: "Missing order id" });
 
-    const updates = { updated_at: new Date().toISOString() };
+    const updates = {};
     if (order_status !== undefined) updates.order_status = order_status;
     if (payment_status !== undefined) updates.payment_status = payment_status;
 
