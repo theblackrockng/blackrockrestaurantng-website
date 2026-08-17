@@ -26,8 +26,7 @@ export default async function handler(req, res) {
     const { data, error } = await db
       .from("order_items")
       .select("*")
-      .eq("order_id", order_id)
-      .order("created_at");
+      .eq("order_id", order_id);
 
     if (error) throw error;
     return res.status(200).json({ ok: true, data });
