@@ -170,8 +170,8 @@ module.exports = async function handler(req, res) {
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const deliveryFee = orderType === 'delivery' ? 1500 : 0;
-  const total = subtotal + deliveryFee;
+  const deliveryFee = 0;
+  const total = subtotal;
 
   // Validate scheduled time if provided
   let scheduledTimeISO = null;
@@ -195,7 +195,7 @@ module.exports = async function handler(req, res) {
         delivery_address: orderType === 'delivery' ? deliveryAddress.trim() : null,
         special_instructions: specialInstructions ? specialInstructions.trim() : null,
         scheduled_time: scheduledTimeISO,
-        payment_method: paymentMethod || 'pay_on_arrival',
+        payment_method: 'pay_on_arrival',
         payment_status: 'pay_on_arrival',
         order_status: 'new',
         subtotal,
@@ -244,7 +244,7 @@ module.exports = async function handler(req, res) {
       orderType === 'delivery'
         ? `🚚 Delivery to ${deliveryAddress ? deliveryAddress.trim() : 'Address not provided'}`
         : `📦 Pickup — 11 Ajao Road, Ikeja`,
-      `💳 ${(paymentMethod === 'pay_on_arrival' || !paymentMethod) ? 'Pay on Arrival' : 'Paid Online'}`,
+      `💳 Bank Transfer — awaiting WhatsApp proof`,
       ``,
       `Items:`,
       itemsText,

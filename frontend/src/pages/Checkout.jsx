@@ -209,7 +209,7 @@ export default function Checkout() {
         guestEmail: guestEmail.trim() || null,
         specialInstructions: specialInstructions.trim() || null,
         scheduledTime,
-        paymentMethod: "bank_transfer",
+        paymentMethod: "pay_on_arrival",
         items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
       };
 
