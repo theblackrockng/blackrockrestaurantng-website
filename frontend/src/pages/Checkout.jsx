@@ -230,7 +230,19 @@ export default function Checkout() {
       window.open(`https://wa.me/${bankAccount.whatsappNumber}?text=${msg}`, "_blank");
 
       clearCart();
-      navigate(`/order-confirmation/${data.orderId}`);
+      navigate(`/order-confirmation/${data.orderId}`, {
+        state: {
+          orderNumber: data.orderNumber,
+          orderType,
+          deliveryAddress: orderType === "delivery" ? fullAddress : null,
+          guestName: guestName.trim(),
+          scheduledTime,
+          items: items.map((i) => ({ name: i.name, qty: i.qty, unit_price: i.price, line_total: i.price * i.qty })),
+          subtotal: total,
+          deliveryFee: 0,
+          total,
+        },
+      });
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {

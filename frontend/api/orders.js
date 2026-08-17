@@ -260,7 +260,9 @@ module.exports = async function handler(req, res) {
       ]],
     };
 
-    sendTelegram(telegramText, replyMarkup).catch(() => {});
+    await sendTelegram(telegramText, replyMarkup).catch((err) => {
+      console.error('[orders] Telegram send error:', err);
+    });
 
     // Email confirmation (fire-and-forget)
     if (guestEmail && guestEmail.trim()) {

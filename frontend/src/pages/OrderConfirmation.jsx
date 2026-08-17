@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircle, Package, Truck, Clock, RotateCcw, Home } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { CheckCircle, Package, Truck, Clock, RotateCcw, Home, MessageCircle } from "lucide-react";
 
 function fmtPrice(n) {
   return `₦${Number(n).toLocaleString("en-NG")}`;
@@ -23,95 +21,12 @@ function fmtScheduledTime(iso) {
   }
 }
 
-function PaymentBadge({ status }) {
-  if (status === "paid") {
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 5,
-          background: "rgba(34,197,94,0.12)",
-          color: "#22c55e",
-          border: "1px solid rgba(34,197,94,0.25)",
-          borderRadius: 99,
-          padding: "4px 12px",
-          fontSize: 12,
-          fontWeight: 600,
-        }}
-      >
-        Paid
-      </span>
-    );
-  }
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        background: "rgba(245,158,11,0.12)",
-        color: "#f59e0b",
-        border: "1px solid rgba(245,158,11,0.25)",
-        borderRadius: 99,
-        padding: "4px 12px",
-        fontSize: 12,
-        fontWeight: 600,
-      }}
-    >
-      Pay on Arrival
-    </span>
-  );
-}
-
 export default function OrderConfirmation() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
-  const [orderItems, setOrderItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { state } = useLocation();
 
-  useEffect(() => {
-    async function fetchOrder() {
-      try {
-        const [{ data: orderData, error: orderErr }, { data: itemsData, error: itemsErr }] =
-          await Promise.all([
-            supabase.from("orders").select("*").eq("id", orderId).single(),
-            supabase.from("order_items").select("*").eq("order_id", orderId).order("created_at"),
-          ]);
-
-        if (orderErr || !orderData) throw new Error("Order not found.");
-        if (itemsErr) throw new Error("Could not load order items.");
-
-        setOrder(orderData);
-        setOrderItems(itemsData || []);
-      } catch (err) {
-        setError(err.message || "Could not load order.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchOrder();
-  }, [orderId]);
-
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "var(--charcoal, #0f0d0a)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <p style={{ color: "var(--muted, #9C8E7A)" }}>Loading…</p>
-      </div>
-    );
-  }
-
-  if (error || !order) {
+  if (!state || !state.orderNumber) {
     return (
       <div
         style={{
@@ -125,13 +40,13 @@ export default function OrderConfirmation() {
           padding: 24,
         }}
       >
-        <p style={{ color: "var(--muted, #9C8E7A)", fontSize: 16 }}>{error || "Order not found."}</p>
+        <p style={{ color: "var(--muted, #9C8E7A)", fontSize: 16 }}>Order not found.</p>
         <button onClick={() => navigate("/")} className="btn-outline-gold">Return Home</button>
       </div>
     );
   }
 
-  const total = (order.subtotal || 0) + (order.delivery_fee || 0);
+  const { orderNumber, orderType, deliveryAddress, guestName, scheduledTime, items = [], subtotal, deliveryFee = 0, total } = state;
 
   return (
     <div
@@ -146,10 +61,7 @@ export default function OrderConfirmation() {
         {/* Success header */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ marginBottom: 20 }}>
-            <CheckCircle
-              size={64}
-              style={{ color: "var(--gold, #C9A84C)" }}
-            />
+            <CheckCircle size={64} style={{ color: "var(--gold, #C9A84C)" }} />
           </div>
           <p
             style={{
@@ -161,26 +73,48 @@ export default function OrderConfirmation() {
               marginBottom: 12,
             }}
           >
-            Order Placed
+            Order Received
           </p>
           <h1
             style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: "clamp(30px, 5vw, 44px)",
+              fontSize: "clamp(28px, 5vw, 40px)",
               fontWeight: 700,
               color: "var(--warm-white, #F5F0E8)",
-              margin: "0 0 12px",
-              lineHeight: 1.1,
+              margin: "0 0 16px",
+              lineHeight: 1.15,
             }}
           >
-            {order.order_number}
+            Thank you{guestName ? `, ${guestName.split(" ")[0]}` : ""}!
           </h1>
-          <p style={{ fontSize: 15, color: "var(--muted, #9C8E7A)", margin: 0 }}>
-            We'll notify you when your order is confirmed.
+          <p style={{ fontSize: 15, color: "var(--muted, #9C8E7A)", margin: "0 0 8px", lineHeight: 1.6 }}>
+            We've received your order <strong style={{ color: "var(--warm-white, #F5F0E8)" }}>{orderNumber}</strong>.
+          </p>
+          <p style={{ fontSize: 14, color: "var(--muted, #9C8E7A)", margin: 0, lineHeight: 1.6 }}>
+            Once we confirm your bank transfer via WhatsApp, we'll process your order immediately.
           </p>
         </div>
 
-        {/* Order summary */}
+        {/* Payment reminder banner */}
+        <div
+          style={{
+            background: "rgba(201,168,76,0.08)",
+            border: "1px solid rgba(201,168,76,0.25)",
+            borderRadius: 10,
+            padding: "14px 18px",
+            marginBottom: 20,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+          }}
+        >
+          <MessageCircle size={18} style={{ color: "var(--gold, #C9A84C)", flexShrink: 0, marginTop: 2 }} />
+          <p style={{ fontSize: 13, color: "var(--gold, #C9A84C)", margin: 0, lineHeight: 1.6 }}>
+            Please send your payment proof on WhatsApp if you haven't already. Payment confirms and activates your order.
+          </p>
+        </div>
+
+        {/* Order summary card */}
         <div
           style={{
             background: "#1a1612",
@@ -197,54 +131,55 @@ export default function OrderConfirmation() {
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <DetailRow
-                icon={order.order_type === "delivery" ? <Truck size={14} /> : <Package size={14} />}
-                label={order.order_type === "delivery" ? "Delivery" : "Pickup"}
+                icon={orderType === "delivery" ? <Truck size={14} /> : <Package size={14} />}
+                label={orderType === "delivery" ? "Delivery" : "Pickup"}
                 value={
-                  order.order_type === "delivery"
-                    ? order.delivery_address
+                  orderType === "delivery"
+                    ? deliveryAddress
                     : "11 Ajao Road, off Adeniyi Jones Road, Ikeja"
                 }
               />
               <DetailRow
                 icon={<Clock size={14} />}
                 label="Time"
-                value={fmtScheduledTime(order.scheduled_time)}
+                value={fmtScheduledTime(scheduledTime)}
               />
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 12, color: "var(--muted, #9C8E7A)" }}>Payment</span>
-                <PaymentBadge status={order.payment_status} />
-              </div>
+              <DetailRow
+                icon={null}
+                label="Payment"
+                value="Bank Transfer (awaiting confirmation)"
+              />
             </div>
           </div>
 
           {/* Items */}
           <div style={{ padding: "14px 20px", borderBottom: "1px solid #2e2820" }}>
             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted, #9C8E7A)", margin: "0 0 12px" }}>
-              Items
+              Items Ordered
             </p>
-            {orderItems.map((item, idx) => (
+            {items.map((item, idx) => (
               <div
-                key={item.id || idx}
+                key={idx}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "flex-start",
                   gap: 16,
-                  paddingBottom: idx < orderItems.length - 1 ? 10 : 0,
-                  marginBottom: idx < orderItems.length - 1 ? 10 : 0,
-                  borderBottom: idx < orderItems.length - 1 ? "1px solid #1e1a16" : "none",
+                  paddingBottom: idx < items.length - 1 ? 10 : 0,
+                  marginBottom: idx < items.length - 1 ? 10 : 0,
+                  borderBottom: idx < items.length - 1 ? "1px solid #1e1a16" : "none",
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, color: "var(--warm-white, #F5F0E8)", lineHeight: 1.3 }}>
-                    {item.item_name || item.name}
+                    {item.name || item.item_name}
                   </div>
                   <div style={{ fontSize: 12, color: "var(--muted, #9C8E7A)", marginTop: 2 }}>
                     {fmtPrice(item.unit_price || item.price)} × {item.qty}
                   </div>
                 </div>
                 <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--warm-white, #F5F0E8)", flexShrink: 0 }}>
-                  {fmtPrice((item.unit_price || item.price) * item.qty)}
+                  {fmtPrice(item.line_total ?? (item.unit_price || item.price) * item.qty)}
                 </div>
               </div>
             ))}
@@ -254,17 +189,17 @@ export default function OrderConfirmation() {
           <div style={{ padding: "14px 20px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ fontSize: 13, color: "var(--muted, #9C8E7A)" }}>Subtotal</span>
-              <span style={{ fontSize: 13, color: "var(--warm-white, #F5F0E8)" }}>{fmtPrice(order.subtotal || 0)}</span>
+              <span style={{ fontSize: 13, color: "var(--warm-white, #F5F0E8)" }}>{fmtPrice(subtotal || 0)}</span>
             </div>
-            {(order.delivery_fee > 0) && (
+            {deliveryFee > 0 && (
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                 <span style={{ fontSize: 13, color: "var(--muted, #9C8E7A)" }}>Delivery fee</span>
-                <span style={{ fontSize: 13, color: "var(--warm-white, #F5F0E8)" }}>{fmtPrice(order.delivery_fee)}</span>
+                <span style={{ fontSize: 13, color: "var(--warm-white, #F5F0E8)" }}>{fmtPrice(deliveryFee)}</span>
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid #2e2820", marginTop: 6 }}>
               <span style={{ fontSize: 16, fontWeight: 700, color: "var(--warm-white, #F5F0E8)" }}>Total</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--gold, #C9A84C)" }}>{fmtPrice(total)}</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--gold, #C9A84C)" }}>{fmtPrice(total || subtotal || 0)}</span>
             </div>
           </div>
         </div>
