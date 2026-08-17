@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Store, Lock, Sun, Moon, Check, Loader, ChevronRight,
-  MapPin, Phone, Mail, Globe, Clock, Palette, RefreshCw, Monitor,
+  MapPin, Phone, Mail, Globe, Clock, Palette, RefreshCw, Monitor, Banknote,
 } from "lucide-react";
 
 /* ─── Section wrapper ─── */
@@ -446,6 +446,66 @@ function AppearanceSection() {
   );
 }
 
+/* ─── Bank Account Section ─── */
+function BankAccountSection({ toast }) {
+  const [fields, setFields] = useState({
+    accountName: "BlackRock Restaurant",
+    accountNumber: "0012345678",
+    bankName: "Moniepoint MFB",
+    whatsappNumber: "2348055238353",
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const set = (k, v) => setFields(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    supabase.from("site_content").select("data").eq("section", "bank-account").maybeSingle()
+      .then(({ data }) => {
+        if (data?.data) setFields(f => ({ ...f, ...data.data }));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase.from("site_content").upsert(
+      { section: "bank-account", data: fields },
+      { onConflict: "section" }
+    );
+    setSaving(false);
+    toast(error ? "Failed: " + error.message : "Bank account details saved", !error);
+  }
+
+  if (loading) return <p style={{ fontSize: 13, color: "var(--ds-muted)" }}>Loading…</p>;
+
+  return (
+    <div>
+      <p style={{ fontSize: 12.5, color: "var(--ds-muted)", marginBottom: 16, lineHeight: 1.6 }}>
+        These details are shown to customers on the checkout page so they can make a bank transfer before placing their order.
+      </p>
+      <Field label="Account Name" icon={Store}>
+        <input style={inputStyle} value={fields.accountName} onChange={e => set("accountName", e.target.value)} />
+      </Field>
+      <Field label="Account Number" icon={Banknote}>
+        <input style={inputStyle} value={fields.accountNumber} onChange={e => set("accountNumber", e.target.value)} />
+      </Field>
+      <Field label="Bank Name" icon={Globe}>
+        <input style={inputStyle} value={fields.bankName} onChange={e => set("bankName", e.target.value)} />
+      </Field>
+      <Field label="WhatsApp Number" icon={Phone}>
+        <input style={inputStyle} value={fields.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)} placeholder="e.g. 2348055238353 (no +)" />
+      </Field>
+      <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+        <button style={saveBtn(saving)} onClick={save} disabled={saving}>
+          {saving ? <Loader size={13} className="spin" /> : <Check size={13} />}
+          {saving ? "Saving…" : "Save Account Details"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main ─── */
 export default function Settings() {
   const [toastMsg, setToastMsg] = useState(null);
@@ -478,6 +538,10 @@ export default function Settings() {
 
         <Section title="Security" icon={Lock}>
           <SecuritySection toast={showToast} />
+        </Section>
+
+        <Section title="Payment & Bank Account" icon={Banknote}>
+          <BankAccountSection toast={showToast} />
         </Section>
 
         <Section title="Console Appearance" icon={Monitor}>

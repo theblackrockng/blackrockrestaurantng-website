@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, MapPin, Truck, Package, Clock, Calendar, ChevronRight, AlertCircle } from "lucide-react";
+import { Check, MapPin, Truck, Package, Clock, Calendar, ChevronRight, AlertCircle, Copy } from "lucide-react";
 import { useCart } from "../context/CartContext";
-
-const PAYMENT_PROVIDER = process.env.REACT_APP_PAYMENT_PROVIDER || "none";
+import { supabase } from "../lib/supabase";
 
 function fmtPrice(n) {
   return `₦${Number(n).toLocaleString("en-NG")}`;
@@ -142,8 +141,19 @@ export default function Checkout() {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("12:00");
 
-  // Step 4
-  const [paymentMethod, setPaymentMethod] = useState("pay_on_arrival");
+  // Bank account details
+  const [bankAccount, setBankAccount] = useState({
+    accountName: "BlackRock Restaurant",
+    accountNumber: "0012345678",
+    bankName: "Moniepoint MFB",
+    whatsappNumber: "2348055238353",
+  });
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    supabase.from("site_content").select("data").eq("section", "bank-account").maybeSingle()
+      .then(({ data }) => { if (data?.data) setBankAccount(a => ({ ...a, ...data.data })); });
+  }, []);
 
   const total = subtotal;
 
@@ -199,7 +209,7 @@ export default function Checkout() {
         guestEmail: guestEmail.trim() || null,
         specialInstructions: specialInstructions.trim() || null,
         scheduledTime,
-        paymentMethod,
+        paymentMethod: "bank_transfer",
         items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
       };
 
@@ -211,6 +221,13 @@ export default function Checkout() {
 
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Failed to place order.");
+
+      // Open WhatsApp with proof of payment request
+      const itemsList = items.map(i => `• ${i.name} x${i.qty} — ${fmtPrice(i.price * i.qty)}`).join("\n");
+      const msg = encodeURIComponent(
+        `Hello BLACKROCK! 🍽️\n\nI just made a bank transfer for my order and would like to send proof of payment.\n\n*Order Details*\nName: ${guestName.trim()}\nPhone: ${guestPhone.trim()}\nType: ${orderType === "delivery" ? "Delivery" : "Pickup"}\nTotal: ${fmtPrice(total)}\n\n*Items:*\n${itemsList}\n\nPlease find attached my proof of payment. Thank you!`
+      );
+      window.open(`https://wa.me/${bankAccount.whatsappNumber}?text=${msg}`, "_blank");
 
       clearCart();
       navigate(`/order-confirmation/${data.orderId}`);
@@ -595,70 +612,51 @@ export default function Checkout() {
               }}
             >
               <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted, #9C8E7A)", margin: "0 0 14px" }}>
-                Payment Method
+                Payment — Bank Transfer
               </p>
 
-              {(PAYMENT_PROVIDER === "none" || !PAYMENT_PROVIDER) && (
-                <>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      padding: "12px 14px",
-                      background: "rgba(201,168,76,0.08)",
-                      border: "1px solid rgba(201,168,76,0.3)",
-                      borderRadius: 8,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: "50%",
-                        border: "2px solid var(--gold, #C9A84C)",
-                        background: "var(--gold, #C9A84C)",
-                        flexShrink: 0,
-                        marginTop: 2,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#0f0d0a" }} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--warm-white, #F5F0E8)", marginBottom: 2 }}>
-                        Pay on {orderType === "delivery" ? "Delivery" : "Pickup"}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--muted, #9C8E7A)", lineHeight: 1.5 }}>
-                        Pay with cash or transfer when your order arrives
-                      </div>
+              {/* Bank account details */}
+              <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 10, padding: "16px 18px", marginBottom: 14 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--gold, #C9A84C)", margin: "0 0 12px" }}>
+                  Transfer to this account
+                </p>
+                {[
+                  { label: "Bank", value: bankAccount.bankName },
+                  { label: "Account Name", value: bankAccount.accountName },
+                  { label: "Account Number", value: bankAccount.accountNumber },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, color: "var(--muted, #9C8E7A)" }}>{label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--warm-white, #F5F0E8)", letterSpacing: label === "Account Number" ? "0.1em" : "normal" }}>
+                        {value}
+                      </span>
+                      {label === "Account Number" && (
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                          title="Copy"
+                          style={{ background: "none", border: "none", cursor: "pointer", color: copied ? "#16a34a" : "var(--muted, #9C8E7A)", display: "flex", padding: 2 }}
+                        >
+                          {copied ? <Check size={13} /> : <Copy size={13} />}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <p style={{ fontSize: 12, color: "var(--muted, #9C8E7A)", margin: "12px 0 0", lineHeight: 1.6 }}>
-                    Online payment is launching soon. For now, please select Pay on {orderType === "delivery" ? "Delivery" : "Pickup"} to complete your order, and we'll confirm everything with you directly.
+                ))}
+                <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(201,168,76,0.1)", borderRadius: 7 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "var(--gold, #C9A84C)", margin: 0 }}>
+                    Transfer amount: {fmtPrice(total)}
                   </p>
-                </>
-              )}
-
-              {(PAYMENT_PROVIDER === "paystack" || PAYMENT_PROVIDER === "flutterwave") && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <PaymentOption
-                    active={paymentMethod === "pay_on_arrival"}
-                    onClick={() => setPaymentMethod("pay_on_arrival")}
-                    label={`Pay on ${orderType === "delivery" ? "Delivery" : "Pickup"}`}
-                    sub="Cash or transfer on arrival"
-                  />
-                  <PaymentOption
-                    active={paymentMethod === "pay_online"}
-                    onClick={() => setPaymentMethod("pay_online")}
-                    label="Pay Online"
-                    sub="Secure payment via card"
-                  />
                 </div>
-              )}
+              </div>
+
+              {/* Note */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 14px", background: "rgba(139,26,43,0.12)", border: "1px solid rgba(139,26,43,0.3)", borderRadius: 8, marginBottom: 4 }}>
+                <AlertCircle size={14} style={{ color: "#e07070", flexShrink: 0, marginTop: 1 }} />
+                <p style={{ fontSize: 12, color: "#e07070", margin: 0, lineHeight: 1.6 }}>
+                  <strong>Payment validates your order.</strong> Your order will only be confirmed after we receive and verify your proof of payment on WhatsApp.
+                </p>
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 12 }}>
@@ -669,7 +667,7 @@ export default function Checkout() {
                 className="btn-burgundy"
                 style={{ flex: 2, opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
               >
-                {loading ? "Placing Order…" : "Place Order"}
+                {loading ? "Placing Order…" : "I've Made This Payment →"}
               </button>
             </div>
           </div>
