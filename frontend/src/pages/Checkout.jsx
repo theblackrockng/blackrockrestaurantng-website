@@ -229,20 +229,23 @@ export default function Checkout() {
       );
       window.open(`https://wa.me/${bankAccount.whatsappNumber}?text=${msg}`, "_blank");
 
+      const confirmationState = {
+        orderNumber: data.orderNumber,
+        orderType,
+        deliveryAddress: orderType === "delivery" ? fullAddress : null,
+        guestName: guestName.trim(),
+        scheduledTime,
+        items: items.map((i) => ({ name: i.name, qty: i.qty, unit_price: i.price, line_total: i.price * i.qty })),
+        subtotal: total,
+        deliveryFee: 0,
+        total,
+      };
+
+      // Save to sessionStorage so a page refresh still shows the confirmation
+      try { sessionStorage.setItem(`order_${data.orderId}`, JSON.stringify(confirmationState)); } catch {}
+
       clearCart();
-      navigate(`/order-confirmation/${data.orderId}`, {
-        state: {
-          orderNumber: data.orderNumber,
-          orderType,
-          deliveryAddress: orderType === "delivery" ? fullAddress : null,
-          guestName: guestName.trim(),
-          scheduledTime,
-          items: items.map((i) => ({ name: i.name, qty: i.qty, unit_price: i.price, line_total: i.price * i.qty })),
-          subtotal: total,
-          deliveryFee: 0,
-          total,
-        },
-      });
+      navigate(`/order-confirmation/${data.orderId}`, { state: confirmationState });
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {

@@ -26,7 +26,16 @@ export default function OrderConfirmation() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  if (!state || !state.orderNumber) {
+  // Fall back to sessionStorage if we landed here without navigation state (e.g. page refresh)
+  let orderData = state;
+  if (!orderData?.orderNumber) {
+    try {
+      const saved = sessionStorage.getItem(`order_${orderId}`);
+      if (saved) orderData = JSON.parse(saved);
+    } catch {}
+  }
+
+  if (!orderData?.orderNumber) {
     return (
       <div
         style={{
@@ -46,7 +55,7 @@ export default function OrderConfirmation() {
     );
   }
 
-  const { orderNumber, orderType, deliveryAddress, guestName, scheduledTime, items = [], subtotal, deliveryFee = 0, total } = state;
+  const { orderNumber, orderType, deliveryAddress, guestName, scheduledTime, items = [], subtotal, deliveryFee = 0, total } = orderData;
 
   return (
     <div
