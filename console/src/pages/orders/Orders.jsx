@@ -203,9 +203,11 @@ export default function Orders() {
   const [orderItems, setOrderItems] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [counts, setCounts] = useState({ new: 0, confirmed: 0, preparing: 0, ready: 0, completed_today: 0 });
+  const [fetchError, setFetchError] = useState(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch("/api/orders");
       const json = await res.json();
@@ -227,6 +229,7 @@ export default function Orders() {
       setCounts({ new: newCount, confirmed: confirmedCount, preparing: preparingCount, ready: readyCount, completed_today: completedToday });
     } catch (err) {
       console.error("[Orders] fetch error:", err);
+      setFetchError(err.message || "Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -390,7 +393,11 @@ export default function Orders() {
 
       {/* Table */}
       <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 10, overflow: "hidden", boxShadow: "var(--ds-shadow)" }}>
-        {loading && orders.length === 0 ? (
+        {fetchError ? (
+          <div style={{ textAlign: "center", padding: "60px 24px", color: "#ef4444", fontSize: 13 }}>
+            Error: {fetchError}
+          </div>
+        ) : loading && orders.length === 0 ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: 10, color: "var(--ds-muted)" }}>
             <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
             <span style={{ fontSize: 13 }}>Loading orders…</span>
