@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Check, MapPin, Truck, Package, Clock, Calendar, ChevronRight, AlertCircle } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
-const DELIVERY_FEE = 1500;
 const PAYMENT_PROVIDER = process.env.REACT_APP_PAYMENT_PROVIDER || "none";
 
 function fmtPrice(n) {
@@ -146,8 +145,7 @@ export default function Checkout() {
   // Step 4
   const [paymentMethod, setPaymentMethod] = useState("pay_on_arrival");
 
-  const deliveryFee = orderType === "delivery" ? DELIVERY_FEE : 0;
-  const total = subtotal + deliveryFee;
+  const total = subtotal;
 
   function validateStep1() {
     if (!orderType) return "Please select an order type.";
@@ -320,7 +318,7 @@ export default function Checkout() {
                 onClick={() => setOrderType("delivery")}
                 icon={<Truck size={28} style={{ color: orderType === "delivery" ? "#0f0d0a" : "var(--gold, #C9A84C)" }} />}
                 title="Delivery"
-                subtitle={`Flat rate: ${fmtPrice(DELIVERY_FEE)}`}
+                subtitle="We'll confirm delivery details with you"
               />
             </div>
 
@@ -536,12 +534,6 @@ export default function Checkout() {
                   <span style={{ fontSize: 13, color: "var(--muted, #9C8E7A)" }}>Subtotal</span>
                   <span style={{ fontSize: 13, color: "var(--warm-white, #F5F0E8)" }}>{fmtPrice(subtotal)}</span>
                 </div>
-                {orderType === "delivery" && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, color: "var(--muted, #9C8E7A)" }}>Delivery fee</span>
-                    <span style={{ fontSize: 13, color: "var(--warm-white, #F5F0E8)" }}>{fmtPrice(DELIVERY_FEE)}</span>
-                  </div>
-                )}
                 <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid #2e2820", marginTop: 6 }}>
                   <span style={{ fontSize: 15, fontWeight: 700, color: "var(--warm-white, #F5F0E8)" }}>Total</span>
                   <span style={{ fontSize: 15, fontWeight: 700, color: "var(--gold, #C9A84C)" }}>{fmtPrice(total)}</span>
