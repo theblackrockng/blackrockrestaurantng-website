@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../context/AuthContext";
 import {
   Package, Truck, Search, RefreshCw, Loader2, X,
-  Phone, Mail, MapPin, Clock, UtensilsCrossed, ChevronRight,
+  Phone, Mail, MapPin, Clock, UtensilsCrossed, ChevronRight, UserCheck,
 } from "lucide-react";
 
 /* ─── Constants ─── */
@@ -195,6 +196,8 @@ function AvatarCircle({ name }) {
 
 /* ─── Main Orders page ─── */
 export default function Orders() {
+  const { session } = useAuth();
+  const [staffName, setStaffName] = useState("");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -204,6 +207,19 @@ export default function Orders() {
   const [actionLoading, setActionLoading] = useState(false);
   const [counts, setCounts] = useState({ new: 0, confirmed: 0, preparing: 0, ready: 0, completed_today: 0 });
   const [fetchError, setFetchError] = useState(null);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    supabase
+      .from("staff_profiles")
+      .select("full_name")
+      .eq("id", session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.full_name) setStaffName(data.full_name);
+        else setStaffName(session.user.email?.split("@")[0] || "Staff");
+      });
+  }, [session]);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -259,22 +275,29 @@ export default function Orders() {
   async function updateStatus(orderId, newStatus) {
     setActionLoading(true);
     try {
+      const patch = { id: orderId, order_status: newStatus };
+      if (newStatus === "confirmed" && staffName) patch.confirmed_by = staffName;
+
       const res = await fetch("/api/orders", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: orderId, order_status: newStatus }),
+        body: JSON.stringify(patch),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
 
-      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, order_status: newStatus } : o));
+      const updatedFields = { order_status: newStatus };
+      if (patch.confirmed_by) updatedFields.confirmed_by = patch.confirmed_by;
+
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, ...updatedFields } : o));
       if (selectedOrder?.id === orderId) {
-        setSelectedOrder((prev) => ({ ...prev, order_status: newStatus }));
+        setSelectedOrder((prev) => ({ ...prev, ...updatedFields }));
       }
 
       const statusLabels = { confirmed: "confirmed", preparing: "being prepared", ready: "ready for pickup/delivery", completed: "completed", cancelled: "cancelled" };
+      const byLine = newStatus === "confirmed" && staffName ? ` by <b>${staffName}</b>` : "";
       notifyTelegram(
-        `📋 Order ${selectedOrder?.order_number || orderId.slice(0, 8)} is now <b>${statusLabels[newStatus] || newStatus}</b>`
+        `📋 Order ${selectedOrder?.order_number || orderId.slice(0, 8)} is now <b>${statusLabels[newStatus] || newStatus}</b>${byLine}`
       ).catch(() => {});
     } catch (err) {
       console.error("[Orders] status update error:", err);
@@ -570,6 +593,13 @@ function OrderDetailPanel({ order, items, itemsLoading, onClose, onStatusUpdate,
             {order.guest_phone && <InfoRow icon={<Phone size={13} />} label={order.guest_phone} />}
             {order.guest_email && <InfoRow icon={<Mail size={13} />} label={order.guest_email} />}
           </Section>
+
+          {/* Confirmed by */}
+          {order.confirmed_by && (
+            <Section title="Confirmed By">
+              <InfoRow icon={<UserCheck size={13} />} label={order.confirmed_by} />
+            </Section>
+          )}
 
           {/* Order info */}
           <Section title="Order Info">

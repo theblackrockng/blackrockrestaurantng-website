@@ -37,12 +37,13 @@ export default async function handler(req, res) {
 
   // PATCH /api/orders — update order_status or payment_status
   if (req.method === "PATCH") {
-    const { id, order_status, payment_status } = req.body || {};
+    const { id, order_status, payment_status, confirmed_by } = req.body || {};
     if (!id) return res.status(400).json({ error: "Missing order id" });
 
     const updates = {};
     if (order_status !== undefined) updates.order_status = order_status;
     if (payment_status !== undefined) updates.payment_status = payment_status;
+    if (confirmed_by !== undefined) updates.confirmed_by = confirmed_by;
 
     try {
       const { error } = await db.from("orders").update(updates).eq("id", id);
