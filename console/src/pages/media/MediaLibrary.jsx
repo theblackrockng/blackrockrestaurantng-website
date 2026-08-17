@@ -58,23 +58,21 @@ const SECTION_OPTIONS = [
 
 // Known website image filenames → section
 const WEBSITE_IMAGES = [
-  { path: "heroimage.png",                          label: "Hero Image",           section: "hero" },
-  { path: "809355C9-989D-49FD-9BD1-D6ABFFC5B395.PNG", label: "Jollof Rice",       section: "home-food-reel" },
-  { path: "PHOTO-2026-05-23-14-42-34.jpg",          label: "Pepper Soup",          section: "home-food-reel" },
-  { path: "PHOTO-2026-05-23-14-35-14.jpg",          label: "Food Photo 1",         section: "home-food-reel" },
-  { path: "PHOTO-2026-05-23-15-14-03.jpg",          label: "Food Photo 2",         section: "home-food-reel" },
-  { path: "PHOTO-2026-05-23-15-30-40.jpg",          label: "Pasta",                section: "home-food-reel" },
-  { path: "Food3.jpg",                              label: "Food 3",               section: "home-food-reel" },
-  { path: "Food4.jpg",                              label: "Food 4",               section: "home-food-reel" },
-  { path: "Food5.jpg",                              label: "Food 5",               section: "home-food-reel" },
-  { path: "Food7.jpg",                              label: "Food 7",               section: "home-food-reel" },
-  { path: "Food12.jpg",                             label: "Food 12",              section: "home-food-reel" },
-  { path: "Food13.jpg",                             label: "Food 13",              section: "home-food-reel" },
-  { path: "Food14.jpg",                             label: "Food 14",              section: "home-food-reel" },
-  { path: "Food15.jpg",                             label: "Food 15",              section: "home-food-reel" },
-  { path: "Food16.jpg",                             label: "Food 16",              section: "home-food-reel" },
-  { path: "noodles-stirfry.jpg",                    label: "Noodles Stir Fry",     section: "home-food-reel" },
-  { path: "vegetable-rolls.png",                    label: "Vegetable Rolls",      section: "home-food-reel" },
+  { path: "heroimage.png",                          label: "Hero Image",            section: "hero" },
+  { path: "food/grilled-fish.png",                  label: "Grilled Fish",          section: "home-food-reel" },
+  { path: "food/rice.png",                          label: "Rice",                  section: "home-food-reel" },
+  { path: "food/salad.png",                         label: "Salad",                 section: "home-food-reel" },
+  { path: "food/vegetable-fried-rice.png",          label: "Vegetable Fried Rice",  section: "home-food-reel" },
+  { path: "food/mixed-veg-stirfry.png",             label: "Mixed Veg Stir Fry",    section: "home-food-reel" },
+  { path: "food/mixed-veg-stirfry-2.png",           label: "Mixed Veg Stir Fry 2",  section: "home-food-reel" },
+  { path: "food/creamy-penne-pasta.png",            label: "Creamy Penne Pasta",    section: "home-food-reel" },
+  { path: "food/creamy-herb-soup.png",              label: "Creamy Herb Soup",      section: "home-food-reel" },
+  { path: "food/carrot-soup.png",                   label: "Carrot Soup",           section: "home-food-reel" },
+  { path: "food/fish-potato-salad.png",             label: "Fish Potato Salad",     section: "home-food-reel" },
+  { path: "food/efo-riro.png",                      label: "Efo Riro",              section: "home-food-reel" },
+  { path: "food/seafood-okro.png",                  label: "Seafood Okro",          section: "home-food-reel" },
+  { path: "food/chicken-veg-stew.png",              label: "Chicken & Veg Stew",    section: "home-food-reel" },
+  { path: "food/rice-buns.png",                     label: "Rice Buns",             section: "home-food-reel" },
 ];
 
 const FILTER_TABS = [
