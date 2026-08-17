@@ -220,7 +220,7 @@ export default function Checkout() {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error((data.error || "Failed to place order.") + (data.detail ? ` — ${data.detail}` : ""));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to place order.");
 
       // Open WhatsApp with proof of payment request
       const itemsList = items.map(i => `• ${i.name} x${i.qty} — ${fmtPrice(i.price * i.qty)}`).join("\n");

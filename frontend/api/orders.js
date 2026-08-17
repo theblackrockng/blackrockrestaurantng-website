@@ -201,14 +201,13 @@ module.exports = async function handler(req, res) {
         subtotal,
         delivery_fee: deliveryFee,
         total,
-        ip_address: ip,
       })
       .select()
       .single();
 
     if (orderErr || !orderRow) {
       console.error('[orders] Insert error:', orderErr);
-      return res.status(500).json({ error: 'Failed to create order.', detail: orderErr?.message || orderErr?.code || 'unknown' });
+      return res.status(500).json({ error: 'Failed to create order.' });
     }
 
     const orderId = orderRow.id;
