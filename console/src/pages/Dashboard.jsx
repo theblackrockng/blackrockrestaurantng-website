@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Clock, AlertCircle, LayoutGrid, MessageSquare, CalendarDays, Users,
-  TrendingUp, TrendingDown, Minus,
+  TrendingUp, TrendingDown, Minus, ShoppingBag, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -62,16 +63,51 @@ function StatusPill({ status }) {
   );
 }
 
-/* ─── Stat Card ─── */
-function StatCard({ label, value, trend, iconEl, loading }) {
+/* ─── Order status pill ─── */
+const ORDER_STATUS_STYLES = {
+  new:        { background: "rgba(239,68,68,0.1)",   color: "#ef4444",   border: "1px solid rgba(239,68,68,0.25)" },
+  confirmed:  { background: "#f0fdf4",               color: "#166534",   border: "1px solid #bbf7d0" },
+  preparing:  { background: "rgba(245,158,11,0.1)",  color: "#d97706",   border: "1px solid rgba(245,158,11,0.3)" },
+  ready:      { background: "rgba(200,169,110,0.12)",color: "var(--ds-gold)", border: "1px solid rgba(200,169,110,0.3)" },
+  completed:  { background: "rgba(107,114,128,0.1)", color: "#6b7280",   border: "1px solid rgba(107,114,128,0.25)" },
+  cancelled:  { background: "#fef2f2",               color: "#991b1b",   border: "1px solid #fecaca" },
+};
+
+const PAYMENT_STATUS_STYLES = {
+  unpaid:          { background: "#fef2f2",               color: "#991b1b",   border: "1px solid #fecaca" },
+  awaiting_proof:  { background: "rgba(245,158,11,0.1)",  color: "#d97706",   border: "1px solid rgba(245,158,11,0.3)" },
+  proof_received:  { background: "rgba(200,169,110,0.12)",color: "var(--ds-gold)", border: "1px solid rgba(200,169,110,0.3)" },
+  paid:            { background: "#f0fdf4",               color: "#166534",   border: "1px solid #bbf7d0" },
+};
+
+function OrderStatusPill({ status, styles }) {
+  const s = styles[status] ?? { background: "var(--ds-input-bg)", color: "var(--ds-muted)", border: "1px solid var(--ds-border)" };
+  const label = (status || "—").replace(/_/g, " ");
   return (
-    <div style={{
-      background: "var(--ds-surface)",
-      border: "1px solid var(--ds-border)",
-      borderRadius: 11,
-      padding: "18px 20px 16px",
-      boxShadow: "var(--ds-shadow)",
-    }}>
+    <span style={{ ...s, borderRadius: 99, fontSize: 10.5, fontWeight: 600, padding: "3px 9px", textTransform: "capitalize", whiteSpace: "nowrap" }}>
+      {label}
+    </span>
+  );
+}
+
+/* ─── Stat Card ─── */
+function StatCard({ label, value, trend, iconEl, loading, onClick, active }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: "var(--ds-surface)",
+        border: "1px solid var(--ds-border)",
+        borderRadius: 11,
+        padding: "18px 20px 16px",
+        boxShadow: "var(--ds-shadow)",
+        cursor: onClick ? "pointer" : "default",
+        borderBottom: active ? "3px solid var(--ds-gold)" : "1px solid var(--ds-border)",
+        transition: "border-color 0.15s",
+      }}
+      onMouseEnter={(e) => { if (onClick) e.currentTarget.style.background = "var(--ds-input-bg)"; }}
+      onMouseLeave={(e) => { if (onClick) e.currentTarget.style.background = "var(--ds-surface)"; }}
+    >
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
         <span style={{ textTransform: "uppercase", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.6px", color: "var(--ds-muted)", lineHeight: 1.4, maxWidth: 110 }}>
           {label}
@@ -268,13 +304,168 @@ function ActivityPanel({ recentRes, recentEnq, loading }) {
   );
 }
 
+/* ─── Today's Orders Panel ─── */
+const ORDERS_TABS = [
+  { key: "all",              label: "All" },
+  { key: "new",              label: "New" },
+  { key: "confirmed",        label: "Confirmed" },
+  { key: "preparing",        label: "Preparing" },
+  { key: "ready",            label: "Ready" },
+  { key: "completed",        label: "Completed" },
+  { key: "cancelled",        label: "Cancelled" },
+  { key: "awaiting_payment", label: "Awaiting Payment" },
+  { key: "payment_confirmed",label: "Payment Confirmed" },
+];
+
+function filterOrders(orders, tab) {
+  switch (tab) {
+    case "all":               return orders;
+    case "new":               return orders.filter(o => o.order_status === "new");
+    case "confirmed":         return orders.filter(o => o.order_status === "confirmed");
+    case "preparing":         return orders.filter(o => o.order_status === "preparing");
+    case "ready":             return orders.filter(o => o.order_status === "ready");
+    case "completed":         return orders.filter(o => o.order_status === "completed");
+    case "cancelled":         return orders.filter(o => o.order_status === "cancelled");
+    case "awaiting_payment":  return orders.filter(o => o.payment_status === "awaiting_proof" || o.payment_status === "proof_received");
+    case "payment_confirmed": return orders.filter(o => o.payment_status === "paid");
+    default:                  return orders;
+  }
+}
+
+function tabCount(orders, tab) {
+  return filterOrders(orders, tab).length;
+}
+
+function TodayOrdersPanel({ orders, loading, tab, setTab, navigate }) {
+  const filtered = filterOrders(orders, tab);
+
+  return (
+    <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 11, boxShadow: "var(--ds-shadow)", overflow: "hidden", marginBottom: 20 }}>
+      {/* Header with tabs */}
+      <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--ds-border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 600, color: "var(--ds-text)", margin: 0 }}>
+          Today's Orders — {loading ? "…" : orders.length} total
+        </h2>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {ORDERS_TABS.map((t) => {
+            const count = loading ? 0 : tabCount(orders, t.key);
+            const isActive = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "5px 10px",
+                  borderRadius: 99,
+                  border: isActive ? "none" : "1px solid var(--ds-border)",
+                  background: isActive ? "var(--ds-gold)" : "transparent",
+                  color: isActive ? "#fff" : "var(--ds-muted)",
+                  fontSize: 12, fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                {t.label}
+                <span style={{
+                  background: isActive ? "rgba(255,255,255,0.25)" : "var(--ds-input-bg)",
+                  color: isActive ? "#fff" : "var(--ds-muted)",
+                  borderRadius: 99, fontSize: 10.5, fontWeight: 700,
+                  padding: "1px 6px", minWidth: 18, textAlign: "center",
+                }}>
+                  {loading ? "—" : count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Orders list */}
+      {loading ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px", color: "var(--ds-muted)", fontSize: 13 }}>Loading orders…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ padding: "36px 20px", textAlign: "center", color: "var(--ds-muted)", fontSize: 13 }}>No orders in this category.</div>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          {/* Table header */}
+          <div style={{ display: "grid", gridTemplateColumns: "100px minmax(140px,1.5fr) 90px 80px 110px 130px", padding: "9px 20px", borderBottom: "1px solid var(--ds-border)" }}>
+            {["ORDER", "GUEST", "TYPE", "TOTAL", "ORDER STATUS", "PAYMENT"].map((col) => (
+              <div key={col} style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ds-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{col}</div>
+            ))}
+          </div>
+          {filtered.map((o) => (
+            <div
+              key={o.id}
+              onClick={() => navigate("/orders")}
+              style={{ display: "grid", gridTemplateColumns: "100px minmax(140px,1.5fr) 90px 80px 110px 130px", padding: "12px 20px", borderBottom: "1px solid var(--ds-border)", alignItems: "center", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--ds-input-bg)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              {/* Order number */}
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ds-text)", fontVariantNumeric: "tabular-nums" }}>
+                #{String(o.order_number || o.id).slice(-6)}
+              </div>
+              {/* Guest */}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ds-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {o.guest_name || o.name || "—"}
+                </div>
+                {(o.phone || o.guest_phone) && (
+                  <div style={{ fontSize: 11, color: "var(--ds-muted)", marginTop: 1 }}>{o.phone || o.guest_phone}</div>
+                )}
+              </div>
+              {/* Type */}
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--ds-muted)" }}>
+                {o.order_type === "delivery" ? (
+                  <>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                    Delivery
+                  </>
+                ) : (
+                  <>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                    Pickup
+                  </>
+                )}
+              </div>
+              {/* Total */}
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ds-gold)", fontVariantNumeric: "tabular-nums" }}>
+                {o.total != null ? `₦${Number(o.total).toLocaleString()}` : "—"}
+              </div>
+              {/* Order status */}
+              <div>
+                <OrderStatusPill status={o.order_status} styles={ORDER_STATUS_STYLES} />
+              </div>
+              {/* Payment status */}
+              <div>
+                <OrderStatusPill status={o.payment_status} styles={PAYMENT_STATUS_STYLES} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Dashboard ─── */
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats,     setStats]     = useState({ today: null, todayDelta: null, pending: null, total: null, totalDelta: null, enquiries: null, enquiriesDelta: null });
   const [recentRes, setRecentRes] = useState([]);
   const [recentEnq, setRecentEnq] = useState([]);
   const [upcoming,  setUpcoming]  = useState([]);
   const [loading,   setLoading]   = useState(true);
+  const [todayOrders,    setTodayOrders]    = useState([]);
+  const [showOrdersPanel, setShowOrdersPanel] = useState(false);
+  const [ordersTab,      setOrdersTab]      = useState("all");
+  const [ordersLoading,  setOrdersLoading]  = useState(true);
 
   const load = async () => {
     setLoading(true);
@@ -322,6 +513,16 @@ export default function Dashboard() {
     setRecentEnq(r7.data ?? []);
     setUpcoming(r8.data ?? []);
     setLoading(false);
+
+    setOrdersLoading(true);
+    try {
+      const res = await fetch("/api/orders");
+      const json = await res.json();
+      const todayStr2 = new Date().toISOString().split("T")[0];
+      const todays = (json.data || []).filter(o => (o.created_at || "").startsWith(todayStr2));
+      setTodayOrders(todays);
+    } catch {}
+    setOrdersLoading(false);
   };
 
   useEffect(() => { load(); }, []);
@@ -332,6 +533,8 @@ export default function Dashboard() {
   const month = now.toLocaleDateString("en-GB", { month: "long" });
   const year = now.getFullYear();
   const headerDate = `${dayName}, ${day} ${month} ${year}`;
+
+  const awaitingPaymentCount = todayOrders.filter(o => o.payment_status === "awaiting_proof").length;
 
   return (
     <div style={{ padding: "26px 28px 44px", fontFamily: "'DM Sans', sans-serif" }}>
@@ -345,7 +548,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }} className="ds-stat-grid">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 20 }} className="ds-stat-grid">
 
         <StatCard
           label="Today's Reservations"
@@ -383,7 +586,36 @@ export default function Dashboard() {
             </div>
           }
         />
+
+        <StatCard
+          label="Today's Orders"
+          value={ordersLoading ? null : todayOrders.length}
+          loading={ordersLoading}
+          trend={
+            <div style={{ fontSize: 12, color: awaitingPaymentCount > 0 ? "#d97706" : "var(--ds-muted)" }}>
+              {ordersLoading ? "" : `${awaitingPaymentCount} awaiting payment`}
+            </div>
+          }
+          iconEl={
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(200,169,110,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ds-gold)", flexShrink: 0 }}>
+              <ShoppingBag size={15} strokeWidth={1.75} />
+            </div>
+          }
+          onClick={() => { setShowOrdersPanel(p => !p); setOrdersTab("all"); }}
+          active={showOrdersPanel}
+        />
       </div>
+
+      {/* Today's Orders Panel */}
+      {showOrdersPanel && (
+        <TodayOrdersPanel
+          orders={todayOrders}
+          loading={ordersLoading}
+          tab={ordersTab}
+          setTab={setOrdersTab}
+          navigate={navigate}
+        />
+      )}
 
       {/* Row 2: Recent Reservations + Recent Enquiries */}
       <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 16, marginBottom: 20 }} className="ds-row2-grid">
@@ -475,7 +707,7 @@ export default function Dashboard() {
       {/* Responsive grid styles */}
       <style>{`
         @media (max-width: 1149px) {
-          .ds-stat-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+          .ds-stat-grid  { grid-template-columns: repeat(3, 1fr) !important; }
           .ds-row2-grid  { grid-template-columns: 1fr !important; }
           .ds-row3-grid  { grid-template-columns: repeat(2, 1fr) !important; }
         }
