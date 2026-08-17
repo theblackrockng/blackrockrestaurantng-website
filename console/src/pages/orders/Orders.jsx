@@ -207,15 +207,12 @@ export default function Orders() {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(200);
+      const res = await fetch("/api/orders");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to fetch orders");
+      const data = json.data || [];
 
-      if (error) throw error;
-
-      setOrders(data || []);
+      setOrders(data);
 
       // Compute summary counts
       const today = new Date().toISOString().split("T")[0];
@@ -237,41 +234,30 @@ export default function Orders() {
 
   useEffect(() => {
     fetchOrders();
-
-    // Real-time subscription
-    const channel = supabase
-      .channel("orders-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
-        setOrders((prev) => [payload.new, ...prev]);
-        setCounts((c) => ({ ...c, new: c.new + 1 }));
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, (payload) => {
-        setOrders((prev) => prev.map((o) => (o.id === payload.new.id ? payload.new : o)));
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
   }, [fetchOrders]);
 
   async function openOrder(order) {
     setSelectedOrder(order);
-    const { data } = await supabase
-      .from("order_items")
-      .select("*")
-      .eq("order_id", order.id)
-      .order("created_at");
-    setOrderItems(data || []);
+    setOrderItems([]);
+    try {
+      const res = await fetch(`/api/order-items?order_id=${order.id}`);
+      const json = await res.json();
+      setOrderItems(json.data || []);
+    } catch (err) {
+      console.error("[Orders] fetch items error:", err);
+    }
   }
 
   async function updateStatus(orderId, newStatus) {
     setActionLoading(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ order_status: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", orderId);
-
-      if (error) throw error;
+      const res = await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: orderId, order_status: newStatus }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
 
       setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, order_status: newStatus } : o));
       if (selectedOrder?.id === orderId) {
@@ -297,11 +283,14 @@ export default function Orders() {
   async function updatePaymentStatus(orderId, newPaymentStatus) {
     setActionLoading(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ payment_status: newPaymentStatus, updated_at: new Date().toISOString() })
-        .eq("id", orderId);
-      if (error) throw error;
+      const res = await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: orderId, payment_status: newPaymentStatus }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+
       setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, payment_status: newPaymentStatus } : o));
       if (selectedOrder?.id === orderId) {
         setSelectedOrder((prev) => ({ ...prev, payment_status: newPaymentStatus }));
