@@ -4,11 +4,14 @@ import { UploadCloud, Trash2, Check, X, ArrowRightLeft, Pencil } from "lucide-re
 
 /* ─── Constants ─── */
 const GALLERY_SECTIONS = [
-  { key: "gallery-food",   label: "Food" },
-  { key: "gallery-drinks", label: "Drinks" },
-  { key: "gallery",        label: "Ambience" },
-  { key: "gallery-behind", label: "Behind the Scenes" },
+  { key: "gallery-food",   label: "Food",               fetchKeys: ["gallery-food", "home-food-reel"] },
+  { key: "gallery-drinks", label: "Drinks",             fetchKeys: ["gallery-drinks"] },
+  { key: "gallery",        label: "Ambience",           fetchKeys: ["gallery"] },
+  { key: "gallery-behind", label: "Behind the Scenes",  fetchKeys: ["gallery-behind"] },
 ];
+
+const DRINK_KEYWORDS = ["heineken", "beer", "wine", "cocktail", "spirit", "whiskey", "vodka", "gin", "rum", "juice", "drink", "mocktail", "cider", "champagne", "prosecco", "brandy", "whisky", "liquor", "lager", "stout"];
+const isDrink = (filename) => DRINK_KEYWORDS.some((k) => (filename || "").toLowerCase().includes(k));
 
 const GOLD_BTN = {
   display: "inline-flex", alignItems: "center", gap: 6,
@@ -153,6 +156,15 @@ function ImageCard({ asset, activeKey, onDelete, onMove, onNameUpdated }) {
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
 
+        {/* Food reel badge */}
+        {asset.used_in === "home-food-reel" && (
+          <div style={{ position: "absolute", top: 6, left: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", background: "var(--ds-gold)", color: "#1a1a1a", borderRadius: 99, padding: "2px 7px" }}>
+              Also on Home
+            </span>
+          </div>
+        )}
+
         {/* Hover overlay */}
         {hovered && !deleteConfirm && (
           <div style={{
@@ -296,11 +308,11 @@ export default function GalleryManager() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const keys = GALLERY_SECTIONS.map((s) => s.key);
+      const allKeys = [...new Set(GALLERY_SECTIONS.flatMap((s) => s.fetchKeys))];
       const { data, error } = await supabase
         .from("media_assets")
         .select("*")
-        .in("used_in", keys)
+        .in("used_in", allKeys)
         .order("uploaded_at", { ascending: false });
       if (!error && data) setAllAssets(data);
     } catch {}
@@ -310,9 +322,26 @@ export default function GalleryManager() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const activeSection = GALLERY_SECTIONS.find((s) => s.key === activeKey);
-  const visibleAssets = allAssets.filter((a) => a.used_in === activeKey);
 
-  const countFor = (key) => allAssets.filter((a) => a.used_in === key).length;
+  // For Food tab: show gallery-food + home-food-reel (non-drinks); for others match exact key
+  const visibleAssets = allAssets.filter((a) => {
+    const section = GALLERY_SECTIONS.find((s) => s.key === activeKey);
+    if (!section) return false;
+    if (!section.fetchKeys.includes(a.used_in)) return false;
+    // Exclude drink-named images from Food tab (they belong in Drinks)
+    if (activeKey === "gallery-food" && isDrink(a.filename)) return false;
+    return true;
+  });
+
+  const countFor = (key) => {
+    const section = GALLERY_SECTIONS.find((s) => s.key === key);
+    if (!section) return 0;
+    return allAssets.filter((a) => {
+      if (!section.fetchKeys.includes(a.used_in)) return false;
+      if (key === "gallery-food" && isDrink(a.filename)) return false;
+      return true;
+    }).length;
+  };
 
   /* ── Upload ── */
   const uploadFiles = async (files) => {
