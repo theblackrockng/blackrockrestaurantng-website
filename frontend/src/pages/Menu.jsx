@@ -363,6 +363,51 @@ export default function MenuPage() {
                         )}
                       </motion.div>
                     ))}
+
+                    {/* Soups & Carbohydrates — shown only for National Dishes */}
+                    {active === "National Dishes" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        style={{
+                          marginTop: "2.5rem",
+                          padding: "1.5rem 1.75rem",
+                          border: "1px solid rgba(200,169,110,0.25)",
+                          borderRadius: "10px",
+                          background: "rgba(200,169,110,0.05)",
+                        }}
+                      >
+                        <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c8a96e", marginBottom: "1rem" }}>
+                          Served with choice of Soup &amp; Carbohydrate
+                        </p>
+
+                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
+                          Soups
+                        </p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem", marginBottom: "1.25rem" }}>
+                          {[
+                            "SP1 · Efo Riro", "SP2 · Edika-Ikong", "SP3 · Egusi",
+                            "SP4 · Mixed Okro", "SP5 · Fisherman Soup", "SP6 · Seafood",
+                            "SP7 · Banga", "SP8 · Ofe Nsala", "SP9 · Miyan Kuka", "SP10 · Ewedu",
+                          ].map((s) => (
+                            <span key={s} style={{ fontSize: "0.8rem", color: "#888580", whiteSpace: "nowrap" }}>{s}</span>
+                          ))}
+                        </div>
+
+                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
+                          Carbohydrates
+                        </p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem" }}>
+                          {[
+                            "CB1 · Pounded Yam", "CB2 · Eba", "CB3 · Amala",
+                            "CB4 · Fufu", "CB5 · Wheat", "CB6 · Semo",
+                          ].map((c) => (
+                            <span key={c} style={{ fontSize: "0.8rem", color: "#888580", whiteSpace: "nowrap" }}>{c}</span>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </div>
