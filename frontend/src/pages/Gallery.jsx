@@ -58,11 +58,13 @@ export default function Gallery() {
           .select("url, filename")
           .eq("used_in", "gallery")
           .order("uploaded_at", { ascending: false });
-        const assetUrls = (assets ?? []).map((a) => a.url);
+        const assetLabelMap = {};
+        (assets ?? []).forEach((a) => { assetLabelMap[a.url] = a.filename || ""; });
+        const assetUrls = Object.keys(assetLabelMap);
 
         const allUrls = [...new Set([...contentUrls, ...assetUrls])];
         if (allUrls.length > 0) {
-          setBaseImages(allUrls.map((src) => ({ src, tag: "Ambience", label: "" })));
+          setBaseImages(allUrls.map((src) => ({ src, tag: "Ambience", label: assetLabelMap[src] || "" })));
         } else {
           setBaseImages(FALLBACK_GALLERY);
         }

@@ -132,9 +132,14 @@ function SectionBadge({ value }) {
 }
 
 /* ─── ImageCard ─── */
-function ImageCard({ asset, onDelete, onSelect, selected }) {
+function ImageCard({ asset, onDelete, onSelect, selected, onNameUpdated }) {
   const [hovered, setHovered] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameVal, setNameVal] = useState(asset.filename ?? "");
+  const nameInputRef = useRef(null);
+
+  useEffect(() => setNameVal(asset.filename ?? ""), [asset.filename]);
 
   const handleCopy = async (e) => {
     e.stopPropagation();
@@ -143,10 +148,26 @@ function ImageCard({ asset, onDelete, onSelect, selected }) {
     setTimeout(() => setCopied(false), 1800);
   };
 
+  const startEditing = (e) => {
+    e.stopPropagation();
+    setEditingName(true);
+    setTimeout(() => nameInputRef.current?.select(), 0);
+  };
+
+  const saveName = async () => {
+    const trimmed = nameVal.trim();
+    setEditingName(false);
+    if (!trimmed || trimmed === asset.filename) { setNameVal(asset.filename ?? ""); return; }
+    try {
+      await supabase.from("media_assets").update({ filename: trimmed }).eq("id", asset.id);
+      onNameUpdated({ ...asset, filename: trimmed });
+    } catch { setNameVal(asset.filename ?? ""); }
+  };
+
   return (
     <div
       style={{ fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}
-      onClick={() => onSelect(asset)}
+      onClick={() => !editingName && onSelect(asset)}
     >
       <div
         style={{
@@ -192,8 +213,43 @@ function ImageCard({ asset, onDelete, onSelect, selected }) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Name — click to edit inline */}
       <div style={{ marginTop: 6 }}>
-        <p style={{ fontSize: 11.5, color: "var(--ds-text)", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{asset.filename}</p>
+        {editingName ? (
+          <input
+            ref={nameInputRef}
+            value={nameVal}
+            onChange={(e) => setNameVal(e.target.value)}
+            onBlur={saveName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveName();
+              if (e.key === "Escape") { setEditingName(false); setNameVal(asset.filename ?? ""); }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%", fontSize: 11.5, color: "var(--ds-text)", margin: "0 0 2px",
+              background: "var(--ds-input-bg)", border: "1px solid var(--ds-gold)",
+              borderRadius: 4, padding: "2px 6px", outline: "none",
+              fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box",
+            }}
+          />
+        ) : (
+          <p
+            title="Click to rename"
+            onClick={startEditing}
+            style={{
+              fontSize: 11.5, color: "var(--ds-text)", margin: "0 0 2px",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              cursor: "text", borderBottom: "1px dashed transparent",
+              transition: "border-color 0.15s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderBottomColor = "var(--ds-muted)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderBottomColor = "transparent"; }}
+          >
+            {asset.filename || "Untitled"}
+          </p>
+        )}
         <p style={{ fontSize: 10.5, color: "var(--ds-muted)", margin: 0 }}>{fmtDate(asset.uploaded_at)}</p>
       </div>
     </div>
@@ -876,6 +932,7 @@ export default function MediaLibrary() {
                   onDelete={setDeletingAsset}
                   onSelect={setSelectedAsset}
                   selected={selectedAsset?.id === asset.id}
+                  onNameUpdated={handleUpdated}
                 />
               </motion.div>
             ))}
