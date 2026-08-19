@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Plus, Pencil, Trash2, ImageOff, UtensilsCrossed,
-  X, AlertTriangle, Check, Download, GripVertical,
+  X, AlertTriangle, Check, Download, GripVertical, Camera,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -216,6 +216,121 @@ function MediaPickerModal({ onSelect, onClose }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── CategoryImageEditor ─── */
+function CategoryImageEditor({ category, currentUrl, onClose, onSaved }) {
+  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(currentUrl || "");
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      let imageUrl = previewUrl;
+
+      if (selectedFile) {
+        const path = `category-${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+        const { error: upErr } = await supabase.storage.from("menu-images").upload(path, selectedFile, { cacheControl: "3600", upsert: false });
+        if (upErr) throw upErr;
+        const { data: { publicUrl } } = supabase.storage.from("menu-images").getPublicUrl(path);
+        imageUrl = publicUrl;
+      }
+
+      // Load current category images from site_content
+      const { data: existing } = await supabase
+        .from("site_content")
+        .select("data")
+        .eq("section", "menu-category-images")
+        .maybeSingle();
+
+      const updated = { ...(existing?.data || {}), [category]: imageUrl };
+
+      await supabase.from("site_content").upsert(
+        { section: "menu-category-images", data: updated },
+        { onConflict: "section" }
+      );
+
+      onSaved(category, imageUrl);
+      onClose();
+    } catch (e) {
+      setError(e.message ?? "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.55)" }}>
+      <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 12, width: 420, fontFamily: "'DM Sans', sans-serif", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--ds-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600, color: "var(--ds-text)" }}>
+            Category Image — {category}
+          </span>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ds-muted)", display: "flex" }}><X size={18} /></button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Preview */}
+          <div style={{
+            width: "100%", height: 200, borderRadius: 10, overflow: "hidden",
+            background: "var(--ds-input-bg)", border: "1px solid var(--ds-border)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {previewUrl ? (
+              <img src={previewUrl} alt={category} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, color: "var(--ds-muted)" }}>
+                <Camera size={32} strokeWidth={1.4} />
+                <span style={{ fontSize: 12 }}>No image set</span>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileChange} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={{ ...GHOST_BTN, flex: 1, justifyContent: "center" }} onClick={() => fileInputRef.current?.click()}>
+              Upload New Image
+            </button>
+            <button style={{ ...GHOST_BTN, flex: 1, justifyContent: "center" }} onClick={() => setShowMediaPicker(true)}>
+              Media Library
+            </button>
+          </div>
+          {selectedFile && <span style={{ fontSize: 11, color: "var(--ds-muted)" }}>{selectedFile.name}</span>}
+          {error && <p style={{ fontSize: 12, color: "#ef4444", margin: 0 }}>{error}</p>}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "12px 20px", borderTop: "1px solid var(--ds-border)", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button style={GHOST_BTN} onClick={onClose}>Cancel</button>
+          <button style={{ ...GOLD_BTN, opacity: saving ? 0.7 : 1 }} onClick={handleSave} disabled={saving}>
+            <Check size={14} /> {saving ? "Saving…" : "Save Image"}
+          </button>
+        </div>
+      </div>
+
+      {showMediaPicker && (
+        <MediaPickerModal
+          onSelect={(url) => { setPreviewUrl(url); setSelectedFile(null); setShowMediaPicker(false); }}
+          onClose={() => setShowMediaPicker(false)}
+        />
+      )}
     </div>
   );
 }
@@ -629,6 +744,9 @@ export default function MenuManagement() {
     }
   };
 
+  const [categoryImages, setCategoryImages] = useState({});
+  const [editingCategoryImage, setEditingCategoryImage] = useState(null);
+
   const [dragId, setDragId]     = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
   const [saving, setSaving]     = useState(false);
@@ -641,6 +759,11 @@ export default function MenuManagement() {
   }, []);
 
   useEffect(() => { fetchDishes(); }, [fetchDishes]);
+
+  useEffect(() => {
+    supabase.from("site_content").select("data").eq("section", "menu-category-images").maybeSingle()
+      .then(({ data }) => { if (data?.data) setCategoryImages(data.data); });
+  }, []);
 
   const byType = dishes.filter((d) => (d.menu_type ?? "food") === menuType);
   const filtered = activeCategory === "All" ? byType : byType.filter((d) => d.category === activeCategory);
@@ -758,6 +881,39 @@ export default function MenuManagement() {
         ))}
       </div>
 
+      {/* Category Image Banner */}
+      {activeCategory !== "All" && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 16, marginBottom: 20,
+          background: "var(--ds-surface)", border: "1px solid var(--ds-border)",
+          borderRadius: 10, padding: "12px 16px",
+        }}>
+          <div style={{
+            width: 72, height: 52, borderRadius: 8, overflow: "hidden", flexShrink: 0,
+            background: "var(--ds-input-bg)", border: "1px solid var(--ds-border)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {categoryImages[activeCategory] ? (
+              <img src={categoryImages[activeCategory]} alt={activeCategory} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <Camera size={20} style={{ color: "var(--ds-muted)" }} strokeWidth={1.4} />
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ds-text)" }}>{activeCategory}</p>
+            <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "var(--ds-muted)" }}>
+              {categoryImages[activeCategory] ? "Category image set" : "No category image set"}
+            </p>
+          </div>
+          <button
+            style={{ ...GHOST_BTN, fontSize: 12, padding: "7px 14px", flexShrink: 0 }}
+            onClick={() => setEditingCategoryImage(activeCategory)}
+          >
+            <Camera size={13} /> {categoryImages[activeCategory] ? "Change Image" : "Set Image"}
+          </button>
+        </div>
+      )}
+
       {/* Grid */}
       {loading ? (
         <div style={{ textAlign: "center", color: "var(--ds-muted)", padding: "60px 0", fontSize: 13 }}>Loading dishes…</div>
@@ -840,6 +996,16 @@ export default function MenuManagement() {
           />
         )}
       </AnimatePresence>
+
+      {/* Category Image Editor */}
+      {editingCategoryImage && (
+        <CategoryImageEditor
+          category={editingCategoryImage}
+          currentUrl={categoryImages[editingCategoryImage] || ""}
+          onClose={() => setEditingCategoryImage(null)}
+          onSaved={(cat, url) => setCategoryImages((prev) => ({ ...prev, [cat]: url }))}
+        />
+      )}
 
       {/* Delete Confirm */}
       {deletingDish && (
