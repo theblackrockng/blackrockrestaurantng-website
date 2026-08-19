@@ -181,7 +181,7 @@ export default function MenuPage() {
       <section className="relative overflow-hidden" data-testid="menu-header">
         <div className="absolute inset-0">
           <img
-            src="/Menuhero.png"
+            src="/Menu Hero.png"
             alt="BlackRock dishes"
             className="w-full h-full object-cover object-center"
           />
