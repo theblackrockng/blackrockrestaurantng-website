@@ -181,9 +181,10 @@ export default function MenuPage() {
       <section className="relative overflow-hidden" data-testid="menu-header">
         <div className="absolute inset-0">
           <img
-            src="/menu-hero.png"
+            src={menuType === "drink" ? "/drink-menu-hero.png" : "/food-menu-hero.png"}
             alt="BlackRock dishes"
-            className="w-full h-full object-contain object-center"
+            className="w-full h-full object-cover object-center"
+            style={{ transition: "opacity 0.4s ease" }}
           />
           <div className="absolute inset-0" style={{ background: "rgba(20,20,20,0.72)" }} />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(20,20,20,0.4) 0%, rgba(20,20,20,0.5) 60%, rgba(20,20,20,1) 100%)" }} />
