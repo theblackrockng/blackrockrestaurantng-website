@@ -15,11 +15,13 @@ function StatusBadge({ status }) {
   const styles = {
     published: { background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" },
     draft:     { background: "#fffbeb", color: "#92400e", border: "1px solid #fde68a" },
+    scheduled: { background: "#eef2ff", color: "#4338ca", border: "1px solid #c7d2fe" },
   };
   const s = styles[status] ?? styles.draft;
+  const label = status === "scheduled" ? "Scheduled" : status;
   return (
     <span style={{ ...s, borderRadius: 99, fontSize: 10.5, fontWeight: 600, padding: "3px 9px", textTransform: "capitalize", whiteSpace: "nowrap" }}>
-      {status}
+      {label}
     </span>
   );
 }
@@ -36,7 +38,7 @@ export default function BlogManagement() {
     setLoading(true);
     const { data } = await supabase
       .from("blog_posts")
-      .select("id,title,slug,excerpt,status,published_at,created_at,updated_at,cover_image_url,tags,author")
+      .select("id,title,slug,excerpt,status,published_at,scheduled_at,created_at,updated_at,cover_image_url,tags,author")
       .order("updated_at", { ascending: false });
     setPosts(data ?? []);
     setLoading(false);
@@ -69,6 +71,7 @@ export default function BlogManagement() {
 
   const publishedCount = posts.filter(p => p.status === "published").length;
   const draftCount = posts.filter(p => p.status === "draft").length;
+  const scheduledCount = posts.filter(p => p.status === "scheduled").length;
 
   return (
     <div style={{ padding: "26px 28px 44px", fontFamily: "'DM Sans', sans-serif" }}>
@@ -80,7 +83,7 @@ export default function BlogManagement() {
             Blog
           </h1>
           <p style={{ fontSize: 13, color: "var(--ds-muted)", margin: 0 }}>
-            {publishedCount} published · {draftCount} draft{draftCount !== 1 ? "s" : ""}
+            {publishedCount} published · {draftCount} draft{draftCount !== 1 ? "s" : ""}{scheduledCount > 0 ? ` · ${scheduledCount} scheduled` : ""}
           </p>
         </div>
         <button
@@ -101,20 +104,24 @@ export default function BlogManagement() {
       {/* Filters + search */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <div style={{ display: "flex", gap: 2 }}>
-          {["all", "published", "draft"].map(f => (
+          {[
+            { key: "all",       label: `All (${posts.length})` },
+            { key: "published", label: `Published (${publishedCount})` },
+            { key: "scheduled", label: `Scheduled (${scheduledCount})` },
+            { key: "draft",     label: `Drafts (${draftCount})` },
+          ].map(f => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={f.key}
+              onClick={() => setFilter(f.key)}
               style={{
                 padding: "6px 14px", borderRadius: 6, fontSize: 12.5, fontWeight: 500,
                 border: "1px solid var(--ds-border)", cursor: "pointer",
                 fontFamily: "'DM Sans', sans-serif",
-                background: filter === f ? "var(--ds-gold)" : "var(--ds-input-bg)",
-                color: filter === f ? "var(--ds-charcoal, #1a1a1a)" : "var(--ds-muted)",
-                textTransform: "capitalize",
+                background: filter === f.key ? "var(--ds-gold)" : "var(--ds-input-bg)",
+                color: filter === f.key ? "var(--ds-charcoal, #1a1a1a)" : "var(--ds-muted)",
               }}
             >
-              {f === "all" ? `All (${posts.length})` : f === "published" ? `Published (${publishedCount})` : `Drafts (${draftCount})`}
+              {f.label}
             </button>
           ))}
         </div>
@@ -157,8 +164,8 @@ export default function BlogManagement() {
       ) : (
         <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 11, overflow: "hidden" }}>
           {/* Table head */}
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(200px,1fr) 140px 110px 120px 100px", padding: "9px 20px", borderBottom: "1px solid var(--ds-border)" }}>
-            {["POST", "AUTHOR", "STATUS", "UPDATED", "ACTIONS"].map((col, i) => (
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(200px,1fr) 130px 110px 160px 100px", padding: "9px 20px", borderBottom: "1px solid var(--ds-border)" }}>
+            {["POST", "AUTHOR", "STATUS", "DATE", "ACTIONS"].map((col, i) => (
               <div key={col} style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ds-muted)", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: i === 4 ? "right" : "left" }}>{col}</div>
             ))}
           </div>
@@ -167,7 +174,7 @@ export default function BlogManagement() {
             <div
               key={post.id}
               style={{
-                display: "grid", gridTemplateColumns: "minmax(200px,1fr) 140px 110px 120px 100px",
+                display: "grid", gridTemplateColumns: "minmax(200px,1fr) 130px 110px 160px 100px",
                 padding: "14px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--ds-border)" : "none",
                 alignItems: "center",
               }}
@@ -209,9 +216,18 @@ export default function BlogManagement() {
                 <StatusBadge status={post.status} />
               </div>
 
-              {/* Updated */}
-              <div style={{ fontSize: 12, color: "var(--ds-muted)" }}>
-                {timeAgo(post.updated_at)}
+              {/* Date */}
+              <div style={{ fontSize: 11.5, color: "var(--ds-muted)" }}>
+                {post.status === "scheduled" && post.scheduled_at ? (
+                  <span style={{ color: "#6366f1" }}>
+                    <Calendar size={10} style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }} />
+                    {new Date(post.scheduled_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                ) : post.status === "published" && post.published_at ? (
+                  new Date(post.published_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })
+                ) : (
+                  timeAgo(post.updated_at)
+                )}
               </div>
 
               {/* Actions */}
