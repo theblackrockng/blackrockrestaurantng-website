@@ -30,17 +30,19 @@ export default function Gallery() {
   const [ambienceImages, setAmbienceImages] = useState(FALLBACK_AMBIENCE);
   const [foodImages, setFoodImages] = useState([]);
   const [drinkImages, setDrinkImages] = useState([]);
+  const [behindImages, setBehindImages] = useState([]);
   const [menuDishImages, setMenuDishImages] = useState([]);
 
   // Load curated gallery images from media_assets by section tag
   useEffect(() => {
     async function loadGallery() {
       try {
-        const [foodRes, foodReelRes, drinkRes, ambienceRes] = await Promise.all([
+        const [foodRes, foodReelRes, drinkRes, ambienceRes, behindRes] = await Promise.all([
           supabase.from("media_assets").select("url, filename").eq("used_in", "gallery-food").order("uploaded_at", { ascending: false }),
           supabase.from("media_assets").select("url, filename").eq("used_in", "home-food-reel").order("uploaded_at", { ascending: false }),
           supabase.from("media_assets").select("url, filename").eq("used_in", "gallery-drinks").order("uploaded_at", { ascending: false }),
           supabase.from("media_assets").select("url, filename").eq("used_in", "gallery").order("uploaded_at", { ascending: false }),
+          supabase.from("media_assets").select("url, filename").eq("used_in", "gallery-behind").order("uploaded_at", { ascending: false }),
         ]);
 
         const combinedFood = [...(foodRes.data ?? []), ...(foodReelRes.data ?? [])];
@@ -57,6 +59,9 @@ export default function Gallery() {
         }
         if (ambienceRes.data?.length) {
           setAmbienceImages(ambienceRes.data.map((a) => ({ src: a.url, tag: "Ambience", label: a.filename || "" })));
+        }
+        if (behindRes.data?.length) {
+          setBehindImages(behindRes.data.map((a) => ({ src: a.url, tag: "Behind The Scenes", label: a.filename || "" })));
         }
       } catch {}
     }
@@ -86,7 +91,7 @@ export default function Gallery() {
     loadMenuDishes();
   }, []);
 
-  const allImages = [...foodImages, ...menuDishImages, ...drinkImages, ...ambienceImages];
+  const allImages = [...foodImages, ...menuDishImages, ...drinkImages, ...ambienceImages, ...behindImages];
   const filtered = allImages.filter((g) => g.tag === filter);
 
   // Lightbox keyboard navigation
@@ -163,9 +168,7 @@ export default function Gallery() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: (i % 8) * 0.04 }}
                 onClick={() => setLightboxIndex(i)}
-                className={`relative cursor-pointer overflow-hidden group ${
-                  i % 7 === 0 ? "row-span-2 aspect-[3/5]" : i % 5 === 0 ? "aspect-square" : "aspect-[4/5]"
-                }`}
+                className="relative cursor-pointer overflow-hidden group aspect-square"
                 data-testid={`gallery-item-${i}`}
               >
                 <img
