@@ -29,14 +29,16 @@ export default function Gallery() {
   useEffect(() => {
     async function loadGallery() {
       try {
-        const [foodRes, drinkRes, ambienceRes] = await Promise.all([
+        const [foodRes, foodReelRes, drinkRes, ambienceRes] = await Promise.all([
           supabase.from("media_assets").select("url, filename").eq("used_in", "gallery-food").order("uploaded_at", { ascending: false }),
+          supabase.from("media_assets").select("url, filename").eq("used_in", "home-food-reel").order("uploaded_at", { ascending: false }),
           supabase.from("media_assets").select("url, filename").eq("used_in", "gallery-drinks").order("uploaded_at", { ascending: false }),
           supabase.from("media_assets").select("url, filename").eq("used_in", "gallery").order("uploaded_at", { ascending: false }),
         ]);
 
-        if (foodRes.data?.length) {
-          setFoodImages(foodRes.data.map((a) => ({ src: a.url, tag: "Food", label: a.filename || "" })));
+        const combinedFood = [...(foodRes.data ?? []), ...(foodReelRes.data ?? [])];
+        if (combinedFood.length) {
+          setFoodImages(combinedFood.map((a) => ({ src: a.url, tag: "Food", label: a.filename || "" })));
         }
         if (drinkRes.data?.length) {
           setDrinkImages(drinkRes.data.map((a) => ({ src: a.url, tag: "Drinks", label: a.filename || "" })));
