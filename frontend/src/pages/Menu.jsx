@@ -7,16 +7,16 @@ import SectionHeader from "../components/SectionHeader";
 import OrderNowLink from "../components/OrderNowLink";
 
 const categoryImages = {
-  "Starters":                "/images/menu/starters.jpg",
-  "Salads":                  "/images/menu/salads.jpg",
-  "Rice":                    "/images/menu/rice.jpg",
-  "Noodles":                 "/images/menu/noodles.jpg",
-  "Pepper Soup & Specials":  "/images/menu/pepper-soup.jpg",
-  "Continental":             "/images/menu/continental.jpg",
-  "Sauces":                  "/images/menu/sauces.jpg",
-  "Charcoal Grills":         "/images/menu/grills.jpg",
-  "National Dishes":         "/images/menu/national.jpg",
-  "Traditional Specials":    "/images/menu/traditional.jpg",
+  "Starters":           "/images/menu/starters.jpg",
+  "Salads":             "/images/menu/salads.jpg",
+  "Rice":               "/images/menu/rice.jpg",
+  "Pasta":              "/images/menu/noodles.jpg",
+  "Bush Bar Kitchen":   "/images/menu/pepper-soup.jpg",
+  "Continental":        "/images/menu/continental.jpg",
+  "Sauces":             "/images/menu/sauces.jpg",
+  "Charcoal Grills":    "/images/menu/grills.jpg",
+  "National Dishes":    "/images/menu/national.jpg",
+  "Traditional Specials": "/images/menu/traditional.jpg",
 };
 
 const DRINK_CATEGORY_IMAGES = {
@@ -31,8 +31,8 @@ const DRINK_CATEGORY_IMAGES = {
 };
 
 const FOOD_CATEGORY_ORDER = [
-  "Starters", "Salads", "Rice", "Noodles",
-  "Pepper Soup & Specials", "Continental", "Sauces",
+  "Starters", "Salads", "Rice", "Pasta",
+  "Bush Bar Kitchen", "Continental", "Sauces",
   "Charcoal Grills", "National Dishes", "Traditional Specials",
 ];
 
