@@ -387,21 +387,21 @@ export default function MenuPage() {
                         </p>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem", marginBottom: "1.25rem" }}>
                           {[
-                            "SP1 · Efo Riro", "SP2 · Edika-Ikong", "SP3 · Egusi",
-                            "SP4 · Mixed Okro", "SP5 · Fisherman Soup", "SP6 · Seafood",
-                            "SP7 · Banga", "SP8 · Ofe Nsala", "SP9 · Miyan Kuka", "SP10 · Ewedu",
+                            "Efo Riro", "Edika-Ikong", "Egusi",
+                            "Mixed Okro", "Fisherman Soup", "Seafood",
+                            "Banga", "Ofe Nsala", "Miyan Kuka", "Ewedu",
                           ].map((s) => (
                             <span key={s} style={{ fontSize: "0.8rem", color: "#888580", whiteSpace: "nowrap" }}>{s}</span>
                           ))}
                         </div>
 
                         <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
-                          Carbohydrates
+                          Swallow
                         </p>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem" }}>
                           {[
-                            "CB1 · Pounded Yam", "CB2 · Eba", "CB3 · Amala",
-                            "CB4 · Fufu", "CB5 · Wheat", "CB6 · Semo",
+                            "Pounded Yam", "Eba", "Amala",
+                            "Fufu", "Wheat", "Semo",
                           ].map((c) => (
                             <span key={c} style={{ fontSize: "0.8rem", color: "#888580", whiteSpace: "nowrap" }}>{c}</span>
                           ))}
