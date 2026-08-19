@@ -717,6 +717,287 @@ function FilterTab({ label, active, onClick }) {
   );
 }
 
+/* ─── CategoryManager ─── */
+function CategoryManager({ menuType, allCats, dishes, categoryImages, onClose, onCategoryImagesChange, onDishesChange, onCatsChange }) {
+  const [renamingCat, setRenamingCat] = useState(null);
+  const [renameVal, setRenameVal] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
+  const [deletingCat, setDeletingCat] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [addingCat, setAddingCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
+  const [editImageCat, setEditImageCat] = useState(null);
+  const [error, setError] = useState("");
+
+  const countItems = (cat) => dishes.filter((d) => (d.menu_type ?? "food") === menuType && d.category === cat).length;
+
+  const handleRename = async (oldName) => {
+    const newName = renameVal.trim();
+    if (!newName || newName === oldName) { setRenamingCat(null); return; }
+    setRenameLoading(true);
+    setError("");
+    try {
+      const items = dishes.filter((d) => d.category === oldName);
+      await Promise.all(items.map((d) => supabase.from("menu_items").update({ category: newName }).eq("id", d.id)));
+
+      // Update category images key
+      if (categoryImages[oldName]) {
+        const updated = { ...categoryImages };
+        updated[newName] = updated[oldName];
+        delete updated[oldName];
+        const { data: existing } = await supabase.from("site_content").select("data").eq("section", "menu-category-images").maybeSingle();
+        const merged = { ...(existing?.data || {}), [newName]: updated[newName] };
+        delete merged[oldName];
+        await supabase.from("site_content").upsert({ section: "menu-category-images", data: merged }, { onConflict: "section" });
+        onCategoryImagesChange(updated);
+      }
+
+      onDishesChange((prev) => prev.map((d) => d.category === oldName ? { ...d, category: newName } : d));
+      // Update customCats if the old name was a custom cat
+      onCatsChange((prev) => ({
+        ...prev,
+        [menuType]: prev[menuType].includes(oldName)
+          ? prev[menuType].map((c) => c === oldName ? newName : c)
+          : prev[menuType],
+      }));
+      setRenamingCat(null);
+    } catch (e) { setError(e.message ?? "Rename failed."); }
+    finally { setRenameLoading(false); }
+  };
+
+  const handleDelete = async (cat) => {
+    setDeleteLoading(true);
+    setError("");
+    try {
+      const { error: delErr } = await supabase.from("menu_items").delete().eq("category", cat).eq("menu_type", menuType);
+      if (delErr) throw delErr;
+
+      // Remove from category images
+      if (categoryImages[cat]) {
+        const updated = { ...categoryImages };
+        delete updated[cat];
+        const { data: existing } = await supabase.from("site_content").select("data").eq("section", "menu-category-images").maybeSingle();
+        const merged = { ...(existing?.data || {}) };
+        delete merged[cat];
+        await supabase.from("site_content").upsert({ section: "menu-category-images", data: merged }, { onConflict: "section" });
+        onCategoryImagesChange(updated);
+      }
+
+      onDishesChange((prev) => prev.filter((d) => !(d.category === cat && (d.menu_type ?? "food") === menuType)));
+      onCatsChange((prev) => ({
+        ...prev,
+        [menuType]: prev[menuType].filter((c) => c !== cat),
+      }));
+      setDeletingCat(null);
+    } catch (e) { setError(e.message ?? "Delete failed."); }
+    finally { setDeleteLoading(false); }
+  };
+
+  const handleAdd = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    setAddLoading(true);
+    setError("");
+    try {
+      onCatsChange((prev) => ({
+        ...prev,
+        [menuType]: prev[menuType].includes(name) ? prev[menuType] : [...prev[menuType], name],
+      }));
+      setNewCatName("");
+      setAddingCat(false);
+    } catch (e) { setError(e.message ?? "Failed to add."); }
+    finally { setAddLoading(false); }
+  };
+
+  const deletingCount = deletingCat ? countItems(deletingCat) : 0;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.55)" }}>
+      <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 14, width: 560, maxHeight: "85vh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "'DM Sans', sans-serif" }}>
+        {/* Header */}
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--ds-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600, color: "var(--ds-text)" }}>
+              Manage {menuType === "drink" ? "Drink" : "Food"} Categories
+            </span>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--ds-muted)" }}>{allCats.length} categories</p>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ds-muted)", display: "flex" }}><X size={18} /></button>
+        </div>
+
+        {/* Category List */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
+          {error && <p style={{ fontSize: 12, color: "#ef4444", margin: "0 0 10px" }}>{error}</p>}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {allCats.map((cat) => {
+              const count = countItems(cat);
+              const imgUrl = categoryImages[cat];
+              const isRenaming = renamingCat === cat;
+
+              return (
+                <div key={cat} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  background: "var(--ds-input-bg)", border: "1px solid var(--ds-border)",
+                  borderRadius: 10, padding: "10px 12px",
+                }}>
+                  {/* Thumbnail — click to change image */}
+                  <div
+                    onClick={() => setEditImageCat(cat)}
+                    title="Click to change image"
+                    style={{
+                      width: 64, height: 46, borderRadius: 7, overflow: "hidden", flexShrink: 0,
+                      background: "var(--ds-surface)", border: "1px solid var(--ds-border)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", position: "relative",
+                    }}
+                  >
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={cat} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <Camera size={18} style={{ color: "var(--ds-muted)" }} strokeWidth={1.4} />
+                    )}
+                    {/* Hover overlay */}
+                    <div style={{
+                      position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      opacity: 0, transition: "opacity 0.15s",
+                    }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                    >
+                      <Camera size={14} style={{ color: "#fff" }} />
+                    </div>
+                  </div>
+
+                  {/* Name / rename input */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {isRenaming ? (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <input
+                          autoFocus
+                          value={renameVal}
+                          onChange={(e) => setRenameVal(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleRename(cat); if (e.key === "Escape") setRenamingCat(null); }}
+                          style={{ ...INPUT_STYLE, padding: "5px 8px", fontSize: 13, flex: 1 }}
+                        />
+                        <button
+                          style={{ ...GOLD_BTN, padding: "5px 10px", fontSize: 12, opacity: renameLoading ? 0.7 : 1 }}
+                          onClick={() => handleRename(cat)}
+                          disabled={renameLoading}
+                        >
+                          <Check size={13} />
+                        </button>
+                        <button style={{ ...GHOST_BTN, padding: "5px 8px" }} onClick={() => setRenamingCat(null)}><X size={13} /></button>
+                      </div>
+                    ) : (
+                      <>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ds-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cat}</p>
+                        <p style={{ margin: "1px 0 0", fontSize: 11, color: "var(--ds-muted)" }}>
+                          {count} {count === 1 ? (menuType === "drink" ? "drink" : "dish") : (menuType === "drink" ? "drinks" : "dishes")}
+                          {imgUrl ? " · Image set" : " · No image"}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  {!isRenaming && (
+                    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                      <button
+                        title="Rename"
+                        onClick={() => { setRenamingCat(cat); setRenameVal(cat); }}
+                        style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 7, padding: "6px 8px", cursor: "pointer", color: "var(--ds-muted)", display: "flex" }}
+                      ><Pencil size={13} /></button>
+                      <button
+                        title="Delete category"
+                        onClick={() => setDeletingCat(cat)}
+                        style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 7, padding: "6px 8px", cursor: "pointer", color: "#ef4444", display: "flex" }}
+                      ><Trash2 size={13} /></button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add new category */}
+          <div style={{ marginTop: 12 }}>
+            {addingCat ? (
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  autoFocus
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") { setAddingCat(false); setNewCatName(""); } }}
+                  placeholder="New category name…"
+                  style={{ ...INPUT_STYLE, flex: 1, padding: "8px 12px" }}
+                />
+                <button style={{ ...GOLD_BTN, opacity: addLoading ? 0.7 : 1 }} onClick={handleAdd} disabled={addLoading}>
+                  <Check size={14} /> Add
+                </button>
+                <button style={GHOST_BTN} onClick={() => { setAddingCat(false); setNewCatName(""); }}><X size={14} /></button>
+              </div>
+            ) : (
+              <button
+                style={{ ...GHOST_BTN, width: "100%", justifyContent: "center", borderStyle: "dashed" }}
+                onClick={() => setAddingCat(true)}
+              >
+                <Plus size={14} /> Add New Category
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "12px 20px", borderTop: "1px solid var(--ds-border)", display: "flex", justifyContent: "flex-end" }}>
+          <button style={GHOST_BTN} onClick={onClose}>Done</button>
+        </div>
+      </div>
+
+      {/* Delete confirm */}
+      {deletingCat && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 250, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.55)" }}>
+          <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: 12, padding: "28px", maxWidth: 380, width: "90%", fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 18 }}>
+              <AlertTriangle size={22} style={{ color: "#ef4444", flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <p style={{ fontWeight: 600, color: "var(--ds-text)", margin: "0 0 6px", fontSize: 15 }}>Delete "{deletingCat}"?</p>
+                <p style={{ color: "var(--ds-muted)", margin: 0, fontSize: 13, lineHeight: 1.5 }}>
+                  {deletingCount > 0
+                    ? `This will permanently delete all ${deletingCount} ${menuType === "drink" ? "drink" : "dish"}${deletingCount !== 1 ? "s" : ""} in this category. This cannot be undone.`
+                    : "This category is empty and will be removed."}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button style={GHOST_BTN} onClick={() => setDeletingCat(null)} disabled={deleteLoading}>Cancel</button>
+              <button
+                style={{ ...GOLD_BTN, background: "#ef4444", opacity: deleteLoading ? 0.7 : 1 }}
+                onClick={() => handleDelete(deletingCat)}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category image editor */}
+      {editImageCat && (
+        <CategoryImageEditor
+          category={editImageCat}
+          currentUrl={categoryImages[editImageCat] || ""}
+          onClose={() => setEditImageCat(null)}
+          onSaved={(cat, url) => { onCategoryImagesChange((prev) => ({ ...prev, [cat]: url })); setEditImageCat(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
 /* ─── MenuManagement ─── */
 export default function MenuManagement() {
   const [dishes, setDishes] = useState([]);
@@ -746,6 +1027,9 @@ export default function MenuManagement() {
 
   const [categoryImages, setCategoryImages] = useState({});
   const [editingCategoryImage, setEditingCategoryImage] = useState(null);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  // extra custom categories (not in hardcoded lists, not derived from DB items)
+  const [customCats, setCustomCats] = useState({ food: [], drink: [] });
 
   const [dragId, setDragId]     = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -768,11 +1052,19 @@ export default function MenuManagement() {
   const byType = dishes.filter((d) => (d.menu_type ?? "food") === menuType);
   const filtered = activeCategory === "All" ? byType : byType.filter((d) => d.category === activeCategory);
 
-  // Build category lists: hardcoded defaults + any custom ones saved in DB
+  // Build category lists: hardcoded defaults + DB items + custom
   const dbFoodCats = [...new Set(dishes.filter((d) => (d.menu_type ?? "food") === "food").map((d) => d.category).filter(Boolean))];
   const dbDrinkCats = [...new Set(dishes.filter((d) => d.menu_type === "drink").map((d) => d.category).filter(Boolean))];
-  const allFoodCats = [...CATEGORIES, ...dbFoodCats.filter((c) => !CATEGORIES.includes(c))];
-  const allDrinkCats = [...DRINK_CATEGORIES, ...dbDrinkCats.filter((c) => !DRINK_CATEGORIES.includes(c))];
+  const allFoodCats = [
+    ...CATEGORIES,
+    ...dbFoodCats.filter((c) => !CATEGORIES.includes(c)),
+    ...customCats.food.filter((c) => !CATEGORIES.includes(c) && !dbFoodCats.includes(c)),
+  ];
+  const allDrinkCats = [
+    ...DRINK_CATEGORIES,
+    ...dbDrinkCats.filter((c) => !DRINK_CATEGORIES.includes(c)),
+    ...customCats.drink.filter((c) => !DRINK_CATEGORIES.includes(c) && !dbDrinkCats.includes(c)),
+  ];
   const allCats = menuType === "drink" ? allDrinkCats : allFoodCats;
 
   /* ─── Drag handlers ─── */
@@ -874,11 +1166,19 @@ export default function MenuManagement() {
       </div>
 
       {/* Category Filter */}
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 24 }}>
-        <FilterTab label="All" active={activeCategory === "All"} onClick={() => setActiveCategory("All")} />
-        {allCats.map((c) => (
-          <FilterTab key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(c)} />
-        ))}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, flex: 1 }}>
+          <FilterTab label="All" active={activeCategory === "All"} onClick={() => setActiveCategory("All")} />
+          {allCats.map((c) => (
+            <FilterTab key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(c)} />
+          ))}
+        </div>
+        <button
+          style={{ ...GHOST_BTN, fontSize: 12, padding: "6px 12px", flexShrink: 0 }}
+          onClick={() => setShowCategoryManager(true)}
+        >
+          <Camera size={13} /> Categories
+        </button>
       </div>
 
       {/* Category Image Banner */}
@@ -958,7 +1258,7 @@ export default function MenuManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.2 }}
-                  style={{ display: "flex" }}
+                  style={{ display: "flex", height: "100%" }}
                   draggable
                   onDragStart={() => handleDragStart(dish.id)}
                   onDragEnd={handleDragEnd}
@@ -1007,6 +1307,25 @@ export default function MenuManagement() {
         />
       )}
 
+      {/* Category Manager */}
+      {showCategoryManager && (
+        <CategoryManager
+          menuType={menuType}
+          allCats={allCats}
+          dishes={dishes}
+          categoryImages={categoryImages}
+          onClose={() => setShowCategoryManager(false)}
+          onCategoryImagesChange={(val) => setCategoryImages(typeof val === "function" ? val(categoryImages) : val)}
+          onDishesChange={setDishes}
+          onCatsChange={(updater) => {
+            setCustomCats((prev) => {
+              const next = typeof updater === "function" ? updater(prev) : updater;
+              return next;
+            });
+          }}
+        />
+      )}
+
       {/* Delete Confirm */}
       {deletingDish && (
         <DeleteConfirm
@@ -1022,6 +1341,7 @@ export default function MenuManagement() {
         .ds-menu-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
+          grid-auto-rows: 340px;
           gap: 16px;
           align-items: stretch;
         }
