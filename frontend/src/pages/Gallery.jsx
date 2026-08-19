@@ -17,6 +17,13 @@ const FALLBACK_AMBIENCE = [
 
 const FILTERS = ["Food", "Drinks", "Ambience", "Behind The Scenes"];
 
+const DRINK_KEYWORDS = ["heineken", "beer", "wine", "cocktail", "spirit", "whiskey", "vodka", "gin", "rum", "juice", "drink", "mocktail", "cider", "champagne", "prosecco", "brandy", "whisky", "liquor", "lager", "stout"];
+
+function isDrink(filename) {
+  const lower = (filename || "").toLowerCase();
+  return DRINK_KEYWORDS.some((k) => lower.includes(k));
+}
+
 export default function Gallery() {
   const [filter, setFilter] = useState("Food");
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -37,11 +44,16 @@ export default function Gallery() {
         ]);
 
         const combinedFood = [...(foodRes.data ?? []), ...(foodReelRes.data ?? [])];
-        if (combinedFood.length) {
-          setFoodImages(combinedFood.map((a) => ({ src: a.url, tag: "Food", label: a.filename || "" })));
+        const actualFood = combinedFood.filter((a) => !isDrink(a.filename));
+        const detectedDrinks = combinedFood.filter((a) => isDrink(a.filename));
+
+        if (actualFood.length) {
+          setFoodImages(actualFood.map((a) => ({ src: a.url, tag: "Food", label: a.filename || "" })));
         }
-        if (drinkRes.data?.length) {
-          setDrinkImages(drinkRes.data.map((a) => ({ src: a.url, tag: "Drinks", label: a.filename || "" })));
+
+        const allDrinks = [...(drinkRes.data ?? []), ...detectedDrinks];
+        if (allDrinks.length) {
+          setDrinkImages(allDrinks.map((a) => ({ src: a.url, tag: "Drinks", label: a.filename || "" })));
         }
         if (ambienceRes.data?.length) {
           setAmbienceImages(ambienceRes.data.map((a) => ({ src: a.url, tag: "Ambience", label: a.filename || "" })));
@@ -51,23 +63,25 @@ export default function Gallery() {
     loadGallery();
   }, []);
 
-  // Load menu item images from Supabase — dynamic, updates when dishes are added
+  // Load menu item images — food items go to Food tab, drink items go to Drinks tab
   useEffect(() => {
     async function loadMenuDishes() {
       try {
         const { data } = await supabase
           .from("menu_items")
-          .select("name, category, image_url")
+          .select("name, menu_type, image_url")
           .not("image_url", "is", null)
           .neq("image_url", "");
         if (data?.length) {
           setMenuDishImages(
-            data.map((item) => ({ src: item.image_url, tag: "Food", label: item.name }))
+            data.map((item) => ({
+              src: item.image_url,
+              tag: item.menu_type === "drink" ? "Drinks" : "Food",
+              label: item.name,
+            }))
           );
         }
-      } catch {
-        // fail silently — category heroes still cover food section
-      }
+      } catch {}
     }
     loadMenuDishes();
   }, []);
