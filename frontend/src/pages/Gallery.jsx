@@ -7,18 +7,12 @@ import { supabase } from "../lib/supabase";
 import SectionHeader from "../components/SectionHeader";
 import OrderNowLink from "../components/OrderNowLink";
 
-const FALLBACK_GALLERY = [
-  { src: IMAGES.heroRooftop,  tag: "Ambience",          label: "Lagos by night" },
-  { src: IMAGES.jollof,       tag: "Food",               label: "Party jollof" },
-  { src: IMAGES.interior1,    tag: "Ambience",          label: "Ground floor" },
-  { src: IMAGES.cocktail,     tag: "Ambience",          label: "Palm wine spritz" },
-  { src: IMAGES.rooftopNight, tag: "Ambience",          label: "Rooftop nights" },
-  { src: IMAGES.pepperSoup,   tag: "Food",               label: "Catfish pepper soup" },
-  { src: IMAGES.grilledFish,  tag: "Food",               label: "Whole grilled croaker" },
-  { src: IMAGES.interior2,    tag: "Ambience",          label: "Quiet corners" },
-  { src: IMAGES.grill,        tag: "Food",               label: "Asun off the grill" },
-  { src: IMAGES.suya,         tag: "Food",               label: "Suya plate" },
-  { src: IMAGES.riceDish,     tag: "Food",               label: "Ofada & ayamase" },
+const FALLBACK_AMBIENCE = [
+  { src: IMAGES.heroRooftop,  tag: "Ambience", label: "Lagos by night" },
+  { src: IMAGES.interior1,    tag: "Ambience", label: "Ground floor" },
+  { src: IMAGES.cocktail,     tag: "Ambience", label: "Palm wine spritz" },
+  { src: IMAGES.rooftopNight, tag: "Ambience", label: "Rooftop nights" },
+  { src: IMAGES.interior2,    tag: "Ambience", label: "Quiet corners" },
 ];
 
 const FILTERS = ["Food", "Drinks", "Ambience", "Behind The Scenes"];
@@ -26,48 +20,31 @@ const FILTERS = ["Food", "Drinks", "Ambience", "Behind The Scenes"];
 export default function Gallery() {
   const [filter, setFilter] = useState("Food");
   const [lightboxIndex, setLightboxIndex] = useState(null);
-  const [baseImages, setBaseImages] = useState(FALLBACK_GALLERY);
+  const [ambienceImages, setAmbienceImages] = useState(FALLBACK_AMBIENCE);
+  const [foodImages, setFoodImages] = useState([]);
   const [drinkImages, setDrinkImages] = useState([]);
   const [menuDishImages, setMenuDishImages] = useState([]);
 
-  // Load curated gallery images (site_content / media_assets)
+  // Load curated gallery images from media_assets by section tag
   useEffect(() => {
     async function loadGallery() {
       try {
-        const { data: contentRow } = await supabase
-          .from("site_content")
-          .select("data")
-          .eq("section", "gallery")
-          .maybeSingle();
-        const contentUrls = Array.isArray(contentRow?.data?.images) ? contentRow.data.images : [];
+        const [foodRes, drinkRes, ambienceRes] = await Promise.all([
+          supabase.from("media_assets").select("url, filename").eq("used_in", "gallery-food").order("uploaded_at", { ascending: false }),
+          supabase.from("media_assets").select("url, filename").eq("used_in", "gallery-drinks").order("uploaded_at", { ascending: false }),
+          supabase.from("media_assets").select("url, filename").eq("used_in", "gallery").order("uploaded_at", { ascending: false }),
+        ]);
 
-        const { data: assets } = await supabase
-          .from("media_assets")
-          .select("url, filename")
-          .eq("used_in", "gallery")
-          .order("uploaded_at", { ascending: false });
-        const assetLabelMap = {};
-        (assets ?? []).forEach((a) => { assetLabelMap[a.url] = a.filename || ""; });
-        const assetUrls = Object.keys(assetLabelMap);
-
-        const allUrls = [...new Set([...contentUrls, ...assetUrls])];
-        if (allUrls.length > 0) {
-          setBaseImages(allUrls.map((src) => ({ src, tag: "Ambience", label: assetLabelMap[src] || "" })));
-        } else {
-          setBaseImages(FALLBACK_GALLERY);
+        if (foodRes.data?.length) {
+          setFoodImages(foodRes.data.map((a) => ({ src: a.url, tag: "Food", label: a.filename || "" })));
         }
-        // Also fetch drink images
-        const { data: drinkAssets } = await supabase
-          .from("media_assets")
-          .select("url, filename")
-          .eq("used_in", "gallery-drinks")
-          .order("uploaded_at", { ascending: false });
-        if (drinkAssets?.length) {
-          setDrinkImages(drinkAssets.map((a) => ({ src: a.url, tag: "Drinks", label: a.filename || "" })));
+        if (drinkRes.data?.length) {
+          setDrinkImages(drinkRes.data.map((a) => ({ src: a.url, tag: "Drinks", label: a.filename || "" })));
         }
-      } catch {
-        setBaseImages(FALLBACK_GALLERY);
-      }
+        if (ambienceRes.data?.length) {
+          setAmbienceImages(ambienceRes.data.map((a) => ({ src: a.url, tag: "Ambience", label: a.filename || "" })));
+        }
+      } catch {}
     }
     loadGallery();
   }, []);
@@ -93,7 +70,7 @@ export default function Gallery() {
     loadMenuDishes();
   }, []);
 
-  const allImages = [...menuDishImages, ...drinkImages, ...baseImages];
+  const allImages = [...foodImages, ...menuDishImages, ...drinkImages, ...ambienceImages];
   const filtered = allImages.filter((g) => g.tag === filter);
 
   // Lightbox keyboard navigation
