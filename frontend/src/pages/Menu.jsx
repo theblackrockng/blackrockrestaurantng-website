@@ -381,13 +381,15 @@ export default function MenuPage() {
                         <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c8a96e", marginBottom: "1rem" }}>
                           Served with choice of Carbohydrate
                         </p>
-                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
+                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.75rem" }}>
                           Swallow
                         </p>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem" }}>
-                          <span style={{ fontSize: "0.8rem", color: "#888580" }}>
-                            Pounded Yam — Eba — Amala — Fufu — Wheat — Semo
-                          </span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                          {["Pounded Yam", "Eba", "Amala", "Fufu", "Wheat", "Semo"].map((s) => (
+                            <span key={s} style={{ fontSize: "0.82rem", fontWeight: 500, color: "#F5F0E8", background: "rgba(200,169,110,0.12)", border: "1px solid rgba(200,169,110,0.4)", borderRadius: "99px", padding: "4px 14px" }}>
+                              {s}
+                            </span>
+                          ))}
                         </div>
                       </motion.div>
                     )}
@@ -410,22 +412,26 @@ export default function MenuPage() {
                           Served with choice of Soup &amp; Carbohydrate
                         </p>
 
-                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
+                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.75rem" }}>
                           Soups
                         </p>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem", marginBottom: "1.25rem" }}>
-                          <span style={{ fontSize: "0.8rem", color: "#888580" }}>
-                            Efo Riro — Edika-Ikong — Egusi — Mixed Okro — Fisherman Soup — Seafood — Banga — Ofe Nsala — Miyan Kuka — Ewedu
-                          </span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                          {["Efo Riro", "Edika-Ikong", "Egusi", "Mixed Okro", "Fisherman Soup", "Seafood", "Banga", "Ofe Nsala", "Miyan Kuka", "Ewedu"].map((s) => (
+                            <span key={s} style={{ fontSize: "0.82rem", fontWeight: 500, color: "#F5F0E8", background: "rgba(200,169,110,0.12)", border: "1px solid rgba(200,169,110,0.4)", borderRadius: "99px", padding: "4px 14px" }}>
+                              {s}
+                            </span>
+                          ))}
                         </div>
 
-                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
+                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.75rem" }}>
                           Swallow
                         </p>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem" }}>
-                          <span style={{ fontSize: "0.8rem", color: "#888580" }}>
-                            Pounded Yam — Eba — Amala — Fufu — Wheat — Semo
-                          </span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                          {["Pounded Yam", "Eba", "Amala", "Fufu", "Wheat", "Semo"].map((s) => (
+                            <span key={s} style={{ fontSize: "0.82rem", fontWeight: 500, color: "#F5F0E8", background: "rgba(200,169,110,0.12)", border: "1px solid rgba(200,169,110,0.4)", borderRadius: "99px", padding: "4px 14px" }}>
+                              {s}
+                            </span>
+                          ))}
                         </div>
                       </motion.div>
                     )}
