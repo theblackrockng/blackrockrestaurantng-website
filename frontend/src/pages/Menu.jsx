@@ -364,6 +364,34 @@ export default function MenuPage() {
                       </motion.div>
                     ))}
 
+                    {/* Swallow — shown only for Traditional Specials */}
+                    {active === "Traditional Specials" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        style={{
+                          marginTop: "2.5rem",
+                          padding: "1.5rem 1.75rem",
+                          border: "1px solid rgba(200,169,110,0.25)",
+                          borderRadius: "10px",
+                          background: "rgba(200,169,110,0.05)",
+                        }}
+                      >
+                        <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c8a96e", marginBottom: "1rem" }}>
+                          Served with choice of Carbohydrate
+                        </p>
+                        <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
+                          Swallow
+                        </p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem" }}>
+                          <span style={{ fontSize: "0.8rem", color: "#888580" }}>
+                            Pounded Yam — Eba — Amala — Fufu — Wheat — Semo
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* Soups & Carbohydrates — shown only for National Dishes */}
                     {active === "National Dishes" && (
                       <motion.div

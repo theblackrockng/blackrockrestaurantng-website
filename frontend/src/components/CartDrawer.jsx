@@ -191,6 +191,11 @@ export default function CartDrawer() {
                         >
                           {item.name}
                         </div>
+                        {(item.soup || item.swallow) && (
+                          <div style={{ fontSize: 11, color: "#c8a96e", marginBottom: 4, lineHeight: 1.4 }}>
+                            {[item.soup, item.swallow].filter(Boolean).join(" — ")}
+                          </div>
+                        )}
                         <div style={{ fontSize: 12, color: "var(--muted, #9C8E7A)" }}>
                           {fmtPrice(item.price)} each
                         </div>

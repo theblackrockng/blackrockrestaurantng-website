@@ -1,14 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Plus, Minus, ShoppingBag } from "lucide-react";
+import { Plus, Minus, ShoppingBag, X, Check } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { MENU } from "../lib/data";
 import { useCart } from "../context/CartContext";
 
 const FOOD_CATEGORY_ORDER = [
-  "Starters", "Salads", "Rice", "Noodles",
-  "Pepper Soup & Specials", "Continental", "Sauces",
+  "Starters", "Salads", "Rice", "Pasta",
+  "Bush Bar Kitchen", "Continental", "Sauces",
   "Charcoal Grills", "National Dishes", "Traditional Specials",
 ];
+
+const SOUPS = [
+  "Efo Riro", "Edika-Ikong", "Egusi", "Mixed Okro",
+  "Fisherman Soup", "Seafood", "Banga", "Ofe Nsala", "Miyan Kuka", "Ewedu",
+];
+
+const SWALLOWS = ["Pounded Yam", "Eba", "Amala", "Fufu", "Wheat", "Semo"];
 
 const DRINK_CATEGORY_ORDER = [
   "Beer & Cider", "Cocktails", "Mocktails",
@@ -32,6 +39,8 @@ export default function Order() {
   const [menuType, setMenuType] = useState("food");
   const [activeFoodCat, setActiveFoodCat] = useState(FOOD_CATEGORY_ORDER[0]);
   const [activeDrinkCat, setActiveDrinkCat] = useState(DRINK_CATEGORY_ORDER[0]);
+  const [soupModal, setSoupModal] = useState(null); // dish object when open
+  const [traditionalModal, setTraditionalModal] = useState(null); // swallow-only picker
 
   const foodSectionRefs = useRef({});
   const drinkSectionRefs = useRef({});
@@ -152,6 +161,7 @@ export default function Order() {
   }, [menuType]);
 
   const getCartItem = useCallback((id) => cartItems.find((i) => i.id === id), [cartItems]);
+  const getNationalCartItems = useCallback((id) => cartItems.filter((i) => i.baseId === id), [cartItems]);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--charcoal, #0f0d0a)" }}>
@@ -267,15 +277,25 @@ export default function Order() {
             >
               <CategoryHeader cat={cat} />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-                {foodData[cat].map((dish) => (
-                  <DishCard
-                    key={dish.id}
-                    dish={dish}
-                    cartItem={getCartItem(dish.id)}
-                    onAdd={() => addItem({ id: dish.id, name: dish.name, price: dish.price, category: dish.category, description: dish.description })}
-                    onSetQty={(q) => setQty(dish.id, q)}
-                  />
-                ))}
+                {foodData[cat].map((dish) => {
+                  const isNational = cat === "National Dishes";
+                  const isTraditional = cat === "Traditional Specials";
+                  const needsPicker = isNational || isTraditional;
+                  return (
+                    <DishCard
+                      key={dish.id}
+                      dish={dish}
+                      cartItem={needsPicker ? null : getCartItem(dish.id)}
+                      nationalCartItems={needsPicker ? getNationalCartItems(dish.id) : null}
+                      onAdd={() => {
+                        if (isNational) setSoupModal(dish);
+                        else if (isTraditional) setTraditionalModal(dish);
+                        else addItem({ id: dish.id, name: dish.name, price: dish.price, category: dish.category, description: dish.description });
+                      }}
+                      onSetQty={(q) => setQty(dish.id, q)}
+                    />
+                  );
+                })}
               </div>
             </section>
           ))
@@ -311,6 +331,48 @@ export default function Order() {
           ))
         }
       </div>
+
+      {/* Soup & Swallow picker modal — National Dishes */}
+      {soupModal && (
+        <SoupSwallowModal
+          dish={soupModal}
+          onClose={() => setSoupModal(null)}
+          onConfirm={(soup, swallow) => {
+            const cartId = `${soupModal.id}|${soup}|${swallow}`;
+            addItem({
+              id: cartId,
+              baseId: soupModal.id,
+              name: soupModal.name,
+              price: soupModal.price,
+              category: soupModal.category,
+              soup,
+              swallow,
+            });
+            setSoupModal(null);
+          }}
+        />
+      )}
+
+      {/* Swallow-only picker modal — Traditional Specials */}
+      {traditionalModal && (
+        <SoupSwallowModal
+          dish={traditionalModal}
+          showSoup={false}
+          onClose={() => setTraditionalModal(null)}
+          onConfirm={(_soup, swallow) => {
+            const cartId = `${traditionalModal.id}|${swallow}`;
+            addItem({
+              id: cartId,
+              baseId: traditionalModal.id,
+              name: traditionalModal.name,
+              price: traditionalModal.price,
+              category: traditionalModal.category,
+              swallow,
+            });
+            setTraditionalModal(null);
+          }}
+        />
+      )}
 
       {/* Floating cart bar */}
       {totalItems > 0 && (
@@ -359,19 +421,12 @@ function CategoryHeader({ cat }) {
   );
 }
 
-function DishCard({ dish, cartItem, onAdd, onSetQty }) {
+function DishCard({ dish, cartItem, nationalCartItems, onAdd, onSetQty }) {
+  const totalNationalQty = nationalCartItems ? nationalCartItems.reduce((s, i) => s + i.qty, 0) : 0;
+
   return (
     <div
-      style={{
-        background: "#1a1612",
-        border: "1px solid var(--border-soft, #2e2820)",
-        borderRadius: 10,
-        padding: 20,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        transition: "border-color 0.15s",
-      }}
+      style={{ background: "#1a1612", border: "1px solid var(--border-soft, #2e2820)", borderRadius: 10, padding: 20, display: "flex", flexDirection: "column", gap: 10, transition: "border-color 0.15s" }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3e3426"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-soft, #2e2820)"; }}
     >
@@ -389,57 +444,133 @@ function DishCard({ dish, cartItem, onAdd, onSetQty }) {
         </div>
       </div>
 
-      {cartItem ? (
+      {/* National Dishes: always show Add button + in-cart summary */}
+      {nationalCartItems !== null ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {totalNationalQty > 0 && (
+            <p style={{ fontSize: 11.5, color: "#c8a96e", margin: 0 }}>
+              {totalNationalQty} variation{totalNationalQty > 1 ? "s" : ""} in cart
+            </p>
+          )}
+          <button
+            onClick={onAdd}
+            style={{ width: "100%", background: "transparent", border: "1px solid var(--gold, #C9A84C)", color: "var(--gold, #C9A84C)", borderRadius: 6, padding: "10px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", letterSpacing: "0.06em", textTransform: "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gold, #C9A84C)"; e.currentTarget.style.color = "#0f0d0a"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--gold, #C9A84C)"; }}
+          >
+            <Plus size={14} /> Add to Cart
+          </button>
+        </div>
+      ) : cartItem ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontSize: 12, color: "var(--muted, #9C8E7A)", fontWeight: 500 }}>In cart</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-            <button
-              onClick={() => onSetQty(cartItem.qty - 1)}
-              aria-label="Decrease"
-              style={{ width: 32, height: 32, background: "#2e2820", border: "none", borderRadius: "6px 0 0 6px", color: "var(--warm-white, #F5F0E8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <Minus size={14} />
-            </button>
-            <span style={{ width: 36, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "#251f19", color: "var(--warm-white, #F5F0E8)", fontSize: 14, fontWeight: 600 }}>
-              {cartItem.qty}
-            </span>
-            <button
-              onClick={() => onSetQty(cartItem.qty + 1)}
-              aria-label="Increase"
-              style={{ width: 32, height: 32, background: "#2e2820", border: "none", borderRadius: "0 6px 6px 0", color: "var(--warm-white, #F5F0E8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <Plus size={14} />
-            </button>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <button onClick={() => onSetQty(cartItem.qty - 1)} style={{ width: 32, height: 32, background: "#2e2820", border: "none", borderRadius: "6px 0 0 6px", color: "var(--warm-white, #F5F0E8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Minus size={14} /></button>
+            <span style={{ width: 36, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "#251f19", color: "var(--warm-white, #F5F0E8)", fontSize: 14, fontWeight: 600 }}>{cartItem.qty}</span>
+            <button onClick={() => onSetQty(cartItem.qty + 1)} style={{ width: 32, height: 32, background: "#2e2820", border: "none", borderRadius: "0 6px 6px 0", color: "var(--warm-white, #F5F0E8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Plus size={14} /></button>
           </div>
         </div>
       ) : (
         <button
           onClick={onAdd}
-          style={{
-            width: "100%",
-            background: "transparent",
-            border: "1px solid var(--gold, #C9A84C)",
-            color: "var(--gold, #C9A84C)",
-            borderRadius: 6,
-            padding: "10px 16px",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            transition: "all 0.15s",
-          }}
+          style={{ width: "100%", background: "transparent", border: "1px solid var(--gold, #C9A84C)", color: "var(--gold, #C9A84C)", borderRadius: 6, padding: "10px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", letterSpacing: "0.06em", textTransform: "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s" }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gold, #C9A84C)"; e.currentTarget.style.color = "#0f0d0a"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--gold, #C9A84C)"; }}
         >
-          <Plus size={14} />
-          Add to Cart
+          <Plus size={14} /> Add to Cart
         </button>
       )}
+    </div>
+  );
+}
+
+function SoupSwallowModal({ dish, onClose, onConfirm, showSoup = true }) {
+  const [soup, setSoup] = useState("");
+  const [swallow, setSwallow] = useState("");
+  const canConfirm = (!showSoup || soup) && swallow;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", padding: 16 }}>
+      <div style={{ background: "#1a1612", border: "1px solid #3e3426", borderRadius: 12, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid #2e2820" }}>
+          <div>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "#c8a96e" }}>Choose your sides</p>
+            <h3 style={{ margin: "4px 0 0", fontSize: 18, fontWeight: 700, color: "#F5F0E8", fontFamily: "'Cormorant Garamond', serif" }}>{dish.name}</h3>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#9C8E7A", display: "flex" }}><X size={20} /></button>
+        </div>
+
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* Soup — only for National Dishes */}
+          {showSoup && (
+            <div>
+              <p style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#F5F0E8" }}>
+                Soup <span style={{ color: "#ef4444" }}>*</span>
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {SOUPS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSoup(s)}
+                    style={{
+                      padding: "8px 16px", borderRadius: 99, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all 0.15s",
+                      background: soup === s ? "#c8a96e" : "transparent",
+                      color: soup === s ? "#0f0d0a" : "#9C8E7A",
+                      border: `1px solid ${soup === s ? "#c8a96e" : "#3e3426"}`,
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Swallow */}
+          <div>
+            <p style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#F5F0E8" }}>
+              Swallow <span style={{ color: "#ef4444" }}>*</span>
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {SWALLOWS.map((sw) => (
+                <button
+                  key={sw}
+                  onClick={() => setSwallow(sw)}
+                  style={{
+                    padding: "8px 16px", borderRadius: 99, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all 0.15s",
+                    background: swallow === sw ? "#c8a96e" : "transparent",
+                    color: swallow === sw ? "#0f0d0a" : "#9C8E7A",
+                    border: `1px solid ${swallow === sw ? "#c8a96e" : "#3e3426"}`,
+                  }}
+                >
+                  {sw}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {!canConfirm && (
+            <p style={{ margin: 0, fontSize: 12, color: "#9C8E7A" }}>
+              {showSoup ? "Please select both a soup and swallow to continue." : "Please select a swallow to continue."}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "16px 24px", borderTop: "1px solid #2e2820", display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 6, border: "1px solid #3e3426", background: "transparent", color: "#9C8E7A", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            Cancel
+          </button>
+          <button
+            onClick={() => canConfirm && onConfirm(soup, swallow)}
+            disabled={!canConfirm}
+            style={{ flex: 2, padding: "12px", borderRadius: 6, border: "none", background: canConfirm ? "#c8a96e" : "#2e2820", color: canConfirm ? "#0f0d0a" : "#5a4e46", fontSize: 13, fontWeight: 700, cursor: canConfirm ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}
+          >
+            <Check size={14} /> Add to Cart
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
