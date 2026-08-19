@@ -21,25 +21,13 @@ const FALLBACK_GALLERY = [
   { src: IMAGES.riceDish,     tag: "Food",               label: "Ofada & ayamase" },
 ];
 
-const CATEGORY_HEROES = [
-  { src: "/images/menu/starters.jpg",    tag: "Food", label: "Starters" },
-  { src: "/images/menu/salads.jpg",      tag: "Food", label: "Salads" },
-  { src: "/images/menu/rice.jpg",        tag: "Food", label: "Rice" },
-  { src: "/images/menu/noodles.jpg",     tag: "Food", label: "Noodles" },
-  { src: "/images/menu/pepper-soup.jpg", tag: "Food", label: "Pepper Soup & Specials" },
-  { src: "/images/menu/continental.jpg", tag: "Food", label: "Continental" },
-  { src: "/images/menu/sauces.jpg",      tag: "Food", label: "Sauces" },
-  { src: "/images/menu/grills.jpg",      tag: "Food", label: "Charcoal Grills" },
-  { src: "/images/menu/national.jpg",    tag: "Food", label: "National Dishes" },
-  { src: "/images/menu/traditional.jpg", tag: "Food", label: "Traditional Specials" },
-];
-
-const FILTERS = ["All", "Food", "Ambience", "Behind The Scenes"];
+const FILTERS = ["Food", "Drinks", "Ambience", "Behind The Scenes"];
 
 export default function Gallery() {
-  const [filter, setFilter] = useState("All");
+  const [filter, setFilter] = useState("Food");
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [baseImages, setBaseImages] = useState(FALLBACK_GALLERY);
+  const [drinkImages, setDrinkImages] = useState([]);
   const [menuDishImages, setMenuDishImages] = useState([]);
 
   // Load curated gallery images (site_content / media_assets)
@@ -67,6 +55,15 @@ export default function Gallery() {
           setBaseImages(allUrls.map((src) => ({ src, tag: "Ambience", label: assetLabelMap[src] || "" })));
         } else {
           setBaseImages(FALLBACK_GALLERY);
+        }
+        // Also fetch drink images
+        const { data: drinkAssets } = await supabase
+          .from("media_assets")
+          .select("url, filename")
+          .eq("used_in", "gallery-drinks")
+          .order("uploaded_at", { ascending: false });
+        if (drinkAssets?.length) {
+          setDrinkImages(drinkAssets.map((a) => ({ src: a.url, tag: "Drinks", label: a.filename || "" })));
         }
       } catch {
         setBaseImages(FALLBACK_GALLERY);
@@ -96,8 +93,8 @@ export default function Gallery() {
     loadMenuDishes();
   }, []);
 
-  const allImages = [...baseImages, ...CATEGORY_HEROES, ...menuDishImages];
-  const filtered = filter === "All" ? allImages : allImages.filter((g) => g.tag === filter);
+  const allImages = [...menuDishImages, ...drinkImages, ...baseImages];
+  const filtered = allImages.filter((g) => g.tag === filter);
 
   // Lightbox keyboard navigation
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
@@ -158,6 +155,12 @@ export default function Gallery() {
       {/* Grid */}
       <section className="bg-[var(--charcoal)] pb-24 md:pb-32" data-testid="gallery-grid">
         <div className="max-w-[1600px] mx-auto px-6 md:px-12">
+          {filtered.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-32 gap-4 text-center">
+              <p className="text-[var(--muted)] text-base font-light">No images in this category yet.</p>
+              <p className="text-[var(--muted)] text-sm opacity-60">Photos will appear here once added from the console.</p>
+            </div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[2px]">
             {filtered.map((g, i) => (
               <motion.button

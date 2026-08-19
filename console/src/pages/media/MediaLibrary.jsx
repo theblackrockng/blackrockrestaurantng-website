@@ -51,7 +51,8 @@ const SECTION_OPTIONS = [
   { value: "hero", label: "Homepage Hero" },
   { value: "home-food-reel", label: "Homepage Food Reel" },
   { value: "home-instagram", label: "Homepage Instagram Strip" },
-  { value: "gallery", label: "Gallery Page" },
+  { value: "gallery", label: "Gallery — Ambience" },
+  { value: "gallery-drinks", label: "Gallery — Drinks" },
   { value: "about", label: "About Page" },
   { value: "other", label: "Other" },
 ];
@@ -76,11 +77,12 @@ const WEBSITE_IMAGES = [
 ];
 
 const FILTER_TABS = [
-  { key: "ALL",    label: "All" },
-  { key: "hero",   label: "Hero" },
+  { key: "ALL",           label: "All" },
+  { key: "hero",          label: "Hero" },
   { key: "home-food-reel", label: "Food Reel" },
-  { key: "gallery", label: "Gallery" },
-  { key: "UNUSED", label: "Unassigned" },
+  { key: "gallery",       label: "Gallery Ambience" },
+  { key: "gallery-drinks", label: "Gallery Drinks" },
+  { key: "UNUSED",        label: "Unassigned" },
 ];
 
 function fmt(bytes) {
@@ -437,7 +439,8 @@ function DetailPanel({ asset, onClose, onDeleted, onUpdated }) {
               {section === "hero" && "Main hero background on the homepage."}
               {section === "home-food-reel" && "Scrolling food strip on the homepage."}
               {section === "home-instagram" && "Instagram strip section."}
-              {section === "gallery" && "Gallery page."}
+              {section === "gallery" && "Gallery page — Ambience category."}
+              {section === "gallery-drinks" && "Gallery page — Drinks category."}
               {section === "about" && "About page."}
               {!section && "Not displayed anywhere on the website."}
             </p>
