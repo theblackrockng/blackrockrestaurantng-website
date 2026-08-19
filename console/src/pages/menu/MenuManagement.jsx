@@ -345,7 +345,8 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, dragProps }) {
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
-      height: "100%",
+      width: "100%",
+      height: 340,
       opacity: dragProps?.isDragging ? 0.35 : 1,
       transition: "opacity 0.15s, border-color 0.15s, transform 0.15s",
       transform: dragProps?.isOver ? "scale(1.02)" : "scale(1)",
@@ -718,7 +719,7 @@ function FilterTab({ label, active, onClick }) {
 }
 
 /* ─── CategoryManager ─── */
-function CategoryManager({ menuType, allCats, dishes, categoryImages, onClose, onCategoryImagesChange, onDishesChange, onCatsChange }) {
+function CategoryManager({ menuType, allCats, dishes, categoryImages, onClose, onCategoryImagesChange, onDishesChange, onCatsChange, onCatDeleted }) {
   const [renamingCat, setRenamingCat] = useState(null);
   const [renameVal, setRenameVal] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
@@ -785,10 +786,7 @@ function CategoryManager({ menuType, allCats, dishes, categoryImages, onClose, o
       }
 
       onDishesChange((prev) => prev.filter((d) => !(d.category === cat && (d.menu_type ?? "food") === menuType)));
-      onCatsChange((prev) => ({
-        ...prev,
-        [menuType]: prev[menuType].filter((c) => c !== cat),
-      }));
+      onCatDeleted(cat);
       setDeletingCat(null);
     } catch (e) { setError(e.message ?? "Delete failed."); }
     finally { setDeleteLoading(false); }
@@ -1028,8 +1026,9 @@ export default function MenuManagement() {
   const [categoryImages, setCategoryImages] = useState({});
   const [editingCategoryImage, setEditingCategoryImage] = useState(null);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
-  // extra custom categories (not in hardcoded lists, not derived from DB items)
   const [customCats, setCustomCats] = useState({ food: [], drink: [] });
+  // tracks hardcoded categories the user has explicitly deleted (hidden from UI)
+  const [excludedCats, setExcludedCats] = useState({ food: [], drink: [] });
 
   const [dragId, setDragId]     = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -1052,18 +1051,18 @@ export default function MenuManagement() {
   const byType = dishes.filter((d) => (d.menu_type ?? "food") === menuType);
   const filtered = activeCategory === "All" ? byType : byType.filter((d) => d.category === activeCategory);
 
-  // Build category lists: hardcoded defaults + DB items + custom
+  // Build category lists: hardcoded defaults (minus deleted) + DB items + custom
   const dbFoodCats = [...new Set(dishes.filter((d) => (d.menu_type ?? "food") === "food").map((d) => d.category).filter(Boolean))];
   const dbDrinkCats = [...new Set(dishes.filter((d) => d.menu_type === "drink").map((d) => d.category).filter(Boolean))];
   const allFoodCats = [
-    ...CATEGORIES,
-    ...dbFoodCats.filter((c) => !CATEGORIES.includes(c)),
-    ...customCats.food.filter((c) => !CATEGORIES.includes(c) && !dbFoodCats.includes(c)),
+    ...CATEGORIES.filter((c) => !excludedCats.food.includes(c)),
+    ...dbFoodCats.filter((c) => !CATEGORIES.includes(c) && !excludedCats.food.includes(c)),
+    ...customCats.food.filter((c) => !CATEGORIES.includes(c) && !dbFoodCats.includes(c) && !excludedCats.food.includes(c)),
   ];
   const allDrinkCats = [
-    ...DRINK_CATEGORIES,
-    ...dbDrinkCats.filter((c) => !DRINK_CATEGORIES.includes(c)),
-    ...customCats.drink.filter((c) => !DRINK_CATEGORIES.includes(c) && !dbDrinkCats.includes(c)),
+    ...DRINK_CATEGORIES.filter((c) => !excludedCats.drink.includes(c)),
+    ...dbDrinkCats.filter((c) => !DRINK_CATEGORIES.includes(c) && !excludedCats.drink.includes(c)),
+    ...customCats.drink.filter((c) => !DRINK_CATEGORIES.includes(c) && !dbDrinkCats.includes(c) && !excludedCats.drink.includes(c)),
   ];
   const allCats = menuType === "drink" ? allDrinkCats : allFoodCats;
 
@@ -1258,7 +1257,6 @@ export default function MenuManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.2 }}
-                  style={{ display: "flex", height: "100%" }}
                   draggable
                   onDragStart={() => handleDragStart(dish.id)}
                   onDragEnd={handleDragEnd}
@@ -1317,11 +1315,11 @@ export default function MenuManagement() {
           onClose={() => setShowCategoryManager(false)}
           onCategoryImagesChange={(val) => setCategoryImages(typeof val === "function" ? val(categoryImages) : val)}
           onDishesChange={setDishes}
-          onCatsChange={(updater) => {
-            setCustomCats((prev) => {
-              const next = typeof updater === "function" ? updater(prev) : updater;
-              return next;
-            });
+          onCatsChange={(updater) => setCustomCats((prev) => typeof updater === "function" ? updater(prev) : updater)}
+          onCatDeleted={(cat) => {
+            setExcludedCats((prev) => ({ ...prev, [menuType]: [...prev[menuType], cat] }));
+            setCustomCats((prev) => ({ ...prev, [menuType]: prev[menuType].filter((c) => c !== cat) }));
+            if (activeCategory === cat) setActiveCategory("All");
           }}
         />
       )}
@@ -1341,9 +1339,7 @@ export default function MenuManagement() {
         .ds-menu-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          grid-auto-rows: 340px;
           gap: 16px;
-          align-items: stretch;
         }
         @media (max-width: 1100px) {
           .ds-menu-grid { grid-template-columns: repeat(3, 1fr); }
