@@ -5,7 +5,7 @@ import { UploadCloud, Trash2, Check, X, ArrowRightLeft, Pencil } from "lucide-re
 /* ─── Constants ─── */
 const GALLERY_SECTIONS = [
   { key: "gallery-food",   label: "Food",               fetchKeys: ["gallery-food", "home-food-reel"] },
-  { key: "gallery-drinks", label: "Drinks",             fetchKeys: ["gallery-drinks"] },
+  { key: "gallery-drinks", label: "Drinks",             fetchKeys: ["gallery-drinks", "home-food-reel"] },
   { key: "gallery",        label: "Ambience",           fetchKeys: ["gallery"] },
   { key: "gallery-behind", label: "Behind the Scenes",  fetchKeys: ["gallery-behind"] },
 ];
@@ -156,7 +156,7 @@ function ImageCard({ asset, activeKey, onDelete, onMove, onNameUpdated }) {
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
 
-        {/* Food reel badge */}
+        {/* Shared with homepage food reel badge */}
         {asset.used_in === "home-food-reel" && (
           <div style={{ position: "absolute", top: 6, left: 6 }}>
             <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", background: "var(--ds-gold)", color: "#1a1a1a", borderRadius: 99, padding: "2px 7px" }}>
@@ -323,25 +323,18 @@ export default function GalleryManager() {
 
   const activeSection = GALLERY_SECTIONS.find((s) => s.key === activeKey);
 
-  // For Food tab: show gallery-food + home-food-reel (non-drinks); for others match exact key
-  const visibleAssets = allAssets.filter((a) => {
-    const section = GALLERY_SECTIONS.find((s) => s.key === activeKey);
-    if (!section) return false;
-    if (!section.fetchKeys.includes(a.used_in)) return false;
-    // Exclude drink-named images from Food tab (they belong in Drinks)
-    if (activeKey === "gallery-food" && isDrink(a.filename)) return false;
-    return true;
-  });
-
-  const countFor = (key) => {
+  const assetMatchesTab = (a, key) => {
     const section = GALLERY_SECTIONS.find((s) => s.key === key);
-    if (!section) return 0;
-    return allAssets.filter((a) => {
-      if (!section.fetchKeys.includes(a.used_in)) return false;
-      if (key === "gallery-food" && isDrink(a.filename)) return false;
-      return true;
-    }).length;
+    if (!section || !section.fetchKeys.includes(a.used_in)) return false;
+    if (a.used_in === "home-food-reel") {
+      // Food-reel images: route drinks to Drinks tab, rest to Food tab
+      return key === "gallery-drinks" ? isDrink(a.filename) : !isDrink(a.filename);
+    }
+    return true;
   };
+
+  const visibleAssets = allAssets.filter((a) => assetMatchesTab(a, activeKey));
+  const countFor = (key) => allAssets.filter((a) => assetMatchesTab(a, key)).length;
 
   /* ── Upload ── */
   const uploadFiles = async (files) => {
