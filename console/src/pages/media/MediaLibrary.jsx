@@ -78,7 +78,6 @@ const WEBSITE_IMAGES = [
 ];
 
 const FILTER_TABS = [
-  { key: "ALL",            label: "All" },
   { key: "hero",           label: "Hero" },
   { key: "home-food-reel", label: "Food Reel" },
   { key: "gallery-food",   label: "Gallery Food" },
@@ -748,7 +747,7 @@ function DeleteConfirm({ asset, onConfirm, onClose, deleting }) {
 export default function MediaLibrary() {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [activeTab, setActiveTab] = useState("home-food-reel");
   const [dragOver, setDragOver] = useState(false);
   const [uploads, setUploads] = useState([]);
   const [deletingAsset, setDeletingAsset] = useState(null);
@@ -772,13 +771,11 @@ export default function MediaLibrary() {
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
   const tabCount = (key) => {
-    if (key === "ALL") return assets.length;
     if (key === "UNUSED") return assets.filter(a => !a.used_in || !a.used_in.trim()).length;
     return assets.filter(a => a.used_in === key).length;
   };
 
   const filtered = assets.filter((a) => {
-    if (activeTab === "ALL") return true;
     if (activeTab === "UNUSED") return !a.used_in || !a.used_in.trim();
     return a.used_in === activeTab;
   });
@@ -913,14 +910,8 @@ export default function MediaLibrary() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: 14 }}>
           <UploadCloud size={40} strokeWidth={1.2} style={{ color: "var(--ds-muted)", opacity: 0.35 }} />
           <p style={{ color: "var(--ds-muted)", fontSize: 14, margin: 0 }}>
-            {activeTab === "ALL" ? "No images yet." : "No images in this section."}
+            No images in this section.
           </p>
-          {activeTab === "ALL" && (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-              <button style={GOLD_BTN} onClick={() => setShowImport(true)}><Download size={14} /> Import from Website</button>
-              <button style={GHOST_BTN} onClick={() => fileInputRef.current?.click()}><UploadCloud size={14} /> Upload Images</button>
-            </div>
-          )}
         </div>
       ) : (
         <div className="ds-media-grid">
