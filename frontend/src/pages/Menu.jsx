@@ -386,25 +386,18 @@ export default function MenuPage() {
                           Soups
                         </p>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem", marginBottom: "1.25rem" }}>
-                          {[
-                            "Efo Riro", "Edika-Ikong", "Egusi",
-                            "Mixed Okro", "Fisherman Soup", "Seafood",
-                            "Banga", "Ofe Nsala", "Miyan Kuka", "Ewedu",
-                          ].map((s) => (
-                            <span key={s} style={{ fontSize: "0.8rem", color: "#888580", whiteSpace: "nowrap" }}>{s}</span>
-                          ))}
+                          <span style={{ fontSize: "0.8rem", color: "#888580" }}>
+                            Efo Riro — Edika-Ikong — Egusi — Mixed Okro — Fisherman Soup — Seafood — Banga — Ofe Nsala — Miyan Kuka — Ewedu
+                          </span>
                         </div>
 
                         <p style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--warm-white)", marginBottom: "0.5rem" }}>
                           Swallow
                         </p>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 0.75rem" }}>
-                          {[
-                            "Pounded Yam", "Eba", "Amala",
-                            "Fufu", "Wheat", "Semo",
-                          ].map((c) => (
-                            <span key={c} style={{ fontSize: "0.8rem", color: "#888580", whiteSpace: "nowrap" }}>{c}</span>
-                          ))}
+                          <span style={{ fontSize: "0.8rem", color: "#888580" }}>
+                            Pounded Yam — Eba — Amala — Fufu — Wheat — Semo
+                          </span>
                         </div>
                       </motion.div>
                     )}
