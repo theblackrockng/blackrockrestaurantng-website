@@ -17,7 +17,7 @@ const FALLBACK_AMBIENCE = [
 
 const FILTERS = ["Food", "Drinks", "Ambience", "Behind The Scenes"];
 
-const DRINK_KEYWORDS = ["heineken", "beer", "wine", "cocktail", "spirit", "whiskey", "vodka", "gin", "rum", "juice", "drink", "mocktail", "cider", "champagne", "prosecco", "brandy", "whisky", "liquor", "lager", "stout"];
+const DRINK_KEYWORDS = ["heineken", "beer", "wine", "spirit", "whiskey", "vodka", "gin", "rum", "mocktail", "cider", "champagne", "prosecco", "brandy", "whisky", "liquor", "lager", "stout"];
 
 function isDrink(filename) {
   const lower = (filename || "").toLowerCase();

@@ -10,7 +10,7 @@ const GALLERY_SECTIONS = [
   { key: "gallery-behind", label: "Behind the Scenes",  fetchKeys: ["gallery-behind"] },
 ];
 
-const DRINK_KEYWORDS = ["heineken", "beer", "wine", "cocktail", "spirit", "whiskey", "vodka", "gin", "rum", "juice", "drink", "mocktail", "cider", "champagne", "prosecco", "brandy", "whisky", "liquor", "lager", "stout"];
+const DRINK_KEYWORDS = ["heineken", "beer", "wine", "spirit", "whiskey", "vodka", "gin", "rum", "mocktail", "cider", "champagne", "prosecco", "brandy", "whisky", "liquor", "lager", "stout"];
 const isDrink = (filename) => DRINK_KEYWORDS.some((k) => (filename || "").toLowerCase().includes(k));
 
 const GOLD_BTN = {
