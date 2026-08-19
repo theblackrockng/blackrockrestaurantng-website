@@ -183,7 +183,7 @@ export default function MenuPage() {
           <img
             src="/menu-hero.png"
             alt="BlackRock dishes"
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-contain object-center"
           />
           <div className="absolute inset-0" style={{ background: "rgba(20,20,20,0.72)" }} />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(20,20,20,0.4) 0%, rgba(20,20,20,0.5) 60%, rgba(20,20,20,1) 100%)" }} />
